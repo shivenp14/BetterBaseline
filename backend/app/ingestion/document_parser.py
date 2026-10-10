@@ -7,6 +7,7 @@ with explicit errors per Issue #22 requirements.
 
 from __future__ import annotations
 
+import hashlib
 import io
 import re
 import uuid
@@ -15,7 +16,11 @@ from pathlib import Path
 from typing import BinaryIO, Sequence
 from uuid import UUID
 
-import pypdf
+# Optional dependency: pypdf is imported lazily inside parse_pdf
+try:
+    import pypdf
+except ImportError:
+    pypdf = None
 
 # Deterministic namespace for fragment UUID generation
 _FRAGMENT_NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL, "https://trialsync.local/fragments")
@@ -53,16 +58,24 @@ class DocumentFragment:
 
 
 def _generate_fragment_id(artifact_name: str, page: int | None, index: int, text: str) -> UUID:
-    """Generate a deterministic UUIDv5 for a fragment based on location and content digest."""
-    seed = f"{artifact_name}:p{page or 0}:idx{index}:{hash(text)}"
+    """Generate a deterministic UUIDv5 for a fragment based on location and content SHA-256.
+
+    Uses SHA-256 instead of Python's built-in hash() so fragment IDs remain 100% stable
+    across processes regardless of PYTHONHASHSEED.
+    """
+    text_digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    seed = f"{artifact_name}:p{page or 0}:idx{index}:{text_digest}"
     return uuid.uuid5(_FRAGMENT_NAMESPACE, seed)
 
 
 def _detect_heading(line: str) -> str | None:
     """Detect if a line represents a section heading.
 
-    Matches patterns like 'section: endpoint', '1. STUDY SYNOPSIS', '1.1 Primary Objective',
-    or standalone all-caps headers.
+    Matches patterns like:
+    - 'section: endpoint' (demo locator tag)
+    - '1. STUDY SYNOPSIS AND OBJECTIVES' (uppercase numbered section)
+    - '1.1 Primary Objective' (mixed-case numbered subsection)
+    - 'RATIONALE FOR PROTOCOL AMENDMENT' (all-caps header)
     """
     stripped = line.strip()
     if not stripped:
@@ -72,8 +85,8 @@ def _detect_heading(line: str) -> str | None:
     if stripped.lower().startswith("section:"):
         return stripped
 
-    # Numbered section headers (e.g., '1. STUDY SYNOPSIS', '1.1 Primary Objective')
-    if re.match(r"^\d+(\.\d+)*\s+[A-Z0-9\s\-_/]+$", stripped):
+    # Numbered section headers supporting mixed-case (e.g. '1.1 Primary Objective', '3. SCHEDULE')
+    if re.match(r"^\d+(\.\d+)*\s+[A-Za-z0-9\s\-_/]+$", stripped):
         return stripped
 
     # Short all-caps headings (e.g., 'RATIONALE FOR PROTOCOL AMENDMENT')
@@ -87,6 +100,7 @@ def parse_text(text: str, artifact_name: str = "document", page_number: int | No
     """Parse plain text into structured fragments with section-aware locators.
 
     Splits text along paragraph boundaries while preserving section headings.
+    Ensures start_char and end_char match the exact slice of text in source.
     """
     if not text.strip():
         return []
@@ -102,10 +116,17 @@ def parse_text(text: str, artifact_name: str = "document", page_number: int | No
         nonlocal buffer_lines, buffer_start, char_offset
         if not buffer_lines:
             return
-        chunk = "".join(buffer_lines).strip()
+        raw_chunk = "".join(buffer_lines)
         buffer_lines = []
+        chunk = raw_chunk.strip()
         if not chunk:
             return
+
+        # Calculate exact trimmed bounds within the source text
+        leading_ws = len(raw_chunk) - len(raw_chunk.lstrip())
+        trailing_ws = len(raw_chunk) - len(raw_chunk.rstrip())
+        exact_start = buffer_start + leading_ws
+        exact_end = buffer_start + len(raw_chunk) - trailing_ws
 
         # Build locator string
         loc_parts: list[str] = []
@@ -123,8 +144,8 @@ def parse_text(text: str, artifact_name: str = "document", page_number: int | No
                 page_number=page_number,
                 section_heading=current_section,
                 locator=locator,
-                start_char=buffer_start,
-                end_char=char_offset,
+                start_char=exact_start,
+                end_char=exact_end,
             )
         )
 
@@ -161,9 +182,15 @@ def parse_pdf(
     """Parse selectable-text PDF into page- and section-aware fragments.
 
     Raises:
+        DocumentParserError: If pypdf is not installed or PDF is corrupt.
         ScannedDocumentError: If PDF has no extractable text across all pages.
-        DocumentParserError: If PDF parsing fails due to corrupt payload.
     """
+    if pypdf is None:
+        raise DocumentParserError(
+            "The 'pypdf' package is required to parse PDF documents. "
+            "Please install it using: pip install 'pypdf>=5.0.0'"
+        )
+
     stream: BinaryIO
     if isinstance(source, (str, Path)):
         file_path = Path(source)
