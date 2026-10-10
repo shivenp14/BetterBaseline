@@ -1,0 +1,159 @@
+{
+  "schema": "declared_numeric_csv_v1",
+  "v1_facts": [
+    {
+      "id": "3f4e4762-c102-5b1d-b276-7b451d39bead",
+      "artifact_id": "d45de8c6-ca7c-50c3-9980-b9e9e8db981e",
+      "version_id": "bbaa5a19-1992-5645-b55c-710e7c44e68f",
+      "logical_key": "study.population.enrolled",
+      "label": "Enrolled Participants",
+      "value": 240,
+      "unit": "participants",
+      "source": {
+        "fragment_id": "57fc7e13-cdfa-5de2-998f-f38f383a13db",
+        "locator": "Row 2 (logical_key: study.population.enrolled)",
+        "quote": "study.population.enrolled,Enrolled Participants,240,participants"
+      }
+    },
+    {
+      "id": "578ac892-d998-5262-aa81-4f584128dddc",
+      "artifact_id": "d45de8c6-ca7c-50c3-9980-b9e9e8db981e",
+      "version_id": "bbaa5a19-1992-5645-b55c-710e7c44e68f",
+      "logical_key": "study.population.evaluable",
+      "label": "Evaluable ITT Cohort",
+      "value": 235,
+      "unit": "participants",
+      "source": {
+        "fragment_id": "565bf40b-a59d-5160-a615-dd5ec57c314b",
+        "locator": "Row 3 (logical_key: study.population.evaluable)",
+        "quote": "study.population.evaluable,Evaluable ITT Cohort,235,participants"
+      }
+    },
+    {
+      "id": "ca82af4a-5026-536d-8e7c-ccb364077f3f",
+      "artifact_id": "d45de8c6-ca7c-50c3-9980-b9e9e8db981e",
+      "version_id": "bbaa5a19-1992-5645-b55c-710e7c44e68f",
+      "logical_key": "endpoint.biomarker.baseline_crp",
+      "label": "Mean Baseline CRP",
+      "value": 14.5,
+      "unit": "mg/L",
+      "source": {
+        "fragment_id": "35d5dec4-1b8b-5661-8b1a-f5304db77e9d",
+        "locator": "Row 4 (logical_key: endpoint.biomarker.baseline_crp)",
+        "quote": "endpoint.biomarker.baseline_crp,Mean Baseline CRP,14.5,mg/L"
+      }
+    },
+    {
+      "id": "8e069f79-1474-5e70-87bb-61786f26dd31",
+      "artifact_id": "d45de8c6-ca7c-50c3-9980-b9e9e8db981e",
+      "version_id": "bbaa5a19-1992-5645-b55c-710e7c44e68f",
+      "logical_key": "endpoint.biomarker.target_crp",
+      "label": "Target Post-Treatment CRP",
+      "value": 3.2,
+      "unit": "mg/L",
+      "source": {
+        "fragment_id": "143c5ad6-fb50-5a28-bdde-bfc6e108b4ba",
+        "locator": "Row 5 (logical_key: endpoint.biomarker.target_crp)",
+        "quote": "endpoint.biomarker.target_crp,Target Post-Treatment CRP,3.2,mg/L"
+      }
+    },
+    {
+      "id": "f75eae6e-8108-5716-a829-65898f4f955e",
+      "artifact_id": "d45de8c6-ca7c-50c3-9980-b9e9e8db981e",
+      "version_id": "bbaa5a19-1992-5645-b55c-710e7c44e68f",
+      "logical_key": "safety.adverse_events.grade3_plus",
+      "label": "Severe Adverse Events Count",
+      "value": 8,
+      "unit": "events",
+      "source": {
+        "fragment_id": "9fd1a8a1-73e7-54e6-9b6f-a75fb08976d0",
+        "locator": "Row 6 (logical_key: safety.adverse_events.grade3_plus)",
+        "quote": "safety.adverse_events.grade3_plus,Severe Adverse Events Count,8,events"
+      }
+    }
+  ],
+  "v2_facts": [
+    {
+      "id": "9b4c7e2c-291f-5ca8-8dc0-235aca041a75",
+      "artifact_id": "082ae7f3-bba5-51b4-ae00-8aaee5f3bb38",
+      "version_id": "5abfdfe1-e6da-5e3a-8b08-f72f5d928ca9",
+      "logical_key": "study.population.enrolled",
+      "label": "Enrolled Participants",
+      "value": 240,
+      "unit": "participants",
+      "source": {
+        "fragment_id": "5e798a45-6487-531a-a810-6fafbb90cd95",
+        "locator": "Row 2 (logical_key: study.population.enrolled)",
+        "quote": "study.population.enrolled,Enrolled Participants,240,participants"
+      }
+    },
+    {
+      "id": "bd2af213-1768-5f80-80d9-81f88ad7c51c",
+      "artifact_id": "082ae7f3-bba5-51b4-ae00-8aaee5f3bb38",
+      "version_id": "5abfdfe1-e6da-5e3a-8b08-f72f5d928ca9",
+      "logical_key": "study.population.evaluable",
+      "label": "Evaluable ITT Cohort",
+      "value": 228,
+      "unit": "participants",
+      "source": {
+        "fragment_id": "cf7a8fe0-ece8-5626-baa7-14cc5946d6ea",
+        "locator": "Row 3 (logical_key: study.population.evaluable)",
+        "quote": "study.population.evaluable,Evaluable ITT Cohort,228,participants"
+      }
+    },
+    {
+      "id": "24274d1e-8652-518f-bd12-a022e99a10b8",
+      "artifact_id": "082ae7f3-bba5-51b4-ae00-8aaee5f3bb38",
+      "version_id": "5abfdfe1-e6da-5e3a-8b08-f72f5d928ca9",
+      "logical_key": "endpoint.biomarker.baseline_crp",
+      "label": "Mean Baseline CRP",
+      "value": 14.5,
+      "unit": "mg/L",
+      "source": {
+        "fragment_id": "e218b7fd-0483-590b-8623-44cff6d3baea",
+        "locator": "Row 4 (logical_key: endpoint.biomarker.baseline_crp)",
+        "quote": "endpoint.biomarker.baseline_crp,Mean Baseline CRP,14.5,mg/L"
+      }
+    },
+    {
+      "id": "651eb4a4-e2fe-5244-8ddd-7c2a636ed62f",
+      "artifact_id": "082ae7f3-bba5-51b4-ae00-8aaee5f3bb38",
+      "version_id": "5abfdfe1-e6da-5e3a-8b08-f72f5d928ca9",
+      "logical_key": "endpoint.biomarker.target_crp",
+      "label": "Target Post-Treatment CRP",
+      "value": 3.2,
+      "unit": "mg/L",
+      "source": {
+        "fragment_id": "8d82cfc2-e30d-54e6-ac80-00f9ffbafc77",
+        "locator": "Row 5 (logical_key: endpoint.biomarker.target_crp)",
+        "quote": "endpoint.biomarker.target_crp,Target Post-Treatment CRP,3.2,mg/L"
+      }
+    },
+    {
+      "id": "22d02af3-aad1-5f05-93e2-e80ee9dfd748",
+      "artifact_id": "082ae7f3-bba5-51b4-ae00-8aaee5f3bb38",
+      "version_id": "5abfdfe1-e6da-5e3a-8b08-f72f5d928ca9",
+      "logical_key": "safety.adverse_events.grade3_plus",
+      "label": "Severe Adverse Events Count",
+      "value": 8,
+      "unit": "events",
+      "source": {
+        "fragment_id": "92e3d03d-2470-59e6-886b-39bc8092cba4",
+        "locator": "Row 6 (logical_key: safety.adverse_events.grade3_plus)",
+        "quote": "safety.adverse_events.grade3_plus,Severe Adverse Events Count,8,events"
+      }
+    }
+  ],
+  "changes": [
+    {
+      "id": "b0dc55b3-f552-5a58-b4ed-c821430a6b9d",
+      "artifact_id": "082ae7f3-bba5-51b4-ae00-8aaee5f3bb38",
+      "logical_key": "study.population.evaluable",
+      "before_fact_id": "578ac892-d998-5262-aa81-4f584128dddc",
+      "after_fact_id": "bd2af213-1768-5f80-80d9-81f88ad7c51c",
+      "before_value": 235,
+      "after_value": 228,
+      "kind": "modified"
+    }
+  ]
+}

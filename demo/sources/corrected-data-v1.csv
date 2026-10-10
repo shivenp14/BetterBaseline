@@ -1,0 +1,6 @@
+logical_key,label,value,unit
+study.population.enrolled,Enrolled Participants,240,participants
+study.population.evaluable,Evaluable ITT Cohort,235,participants
+endpoint.biomarker.baseline_crp,Mean Baseline CRP,14.5,mg/L
+endpoint.biomarker.target_crp,Target Post-Treatment CRP,3.2,mg/L
+safety.adverse_events.grade3_plus,Severe Adverse Events Count,8,events
