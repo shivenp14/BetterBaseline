@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Trial change dependencies</title>
+<style>
+body{margin:0;background:var(--background);color:var(--foreground);font-family:var(--font-sans,system-ui);line-height:1.5}*{box-sizing:border-box}h2{font-size:1.15rem;font-weight:500;margin:0 0 6px}p{margin:6px 0 14px}.muted{color:var(--muted-foreground)}label{display:block;margin-bottom:6px}select{width:100%;font:inherit;padding:10px;background:var(--background);color:var(--foreground);border:1px solid var(--border);border-radius:6px}.graph{margin:20px 0}.row{display:flex;gap:12px;justify-content:center}.node{flex:1;min-width:0;padding:10px;background:var(--muted);text-align:center}.node strong{display:block;font-weight:500}.node small{display:block;color:var(--muted-foreground);font-size:.85rem}.changed{background:var(--warning-surface);color:var(--warning-foreground)}.changed small{color:inherit}.resolved{background:var(--muted);color:var(--foreground)}.resolved small{color:inherit}.link{text-align:center;color:var(--muted-foreground);padding:5px 0;font-size:.85rem}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:.9rem}th,td{text-align:left;vertical-align:top;padding:9px 5px;border-bottom:1px solid var(--border)}th{font-weight:500}.foot{font-size:.85rem;margin-top:12px}.result{margin-top:14px;font-weight:500}@media(max-width:460px){.row{flex-direction:column}.node{text-align:left}th,td{padding:8px 3px}table{font-size:.85rem}}
+</style></head><body><main id="trial-change">
+<h2>Follow an amendment through its dependencies</h2>
+<p class="muted">Hypothetical trial. All profiles, costs, schedules, and agreements are invented for this example.</p>
+<label for="scenario">Study state</label>
+<select id="scenario"><option value="baseline">1. Approved plan: four Thursday visits</option><option value="amended" selected>2. Amendment: add one Tuesday assessment</option><option value="reviewed">3. Support updates reviewed and confirmed</option></select>
+<div class="graph" role="group" aria-label="Dependency paths from protocol to documents and participant support">
+<div class="row"><div class="node" id="protocol"><strong>Protocol requirement</strong><small id="protocol-text"></small></div></div>
+<div class="link">↓ described in documents · requires attendance ↓</div>
+<div class="row"><div class="node" id="document"><strong>Participant information</strong><small id="document-text"></small></div><div class="node" id="visit"><strong>Visit requirements</strong><small id="visit-text"></small></div></div>
+<div class="link">↓ matched against declared needs and support agreements ↓</div>
+<div class="row"><div class="node" id="transit"><strong>Transit support</strong><small id="transit-text"></small></div><div class="node" id="care"><strong>Childcare support</strong><small id="care-text"></small></div><div class="node" id="access"><strong>Accessible transport</strong><small id="access-text"></small></div></div>
+</div>
+<div class="table-wrap"><table><thead><tr><th>Illustrative profile</th><th>Added burden</th><th>Dependency finding</th></tr></thead><tbody id="findings"></tbody></table></div>
+<div id="outcome" class="result" aria-live="polite"></div>
+<p class="foot muted">Time = declared round-trip travel + assessment duration. Findings test explicit coverage and availability; they do not predict dropout or represent real communities.</p>
+</main><script>
+const root=document.getElementById('trial-change');
+const $=id=>root.querySelector('#'+id);
+function show(){
+ const state=$('scenario').value, changed=state!=='baseline', reviewed=state==='reviewed';
+ const mark=changed?(reviewed?'resolved':'changed'):'';
+ for(const id of ['protocol','document','visit','transit','care','access']) $(id).className='node '+mark;
+ $('protocol-text').textContent=changed?'v2: five visits; new Tuesday assessment':'v1: four visits, all on Thursdays';
+ $('document-text').textContent=reviewed?'Draft revised; reviewer confirmed five visits':changed?'Current text still says “four visits”':'Approved text says “four visits”';
+ $('visit-text').textContent=changed?'New assessment: 90 minutes, in person':'Four planned assessments';
+ $('transit-text').textContent=reviewed?'Coverage extended to five trips':changed?'Agreement covers only four trips':'Four trips covered at $40 each';
+ $('care-text').textContent=reviewed?'Coverage extended to five visits':changed?'Agreement covers only four visits':'Four visits covered at $30 each';
+ $('access-text').textContent=reviewed?'Tuesday transport confirmed':changed?'Existing provider serves Thursdays':'Thursday transport confirmed';
+ const rows=changed?[
+ ['Uses transit; 150-min round trip','240 minutes; $40 fare',reviewed?'Additional trip covered':'$40 beyond current coverage'],
+ ['Needs childcare; 45-min round trip','135 minutes; $30 childcare',reviewed?'Additional childcare covered':'$30 beyond current coverage'],
+ ['Needs step-free transport; 60-min round trip','150 minutes; Tuesday service',reviewed?'Tuesday availability confirmed':'Tuesday availability unconfirmed']
+ ]:[['Uses transit','No added requirement','Current plan covered'],['Needs childcare','No added requirement','Current plan covered'],['Needs step-free transport','No added requirement','Thursday availability confirmed']];
+ $('findings').innerHTML=rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('');
+ $('outcome').textContent=reviewed?'Review complete: updated documents and support commitments linked to v2.':changed?'Needs review: one document mismatch, two coverage gaps, and one transport availability gap.':'Baseline: requirements match the recorded support plan.';
+}
+ $('scenario').addEventListener('change',show);show();
+</script></body></html>

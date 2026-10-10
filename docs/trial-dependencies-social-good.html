@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Trial Dependencies &amp; Equitable Participation — HackRU Concept</title>
+<style>
+body{margin:0;background:var(--background);color:var(--foreground);font-family:var(--font-sans,system-ui);line-height:1.5}*{box-sizing:border-box}h2{font-size:1.15rem;font-weight:500;margin:0 0 6px}p{margin:6px 0 14px}.muted{color:var(--muted-foreground)}label{display:block;margin-bottom:6px}select{width:100%;font:inherit;padding:10px;background:var(--background);color:var(--foreground);border:1px solid var(--border);border-radius:6px}.graph{margin:20px 0}.row{display:flex;gap:12px;justify-content:center}.node{flex:1;min-width:0;padding:10px;background:var(--muted);text-align:center}.node strong{display:block;font-weight:500}.node small{display:block;color:var(--muted-foreground);font-size:.85rem}.changed{background:var(--warning-surface);color:var(--warning-foreground)}.changed small{color:inherit}.resolved{background:var(--muted);color:var(--foreground)}.resolved small{color:inherit}.link{text-align:center;color:var(--muted-foreground);padding:5px 0;font-size:.85rem}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:.9rem}th,td{text-align:left;vertical-align:top;padding:9px 5px;border-bottom:1px solid var(--border)}th{font-weight:500}.foot{font-size:.85rem;margin-top:12px}.result{margin-top:14px;font-weight:500}@media(max-width:460px){.row{flex-direction:column}.node{text-align:left}th,td{padding:8px 3px}table{font-size:.85rem}}
+</style>
+<style>
+:root{color-scheme:light;--background:#f7f9fc;--foreground:#17243a;--muted:#edf1f7;--muted-foreground:#4e6077;--border:#cbd5e1;--warning-surface:#fff1d5;--warning-foreground:#764600;--font-sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{font-size:16px;line-height:1.65}.page{max-width:960px;margin:auto;padding:44px 28px 64px}h1{font-size:2rem;line-height:1.2;margin:8px 0 18px;font-weight:650;letter-spacing:-.03em}h2{font-size:1.3rem;line-height:1.35;margin:30px 0 12px;font-weight:650}h3{font-size:1rem;margin:20px 0 6px}p{margin:0 0 14px}.eyebrow{text-transform:uppercase;letter-spacing:.1em;font-size:.8rem;color:var(--muted-foreground);font-weight:600}.lead{font-size:1.1rem;max-width:760px}.section{margin:32px 0;padding-top:4px;border-top:1px solid var(--border)}ul,ol{padding-left:24px}li{margin:9px 0}.note{border-left:4px solid #4666b0;padding:12px 18px;background:var(--muted);margin:20px 0}.quote{font-size:1.15rem;font-weight:600}.node{border-radius:8px;padding:15px 10px}.resolved{background:#e4f2e8;color:#215237}.resolved small{color:inherit}.result{padding:12px 0}.data-list strong{color:var(--foreground)}pre{padding:18px;background:var(--muted);white-space:pre-wrap;border-radius:8px;font-size:.9rem;line-height:1.7}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.footer{margin-top:40px;border-top:1px solid var(--border);padding-top:16px;font-size:.85rem;color:var(--muted-foreground)}
+@media(prefers-color-scheme:dark){:root{color-scheme:dark;--background:#101722;--foreground:#e4edf8;--muted:#1e2a3b;--muted-foreground:#afbed2;--border:#42536b;--warning-surface:#3e2d12;--warning-foreground:#ffdc92}.resolved{background:#17392c;color:#c1ead1}}
+@media(max-width:460px){.page{padding:24px 16px 40px}h1{font-size:1.65rem}h2{font-size:1.2rem}select{font-size:16px}}
+@media print{:root{--background:#fff;--foreground:#111;--muted:#f0f2f5;--muted-foreground:#444;--border:#bbb}body{font-size:11pt}.page{padding:0;max-width:none}.section{break-inside:avoid}select{border:0;padding:0}.node{break-inside:avoid}.footer{margin-top:20px}}
+</style></head><body><article class="page">
+<div class="eyebrow">HackRU concept • Clinical development + Social Good</div>
+<h1>Track trial changes.<br>Protect equitable participation.</h1>
+<p class="lead">When information changes during a clinical trial, a dependency graph can show which documents, decisions, and participant support plans need review.</p>
+<p>The proposed addition connects study requirements to participant needs and community support commitments. It helps teams identify who faces new participation barriers and follow through on the support they need.</p>
+<main id="trial-change" class="section">
+<h2>Follow an amendment through its dependencies</h2>
+<p class="muted">Hypothetical trial. All profiles, costs, schedules, and agreements are invented for this example.</p>
+<label for="scenario">Study state</label>
+<select id="scenario"><option value="baseline">1. Approved plan: four Thursday visits</option><option value="amended" selected>2. Amendment: add one Tuesday assessment</option><option value="reviewed">3. Support updates reviewed and confirmed</option></select>
+<div class="graph" role="group" aria-label="Dependency paths from protocol to documents and participant support">
+<div class="row"><div class="node" id="protocol"><strong>Protocol requirement</strong><small id="protocol-text"></small></div></div>
+<div class="link">↓ described in documents · requires attendance ↓</div>
+<div class="row"><div class="node" id="document"><strong>Participant information</strong><small id="document-text"></small></div><div class="node" id="visit"><strong>Visit requirements</strong><small id="visit-text"></small></div></div>
+<div class="link">↓ matched against declared needs and support agreements ↓</div>
+<div class="row"><div class="node" id="transit"><strong>Transit support</strong><small id="transit-text"></small></div><div class="node" id="care"><strong>Childcare support</strong><small id="care-text"></small></div><div class="node" id="access"><strong>Accessible transport</strong><small id="access-text"></small></div></div>
+</div>
+<div class="table-wrap"><table><thead><tr><th>Illustrative profile</th><th>Added burden</th><th>Dependency finding</th></tr></thead><tbody id="findings"></tbody></table></div>
+<div id="outcome" class="result" aria-live="polite"></div>
+<p class="foot muted">Time = declared round-trip travel + assessment duration. Findings test explicit coverage and availability; they do not predict dropout or represent real communities.</p>
+</main>
+<section class="section" aria-labelledby="social-heading">
+<h2 id="social-heading">How this ties to the Social Good track</h2>
+<p><strong>The community benefit is preventing trial changes from making participation harder for people who already face barriers.</strong> Additional travel, missed work, childcare, caregiver needs, or accessibility requirements can place unequal burdens on participants.</p>
+<p>For example, a trial adds a visit and its documents are updated, but transport assistance still covers only the original visits. A participant who can drive may manage the change; someone relying on funded transport may have to pay, miss work, or miss the visit. The system exposes that gap and assigns it to someone responsible for resolving it.</p>
+<ul>
+<li><strong>Fairer access:</strong> people with limited income, caregiving responsibilities, or disabilities can receive the support needed to participate.</li>
+<li><strong>Less unexpected burden:</strong> participants can understand additional time and cost before deciding whether to continue.</li>
+<li><strong>Accountability:</strong> promised support is tracked through changes, with unresolved gaps visible to coordinators and authorized community partners.</li>
+</ul>
+<p>A graph that only updates clinical documents has an indirect Social Good connection. Participant needs and support commitments must be central to the product to make this connection convincing.</p>
+<div class="note"><strong>What the demo must establish:</strong> a specific barrier is identified, a responsible owner reviews it, and a support commitment is confirmed. An alert alone does not demonstrate that the barrier has been resolved.</div>
+<p class="quote">“When a clinical trial changes, we help teams identify who faces new participation barriers and follow through on the support they need.”</p>
+</section>
+<section class="section" aria-labelledby="implementation-heading">
+<h2 id="implementation-heading">How a working implementation would behave</h2>
+<p>Use a <strong>versioned dependency graph with explicit rules</strong> that check whether participant support still satisfies the study’s requirements. The graph finds potentially affected records; the rules determine which gaps need review.</p>
+<ol>
+<li><strong>Extract the original plan.</strong> AI reads protocol and support documents, proposing structured facts and relationships with paragraph citations. A reviewer confirms them.</li>
+<li><strong>Compare versions.</strong> When an amendment arrives, identify changed visit dates, durations, locations, procedures, or attendance requirements. Proposed changes remain distinct from approved requirements.</li>
+<li><strong>Follow affected relationships.</strong> Traverse from changed requirements to dependent document claims, participant needs, and support commitments.</li>
+<li><strong>Recalculate constraints.</strong> Check whether coverage, availability, and capacity still satisfy the new requirements.</li>
+<li><strong>Create review tasks.</strong> Include the triggering change, dependency path, source evidence, and accountable owner.</li>
+<li><strong>Record resolution.</strong> Close a finding after an authorized reviewer confirms a document revision or support commitment. Preserve earlier versions and decisions.</li>
+</ol>
+<p><strong>AI extracts and explains; explicit rules calculate the gaps.</strong> AI can draft wording or suggest options. A human or verified service record must establish that funding, a booking, or provider availability has actually been confirmed.</p>
+</section>
+<section class="section" aria-labelledby="records-heading">
+<h2 id="records-heading">What the graph stores</h2>
+<ul class="data-list">
+<li><strong>Study requirements:</strong> visit date, duration, location, procedures, and whether attendance must be in person.</li>
+<li><strong>Participant needs:</strong> voluntarily declared transport, childcare, caregiver, or accessibility needs. Use fictional profiles for the prototype.</li>
+<li><strong>Support commitments:</strong> trips covered, reimbursement limits, service availability, capacity, and expiration dates.</li>
+<li><strong>Document claims:</strong> specific statements such as “four visits are required,” linked to their paragraph and source version.</li>
+<li><strong>Review decisions:</strong> who confirmed a relationship, approved a revision, or verified a support commitment, and when.</li>
+</ul>
+<p>Relationships carry meaning: a visit <em>requires</em> attendance; a participant <em>needs</em> transport for that attendance; an agreement <em>covers</em> certain trips; a paragraph <em>describes</em> the schedule. Each relationship stores its source, source version, confidence, and confirmation status.</p>
+<pre><code>required trips &gt; covered trips
+    → transport coverage gap
+
+new visit day outside provider availability
+    → transport availability needs review
+
+current document visit count ≠ approved protocol visit count
+    → document revision required</code></pre>
+<div class="note">A changed source does not automatically make an older document wrong. A historical report may correctly describe a frozen dataset or prior protocol. Distinguish “used this version,” “calculated from this value,” “assumes this remains true,” and “must reflect the current value.”</div>
+</section>
+<section class="section" aria-labelledby="second-heading">
+<h2 id="second-heading">A second example: a support agreement expires</h2>
+<p>A community transport agreement expires while the protocol remains unchanged. The system follows the agreement’s relationships to future visits and participants who depend on it. It creates tasks to confirm replacement coverage and review participant materials that promise transport support.</p>
+<p>This shows that a change can originate in a community resource as well as a trial document. The useful finding is the concrete coverage gap, not a prediction that someone will drop out.</p>
+</section>
+<section class="section" aria-labelledby="scope-heading">
+<h2 id="scope-heading">A focused first prototype</h2>
+<p>Use one fictional trial, two protocol versions, three related documents, ten fictional participant profiles, and a few support agreements. Store records in ordinary <code>nodes</code>, <code>edges</code>, <code>versions</code>, and <code>findings</code> tables; a specialized graph database is optional.</p>
+<p><strong>Demo sequence:</strong> import an amendment → inspect affected dependencies → see evidence-backed gaps → assign review tasks → record confirmed resolutions.</p>
+<p>Compare the consequences across declared needs. The same additional visit may create uncovered travel for one participant, childcare expenses for another, and unavailable accessible transport for another. Concrete differences make equitable access visible without inventing dropout probabilities.</p>
+</section>
+<footer class="footer">Standalone concept explainer. Works offline; no external scripts, services, or real participant data. The interactive states illustrate the proposed workflow and do not perform document extraction or actual approval.</footer>
+</article><script>
+const root=document.getElementById('trial-change');
+const $=id=>root.querySelector('#'+id);
+function show(){
+ const state=$('scenario').value, changed=state!=='baseline', reviewed=state==='reviewed';
+ const mark=changed?(reviewed?'resolved':'changed'):'';
+ for(const id of ['protocol','document','visit','transit','care','access']) $(id).className='node '+mark;
+ $('protocol-text').textContent=changed?'v2: five visits; new Tuesday assessment':'v1: four visits, all on Thursdays';
+ $('document-text').textContent=reviewed?'Draft revised; reviewer confirmed five visits':changed?'Current text still says “four visits”':'Approved text says “four visits”';
+ $('visit-text').textContent=changed?'New assessment: 90 minutes, in person':'Four planned assessments';
+ $('transit-text').textContent=reviewed?'Coverage extended to five trips':changed?'Agreement covers only four trips':'Four trips covered at $40 each';
+ $('care-text').textContent=reviewed?'Coverage extended to five visits':changed?'Agreement covers only four visits':'Four visits covered at $30 each';
+ $('access-text').textContent=reviewed?'Tuesday transport confirmed':changed?'Existing provider serves Thursdays':'Thursday transport confirmed';
+ const rows=changed?[
+ ['Uses transit; 150-min round trip','240 minutes; $40 fare',reviewed?'Additional trip covered':'$40 beyond current coverage'],
+ ['Needs childcare; 45-min round trip','135 minutes; $30 childcare',reviewed?'Additional childcare covered':'$30 beyond current coverage'],
+ ['Needs step-free transport; 60-min round trip','150 minutes; Tuesday service',reviewed?'Tuesday availability confirmed':'Tuesday availability unconfirmed']
+ ]:[['Uses transit','No added requirement','Current plan covered'],['Needs childcare','No added requirement','Current plan covered'],['Needs step-free transport','No added requirement','Thursday availability confirmed']];
+ $('findings').innerHTML=rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('');
+ $('outcome').textContent=reviewed?'Review complete: updated documents and support commitments linked to v2.':changed?'Needs review: one document mismatch, two coverage gaps, and one transport availability gap.':'Baseline: requirements match the recorded support plan.';
+}
+ $('scenario').addEventListener('change',show);show();
+</script></body></html>

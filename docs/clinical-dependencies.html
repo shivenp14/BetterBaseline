@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clinical trial dependency explorer</title>
+<style>
+:root{color-scheme:light dark;--background:light-dark(#fff,#141619);--foreground:light-dark(#20252b,#eceff3);--muted:light-dark(#f1f3f5,#22262c);--muted-foreground:light-dark(#606975,#b2bac5);--card:light-dark(#f8f9fb,#1b1f25);--border:light-dark(#dce1e7,#373e48);--primary:light-dark(#253c53,#dde8f4);--primary-foreground:light-dark(#fff,#152333);--warning:light-dark(#895e13,#edc56c);--warning-surface:light-dark(#fff4dc,#352b19);--success:light-dark(#236447,#8ed8b6);--success-surface:light-dark(#eaf7ef,#18352a);--accent:light-dark(#315f8c,#9ec7ee)}
+*{box-sizing:border-box}body{margin:0;background:var(--background);color:var(--foreground);font:15px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{width:100%;padding:0 0 18px}h1{font-size:23px;font-weight:600;margin:0 100px 7px 0;letter-spacing:-.4px}h2{font-size:20px;font-weight:600;margin:0 0 5px}h3{font-size:14px;margin:0 0 7px;font-weight:600}p{margin:0 0 12px}.muted{color:var(--muted-foreground)}.intro{max-width:650px}.choices{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:18px 0 22px}button{font:inherit;color:var(--foreground);background:transparent;border:1px solid var(--border);border-radius:8px;padding:10px 11px;cursor:pointer;text-align:left;min-height:46px}button[aria-pressed="true"]{background:var(--primary);color:var(--primary-foreground);border-color:var(--primary)}button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:3px}.num{opacity:.65;font-size:12px;display:block;margin-bottom:2px}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:15px;margin:16px 0}.toolbar button{flex-shrink:0}.state{font-size:13px;color:var(--muted-foreground)}.flow{display:grid;grid-template-columns:minmax(0,1fr) 48px minmax(0,1fr) 48px minmax(0,1fr);align-items:start;margin:18px 0}.stage-label{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted-foreground);margin-bottom:10px}.node{padding:13px;border:1px solid var(--border);border-radius:9px;background:var(--card);margin-bottom:10px;min-height:120px;overflow-wrap:anywhere}.node.changed{border-color:var(--warning);background:var(--warning-surface)}.node.preserved{border-color:var(--success);background:var(--success-surface)}.node p{font-size:14px;margin:0}.badge{display:inline-block;font-size:11px;font-weight:600;margin-top:12px;text-transform:uppercase;letter-spacing:.035em;color:var(--muted-foreground)}.changed .badge{color:var(--warning)}.preserved .badge{color:var(--success)}.connector{color:var(--muted-foreground);text-align:center;margin-top:62px;font-size:24px}.relationship{font-size:12px;color:var(--accent);margin-top:3px}.explanation{border-top:1px solid var(--border);padding-top:16px;margin-top:10px}.footgrid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:18px}.footgrid p{font-size:13px}.notice{font-size:13px;margin:16px 0 0;color:var(--muted-foreground)}a{color:var(--accent);text-underline-offset:3px}details{border-top:1px solid var(--border);margin-top:16px;padding-top:13px;font-size:13px}summary{cursor:pointer;font-weight:600}details p{margin-top:10px}code{font:13px ui-monospace,monospace;background:var(--muted);padding:2px 4px;border-radius:3px}
+@media(max-width:570px){.choices{grid-template-columns:repeat(2,minmax(0,1fr))}.flow{grid-template-columns:1fr}.connector{margin:0 0 10px;font-size:22px}.connector span{display:inline-block;transform:rotate(90deg)}.node{min-height:0}.stage-label{margin-bottom:6px}.footgrid{grid-template-columns:1fr;gap:4px}.toolbar{align-items:flex-start}.toolbar button{max-width:145px}h1{font-size:21px;margin-right:70px}}
+</style>
+</head>
+<body>
+<main id="clinical-dependency-explorer">
+<h1>How a trial change travels</h1>
+<p class="intro muted">Explore eight dependency types. Select an example, then show a source change to see what requires recalculation, updating, or review.</p>
+<nav class="choices" aria-label="Choose a dependency type" id="choices"></nav>
+<section aria-labelledby="scenario-title">
+<h2 id="scenario-title"></h2><p id="definition" class="muted"></p>
+<div class="toolbar"><div id="state" class="state"></div><button id="change" type="button" aria-pressed="false">Show source change</button></div>
+<div id="graph" class="flow" role="group" aria-label="Dependency path"></div>
+<div class="explanation" aria-live="polite"><h3 id="action-title"></h3><p id="action"></p></div>
+<div class="footgrid">
+<div><h3>What the relationship means</h3><p id="edge"></p></div>
+<div><h3>Inputs listed in the Regeneron kit</h3><p id="data"></p></div>
+</div>
+<p id="nuance" class="notice"></p>
+</section>
+<details><summary>What each dependency record needs to retain</summary><p><strong>Source and artifact versions</strong> · the exact field, row, or passage · relationship type · transformation or reasoning · applicable population and time period · owner · review status.</p><p>For example: <code>Safety table v1 → calculated from → dataset v1</code> is different from <code>Live dashboard → must reflect → current dataset</code>.</p></details>
+<p class="notice">All changes, numbers, and document snippets here are illustrative. The folder contains challenge guidance and public-data references; it does not provide live proprietary Regeneron trial data. Highlighted downstream artifacts have been flagged, not automatically approved or updated.</p>
+</main>
+<script>
+const scenarios=[
+{id:"fact",name:"Shared fact",title:"One trial fact appears in several places",definition:"A downstream document repeats a value from the study design.",relation:"repeats",
+source:[{title:"Protocol · planned enrollment",before:"200 participants",after:"240 participants",status:"Source amended"}],
+middle:[{title:"Shared enrollment fact",before:"Planned enrollment: 200",after:"Planned enrollment: 240",status:"Validate amended fact"}],
+down:[{title:"Statistical analysis plan",before:"Target enrollment: 200",after:"Still says 200",status:"Review design implications"},{title:"Registry entry",before:"Planned enrollment: 200",after:"Still says 200",status:"Propose update"},{title:"Consent form",before:"About 200 people will join",after:"Still says 200",status:"Review wording"}],
+edge:"A particular passage repeats the protocol's planned enrollment, for the same study and design version.",
+data:'ClinicalTrials.gov study fields and attached protocol, analysis plan, or consent documents where available; a synthetic amendment. Kit: “Write Once.”',
+action:"Find every reference to the amended planned enrollment. Route proposed edits and any analysis-design implications to their owners.",
+nuance:"Planned enrollment and actual enrollment are different concepts. A historical report quoting the old plan may remain correct."},
+{id:"calculation",name:"Calculation",title:"A corrected denominator changes a percentage",definition:"An output depends on source observations and a calculation.",relation:"calculated from",
+source:[{title:"Safety analysis population",before:"100 participants; 12 with event",after:"96 participants; 12 with event",status:"Dataset corrected"}],
+middle:[{title:"Event percentage",before:"12 ÷ 100 = 12%",after:"12 ÷ 96 = 12.5%",status:"Recalculation required"}],
+down:[{title:"Safety table · event row",before:"12 participants (12%)",after:"Still displays 12%",status:"Update after QC"},{title:"Report narrative",before:"“The event occurred in 12%…”",after:"Still quotes 12%",status:"Review claim"}],
+edge:"This cell is calculated from an event count, an analysis-population count, and a specified formula.",
+data:'CDISC educational SDTM/ADaM pilot datasets plus synthetic analysis specifications and table shells. Kit: “Table Factory.”',
+action:"Recalculate using the corrected population, verify the result, then review the table and the narrative quoting it.",
+nuance:"The new 12.5% is a proposed recalculated value. The documents remain unchanged until reviewed."},
+{id:"rule",name:"Derivation rule",title:"Changing baseline affects derived outcomes",definition:"The raw observations stay the same, but the rule for interpreting them changes.",relation:"derived using",
+source:[{title:"Baseline specification",before:"Last measurement before dose",after:"Last eligible measurement in a defined pre-dose window",status:"Rule revised"}],
+middle:[{title:"Baseline values and change scores",before:"Derived using rule v1",after:"Still derived using rule v1",status:"Rederive variables"}],
+down:[{title:"Treatment-effect analysis",before:"Uses the current change scores",after:"Uses scores from the old rule",status:"Rerun analysis"},{title:"Results statement",before:"Supported by analysis v1",after:"Still supported by analysis v1",status:"Reassess after rerun"}],
+edge:"A variable depends on a versioned derivation rule as well as the raw measurements.",
+data:'SDTM/ADaM educational data and a synthetic v2 analysis specification. The kit explicitly suggests baseline-definition bugs and specification changes.',
+action:"Determine which participants' baseline values would change, rederive affected variables, and rerun dependent analyses before revising statements.",
+nuance:"A monitor that checks only for edits to raw data would miss this change."},
+{id:"semantic",name:"Meaning",title:"Different wording may describe the same endpoint",definition:"A relationship requires matching the meaning of a measure, not just its words.",relation:"describes",
+source:[{title:"Protocol · primary endpoint",before:"Symptom-score change at week 12",after:"Symptom-score change at week 16",status:"Endpoint amended"}],
+middle:[{title:"Endpoint representation",before:"Instrument + population + week 12",after:"Instrument + population + week 16",status:"Validate semantic match"}],
+down:[{title:"Statistical analysis plan",before:"Week-12 symptom-score comparison",after:"Still specifies week 12",status:"Resolve mismatch"},{title:"Registry outcome field",before:"Symptom score at week 12",after:"Still specifies week 12",status:"Propose update"},{title:"Participant-facing description",before:"Improvement after about 3 months",after:"Still describes about 3 months",status:"Review meaning"}],
+edge:"Passages describe the same endpoint only if the instrument, timepoint, population, and calculation agree.",
+data:'Protocol and statistical-analysis-plan PDFs, plus ClinicalTrials.gov outcome fields for the same study. Kit: “Write Once.”',
+action:"Check whether each passage really refers to the amended endpoint. Flag confirmed dependencies and uncertain matches separately.",
+nuance:"Similar wording does not establish equivalence. Different instruments or timepoints can make two outcomes distinct."},
+{id:"configuration",name:"Configuration",title:"A new visit creates operational dependencies",definition:"A study requirement determines what downstream systems need to support.",relation:"configures",
+source:[{title:"Study definition",before:"Visits through week 24",after:"Adds a week-36 assessment",status:"Design amended"}],
+middle:[{title:"Schedule of activities",before:"Assessments through week 24",after:"Still omits the week-36 assessment",status:"Update and review schedule"}],
+down:[{title:"Trial database configuration",before:"No week-36 visit or assessment form",after:"Still has no week-36 configuration",status:"Change and verify configuration"},{title:"Site calendar template",before:"Visits through week 24",after:"Still omits week 36",status:"Review site workflow"},{title:"Registry draft",before:"Describes original assessment window",after:"Still describes original window",status:"Review affected fields"}],
+edge:"A visit and its required procedures determine specific forms, schedules, and registration fields.",
+data:'A synthetic USDM-style study definition, mock EDC and registry systems, and public trial metadata. Kit: “Protocol to Pipeline.”',
+action:"Identify the systems that consume the amended visit definition, prepare the required changes, and record which version each consumer has received.",
+nuance:"Adding a visit can also create participant travel and caregiver burdens. Those can become additional dependencies in your project."},
+{id:"identity",name:"Same event",title:"Two databases describe one safety event",definition:"Different identifiers and schemas may refer to the same underlying event.",relation:"same event as",
+source:[{title:"Trial database · event E-17",before:"Outcome: ongoing",after:"Outcome: recovered",status:"Follow-up entered"}],
+middle:[{title:"Safety database · case S-42",before:"Outcome: ongoing",after:"Still says ongoing",status:"Field discrepancy"}],
+down:[{title:"Reconciliation record",before:"Matched; outcome agrees",after:"Matched; outcome disagrees",status:"Resolve discrepancy"},{title:"Cross-system safety listing",before:"Uses reconciled event outcome",after:"Uses unresolved event outcome",status:"Flag for review"}],
+edge:"A reviewed match links two records to one event; field-level rules define what should agree.",
+data:'CDISC pilot adverse-event records transformed into a synthetic safety-side copy, with follow-up changes. Kit: “Two Databases, One Truth.”',
+action:"Preserve the event match, flag the changed field, and route the discrepancy to the responsible data and safety reviewers.",
+nuance:"openFDA can inform the safety schema. Unrelated openFDA cases cannot be assumed to match participants in the CDISC pilot."},
+{id:"evidence",name:"Supporting evidence",title:"A correction can weaken a conclusion",definition:"A claim depends on the analysis that supports it and the assumptions behind that analysis.",relation:"supports",
+source:[{title:"Subgroup dataset",before:"Original observations and group membership",after:"Corrected observations or population membership",status:"Supporting data changed"}],
+middle:[{title:"Subgroup analysis",before:"Original estimate and uncertainty",after:"Analysis has not yet been rerun",status:"Reassess evidence"}],
+down:[{title:"Report claim",before:"“The effect was consistent across groups.”",after:"Claim remains in the report",status:"Scientific review"},{title:"Internal decision rationale",before:"Relies on subgroup analysis v1",after:"Still relies on analysis v1",status:"Review reasoning"}],
+edge:"The claim is supported by a specific analysis version, population, uncertainty estimate, and interpretation.",
+data:'Educational trial datasets with synthetic subgroup analyses and report statements. This example extends the kit’s data-to-output traceability.',
+action:"Rerun the relevant analysis and ask whether its revised uncertainty still supports the claim and decision. The outcome may be a revised claim, unchanged claim, or unresolved question.",
+nuance:"A text replacement cannot settle this dependency. Corrected evidence does not automatically mean the original conclusion was false."},
+{id:"version",name:"Version / time",title:"A historical report can remain valid",definition:"Some artifacts depend on a frozen snapshot; others promise to show current information.",relation:"valid for version",
+source:[{title:"Dataset history",before:"Dataset v1 is current",after:"Dataset v2 becomes current; v1 retained",status:"New version available"}],
+middle:[{title:"Version bindings",before:"Historical artifacts → v1; live view → current",after:"Historical artifacts → v1; live view → current v2",status:"Keep the two bindings distinct"}],
+down:[{title:"Final report",before:"Bound to frozen dataset v1",after:"Still correctly describes dataset v1",status:"Preserve historical binding",preserved:true},{title:"Archived table package",before:"Results from dataset v1",after:"Still records results from v1",status:"Preserve historical package",preserved:true},{title:"Live dashboard",before:"Shows current data: v1",after:"Still shows v1; v2 is current",status:"Refresh and verify"}],
+edge:"The report explicitly uses dataset v1. The live dashboard instead depends on whichever version is current.",
+data:'Educational datasets with synthetic versions, a frozen report package, and a live dashboard. Consent records can similarly bind to exact form versions.',
+action:"Preserve the report’s historical lineage. Refresh the dashboard if it promises current data. Assess corrections separately if they reveal a problem in the historical report.",
+nuance:"A source change alone does not make every dependent artifact stale. Version, time, and intended use determine the response."}
+];
+let selected="calculation",changed=false;
+const root=document.getElementById("clinical-dependency-explorer");
+const el=id=>root.querySelector("#"+id);
+const escapeText=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function render(){
+ const s=scenarios.find(x=>x.id===selected);
+ el("choices").innerHTML=scenarios.map((x,i)=>'<button type="button" data-id="'+x.id+'" aria-pressed="'+(x.id===selected)+'"><span class="num">'+String(i+1).padStart(2,"0")+'</span>'+x.name+'</button>').join("");
+ el("scenario-title").textContent=s.title;el("definition").textContent=s.definition;
+ el("state").textContent=changed?"After change · downstream artifacts flagged":"Before change · dependencies aligned";
+ el("change").textContent=changed?"Show original state":"Show source change";el("change").setAttribute("aria-pressed",String(changed));
+ const stage=(label,nodes)=>'<div><div class="stage-label">'+label+'</div>'+nodes.map(n=>'<article class="node '+(changed?(n.preserved?"preserved":"changed"):"")+'"><h3>'+escapeText(n.title)+'</h3><p>'+escapeText(changed?n.after:n.before)+'</p><span class="badge">'+escapeText(changed?n.status:"Original state")+'</span></article>').join("")+'</div>';
+ const connector='<div class="connector" aria-hidden="true"><span>→</span></div>';
+ el("graph").innerHTML=stage("1 · Source",s.source)+connector+stage("2 · Direct dependency",s.middle)+connector+stage("3 · Further impact",s.down);
+ el("action-title").textContent=changed?"What this change triggers":"Trace the relationship";
+ el("action").textContent=changed?s.action:"The arrows show potential impact, flowing from a source to the artifacts that depend on it. Show the source change to inspect the required response.";
+ el("edge").textContent='"'+s.relation+'" — '+s.edge;el("data").textContent=s.data;el("nuance").textContent=s.nuance;
+}
+el("choices").addEventListener("click",e=>{const b=e.target.closest("button[data-id]");if(b){selected=b.dataset.id;changed=false;render();}});
+el("change").addEventListener("click",()=>{changed=!changed;render();});
+render();
+</script>
+</body></html>
