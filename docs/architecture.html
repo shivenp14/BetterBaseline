@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Clinical trial dependency architecture</title><style>
+:root{--background:#f8fafc;--foreground:#17243a;--muted:#edf1f7;--muted-foreground:#4e6077;--border:#cbd5e1;--accent-surface:#e5edff;--accent-surface-foreground:#163b78;--font-sans:system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--background);color:var(--foreground);font-family:var(--font-sans);line-height:1.5}h2{font-size:1.15rem;font-weight:500;margin:0 0 10px}h3{font-size:1rem;font-weight:500;margin:0 0 3px}p{margin:0 0 14px}.muted{color:var(--muted-foreground)}.flow{display:flex;align-items:stretch;gap:10px;margin:16px 0}.node{flex:1;min-width:0;padding:12px;background:var(--muted)}.node small{display:block;color:var(--muted-foreground)}.arrow{align-self:center;color:var(--muted-foreground)}.worker{background:var(--accent-surface);color:var(--accent-surface-foreground);padding:14px;margin:10px 0}.worker small{display:block}.connections{font-size:.9rem;color:var(--muted-foreground);margin:8px 0}.services{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.services div{padding:10px;background:var(--muted)}table{border-collapse:collapse;width:100%;margin-top:20px}th,td{padding:9px 4px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top;font-size:.9rem}th{font-weight:500}a{color:inherit;text-decoration:underline}.foot{font-size:.85rem;color:var(--muted-foreground);margin-top:16px}@media(max-width:480px){.flow{flex-direction:column}.arrow{text-align:center;transform:rotate(90deg)}.services{grid-template-columns:1fr}.node{width:100%}}
+</style></head><body><main>
+<h2>Recommended starting architecture</h2>
+<p class="muted">One application, two Python processes, one managed data platform.</p>
+<div class="flow" role="group" aria-label="Browser requests go to the API, which reads and writes PostgreSQL">
+<div class="node"><h3>Browser interface</h3><small>Next.js + TypeScript<br>React Flow graph + review queue<br>Hosted on Vercel</small></div><div class="arrow" aria-hidden="true">→</div>
+<div class="node"><h3>Application API</h3><small>FastAPI · Python<br>Authorization, uploads, reviews<br>Render web service</small></div><div class="arrow" aria-hidden="true">→</div>
+<div class="node"><h3>PostgreSQL</h3><small>Versions, graph, findings, audit<br>Durable jobs table<br>Managed by Supabase</small></div>
+</div>
+<p class="connections">API enqueues processing jobs in PostgreSQL. Browser polls job status.</p>
+<div class="worker"><h3>Processing worker · Render background worker</h3><small>Claims jobs from PostgreSQL → parses sources → extracts facts → proposes dependencies → compares versions → applies impact rules → persists findings.</small></div>
+<p class="connections">Worker reads source files and calls the model. API and worker share the same domain logic and database.</p>
+<div class="services">
+<div><h3>Private file storage</h3><small>Supabase Storage<br>Original PDFs, DOCX, CSV<br>Unique paths per version</small></div>
+<div><h3>Authentication</h3><small>Supabase Auth<br>Browser signs in<br>API verifies identity and study access</small></div>
+<div><h3>Hosted LLM API</h3><small>One provider adapter<br>Structured candidate extraction<br>Source citations required</small></div>
+</div>
+<table><thead><tr><th>Responsibility</th><th>Implementation boundary</th></tr></thead><tbody>
+<tr><td>Extract facts and suggest links</td><td>AI returns candidates; server validates source locations and structure.</td></tr>
+<tr><td>Versioning and change detection</td><td>Stable fact identities, stored snapshots, typed comparisons.</td></tr>
+<tr><td>Impact propagation</td><td>Confirmed graph edges + deterministic rules + version context.</td></tr>
+<tr><td>Resolution</td><td>Owner reviews evidence; approval transaction records update and audit event.</td></tr>
+<tr><td>Participant-access extension</td><td>Additional need/support nodes and coverage rules using the same engine.</td></tr>
+</tbody></table>
+<p class="foot">Architecture recommendation for the prototype. Source files and graph records remain versioned; the LLM proposes changes and reviewers approve them.</p>
+<p class="foot">Official references: <a href="https://reactflow.dev/learn/customization/custom-nodes">React Flow</a> · <a href="https://fastapi.tiangolo.com/tutorial/background-tasks/">FastAPI workers guidance</a> · <a href="https://www.postgresql.org/docs/current/queries-with.html">PostgreSQL traversal</a> · <a href="https://render.com/docs/background-workers">Render workers</a> · <a href="https://supabase.com/docs/guides/storage/security/access-control">Supabase Storage</a> · <a href="https://vercel.com/docs/frameworks/full-stack/nextjs">Vercel</a></p>
+</main></body></html>
