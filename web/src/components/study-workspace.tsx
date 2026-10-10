@@ -2,12 +2,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createStudyApi, parseApiMode } from "@/lib/api/client";
-import type { Artifact, Finding, Study } from "@/lib/api/types";
+import type { Artifact, DependencyWorkspaceData, Finding, Study } from "@/lib/api/types";
+import { DependencyGraph } from "@/components/dependency-graph";
 interface WorkspaceData {
   studies: Study[];
   study: Study | null;
   artifacts: Artifact[];
   findings: Finding[];
+  dependencyData: DependencyWorkspaceData;
 }
 export function StudyWorkspace() {
   const [data, setData] = useState<WorkspaceData | null>(null);
@@ -27,18 +29,20 @@ export function StudyWorkspace() {
         const { items: studies } = await api.listStudies();
         const study =
           studies.find((item) => item.id === selectedId) ?? studies[0] ?? null;
-        const [artifacts, findings] = study
+        const [artifacts, findings, dependencyData] = study
           ? await Promise.all([
               api.listArtifacts(study.id),
               api.listFindings(study.id),
+              api.getDependencyData(study.id),
             ])
-          : [{ items: [] }, { items: [] }];
+          : [{ items: [] }, { items: [] }, { graph: null, changes: [] }];
         if (active) {
           setData({
             studies,
             study,
             artifacts: artifacts.items,
             findings: findings.items,
+            dependencyData,
           });
           setLoading(false);
         }
@@ -164,6 +168,12 @@ export function StudyWorkspace() {
                 <p>Open or in-review findings</p>
               </div>
             </section>
+            <DependencyGraph
+              graph={data.dependencyData.graph}
+              changes={data.dependencyData.changes}
+              artifacts={data.artifacts}
+              findings={data.findings}
+            />
             <div className="panels">
               <section className="panel" aria-labelledby="artifacts-title">
                 <div className="panel-heading">

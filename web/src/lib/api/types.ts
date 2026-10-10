@@ -86,6 +86,10 @@ export interface Graph {
   facts: Fact[];
   dependencies: Dependency[];
 }
+export interface DependencyWorkspaceData {
+  graph: Graph | null;
+  changes: Change[];
+}
 export interface ListResponse<T> {
   items: T[];
 }
@@ -93,4 +97,5 @@ export interface StudyApi {
   listStudies(): Promise<ListResponse<Study>>;
   listArtifacts(studyId: string): Promise<ListResponse<Artifact>>;
   listFindings(studyId: string): Promise<ListResponse<Finding>>;
+  getDependencyData(studyId: string): Promise<DependencyWorkspaceData>;
 }

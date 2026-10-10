@@ -1,5 +1,5 @@
-import { artifacts, findings, studies } from "./fixtures";
-import type { Artifact, Finding, ListResponse, Study, StudyApi } from "./types";
+import { artifacts, changes, findings, graph, studies } from "./fixtures";
+import type { Artifact, Finding, Graph, ListResponse, Study, StudyApi } from "./types";
 export type ApiMode = "fixture" | "live";
 export class ApiError extends Error {
   constructor(
@@ -15,6 +15,9 @@ export function parseApiMode(value?: string): ApiMode {
   if (!value || value === "fixture") return "fixture";
   if (value === "live") return "live";
   throw new ApiError("API mode must be fixture or live.", "INVALID_CONFIG");
+}
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 export function createStudyApi(options: {
   mode: ApiMode;
@@ -38,6 +41,10 @@ export function createStudyApi(options: {
         checkStudy(id);
         return copy(findings.filter((item) => item.study_id === id));
       },
+      getDependencyData: async (id) => {
+        checkStudy(id);
+        return structuredClone({ graph, changes });
+      },
     };
   }
   const baseUrl = options.baseUrl?.trim().replace(/\/+$/, "");
@@ -47,7 +54,7 @@ export function createStudyApi(options: {
       "INVALID_CONFIG",
     );
   const fetcher = options.fetcher ?? fetch;
-  async function list<T>(path: string): Promise<ListResponse<T>> {
+  async function request(path: string): Promise<{ body: unknown; status: number }> {
     let response: Response;
     try {
       response = await fetcher(`${baseUrl}${path}`, {
@@ -60,7 +67,7 @@ export function createStudyApi(options: {
         "NETWORK_ERROR",
       );
     }
-    let body;
+    let body: unknown;
     try {
       body = await response.json();
     } catch {
@@ -70,19 +77,43 @@ export function createStudyApi(options: {
         response.status,
       );
     }
-    if (!response.ok)
+    if (!response.ok) {
+      const error = isRecord(body) && isRecord(body.error) ? body.error : {};
       throw new ApiError(
-        body?.error?.message ?? `API request failed (${response.status}).`,
-        body?.error?.code ?? "HTTP_ERROR",
+        typeof error.message === "string"
+          ? error.message
+          : `API request failed (${response.status}).`,
+        typeof error.code === "string" ? error.code : "HTTP_ERROR",
         response.status,
       );
-    if (!body || !Array.isArray(body.items))
+    }
+    return { body, status: response.status };
+  }
+  async function list<T>(path: string): Promise<ListResponse<T>> {
+    const { body, status } = await request(path);
+    if (!isRecord(body) || !Array.isArray(body.items))
       throw new ApiError(
         "The API response must contain an items array.",
         "INVALID_RESPONSE",
-        response.status,
+        status,
       );
-    return body as ListResponse<T>;
+    return body as unknown as ListResponse<T>;
+  }
+  async function dependencyGraph(studyId: string): Promise<Graph> {
+    const { body, status } = await request(
+      `/studies/${encodeURIComponent(studyId)}/graph`,
+    );
+    if (
+      !isRecord(body) ||
+      !Array.isArray(body.facts) ||
+      !Array.isArray(body.dependencies)
+    )
+      throw new ApiError(
+        "The API graph response must contain facts and dependencies arrays.",
+        "INVALID_RESPONSE",
+        status,
+      );
+    return body as unknown as Graph;
   }
   return {
     listStudies: () => list<Study>("/studies"),
@@ -90,5 +121,10 @@ export function createStudyApi(options: {
       list<Artifact>(`/studies/${encodeURIComponent(id)}/artifacts`),
     listFindings: (id) =>
       list<Finding>(`/studies/${encodeURIComponent(id)}/findings`),
+    getDependencyData: async (id) => ({
+      graph: await dependencyGraph(id),
+      // The backend does not expose change records yet; live highlights remain pending.
+      changes: [],
+    }),
   };
 }
