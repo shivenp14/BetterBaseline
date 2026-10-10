@@ -18,16 +18,21 @@ Changing `24` to `"24.00"` produces no change. An absent old/new fact produces
 values remain distinguishable from absent facts by those references and kind.
 
 Facts match by `(artifact_id, logical_key)`; IDs identify version snapshots.
-Outputs sort by that identity and use UUIDv5 IDs derived from the complete
-change payload, including snapshot references. Retries and input reordering
-therefore preserve IDs; distinct amendment snapshots produce distinct IDs.
+Outputs sort by that identity and use UUIDv5 IDs derived from artifact ID,
+logical key, change kind, and normalized before/after values and units.
+Regenerated fact IDs and numeric formatting do not change the change ID;
+snapshot references in the output still point to the supplied extractions.
+Repeated identical logical transitions share an ID, so persistence must scope
+occurrences to the version/job when retaining separate amendment history.
 
 Finite numeric JSON values and strings containing only decimal/scientific
 numbers compare exactly through Decimal, without floating-point tolerances.
 Booleans stay distinct from numbers. Prose strings compare exactly. Unit outer
-whitespace is ignored and null/empty units are equivalent; case, aliases, and
+whitespace is ignored; null and empty units remain distinct. Case, aliases, and
 unit conversions are deliberately not inferred. A unit-only change is modified;
-the caller can retrieve its units through the before/after fact references.
+the output preserves original units as additive `before_unit`/`after_unit`
+fields, with null for an absent side. Consumers of the original #4 Change
+schema must allow these fields or adapt them explicitly before persistence.
 Labels and source formatting do not trigger changes.
 
 Duplicate artifact/logical keys, missing required comparison fields, nonscalar

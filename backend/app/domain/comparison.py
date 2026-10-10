@@ -28,11 +28,26 @@ def _value_key(value):
 
 def _unit_key(unit):
     if unit is None:
-        return ""
+        return None
     if not isinstance(unit, str):
         raise ValueError("Fact units must be strings or null")
     # Do not infer aliases, case equivalence, or conversions such as week/day.
     return unit.strip()
+
+
+def _identity_value(value):
+    kind, normalized = _value_key(value)
+    if kind != "number":
+        return (kind, normalized)
+    # Canonicalize exactly without Decimal.normalize's context rounding.
+    if normalized == 0:
+        return (kind, 0, [0], 0)
+    sign, digits, exponent = normalized.as_tuple()
+    digits = list(digits)
+    while digits[-1] == 0:
+        digits.pop()
+        exponent += 1
+    return (kind, sign, digits, exponent)
 
 
 def _index(facts):
@@ -56,8 +71,8 @@ def compare_facts(before, after):
     """Return deterministic Change dictionaries without mutating input facts.
 
     Match on (artifact_id, logical_key), independent of snapshot IDs, labels,
-    and source formatting. IDs include both snapshot references so different
-    amendments remain distinct. Input ordering does not affect output ordering.
+    and source formatting. IDs use normalized logical change content, independent
+    of regenerated snapshot IDs. Input ordering does not affect output ordering.
     """
     old, new = _index(before), _index(after)
     changes = []
@@ -79,9 +94,18 @@ def compare_facts(before, after):
             "after_fact_id": replacement["id"] if replacement is not None else None,
             "before_value": previous["value"] if previous is not None else None,
             "after_value": replacement["value"] if replacement is not None else None,
+            "before_unit": previous["unit"] if previous is not None else None,
+            "after_unit": replacement["unit"] if replacement is not None else None,
             "kind": kind,
         }
-        identity = json.dumps(change, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        logical_change = {
+            "artifact_id": artifact_id, "logical_key": logical_key, "kind": kind,
+            "before_value": _identity_value(change["before_value"]),
+            "after_value": _identity_value(change["after_value"]),
+            "before_unit": _unit_key(change["before_unit"]),
+            "after_unit": _unit_key(change["after_unit"]),
+        }
+        identity = json.dumps(logical_change, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
         change["id"] = str(uuid5(NAMESPACE_URL, "trialsync:change:" + identity))
         changes.append(change)
     return changes
