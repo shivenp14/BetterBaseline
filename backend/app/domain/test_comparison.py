@@ -4,7 +4,7 @@ import copy
 import unittest
 from uuid import UUID
 
-from comparison import compare_facts
+from app.domain import compare_facts
 
 
 def fact(id="before", artifact="protocol", key="endpoint.week", value=24, unit="week"):

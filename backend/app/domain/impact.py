@@ -4,6 +4,8 @@ import json
 from collections import defaultdict, deque
 from uuid import NAMESPACE_URL, uuid5
 
+from .actions import impact_action
+
 
 def _records_by_id(records, label):
     indexed = {}
@@ -17,7 +19,7 @@ def _records_by_id(records, label):
     return indexed
 
 
-def assess_impact(changes, facts, dependencies, *, study_id=None):
+def assess_impact(changes, facts, dependencies, *, study_id=None, artifact_lookup=None):
     """Return open findings, one per change/affected fact, in stable order.
 
     Facts must include the old snapshots and every endpoint of the confirmed
@@ -25,13 +27,16 @@ def assess_impact(changes, facts, dependencies, *, study_id=None):
     cannot distinguish superseded approved graph snapshots.
 
     Added facts receive an empty-path link-review finding on their new snapshot;
-    no outgoing candidate links are traversed. Action rules and explanation
-    generation are subsequent tasks; review_document is the interim fallback.
+    no outgoing candidate links are traversed. artifact_lookup maps artifact IDs
+    to records with a kind field (or explicit kind strings). The final retained
+    edges and dependent kind select the action; reanalysis takes precedence
+    over document review, with one deterministic supporting path retained.
     Supply study_id from worker context before persisting findings.
     """
     fact_index = _records_by_id(facts, "Fact")
     change_index = _records_by_id(changes, "Change")
     edges = _records_by_id(dependencies, "Dependency")
+    artifacts = {} if artifact_lookup is None else artifact_lookup
     adjacency = defaultdict(list)
     for fact in fact_index.values():
         if not isinstance(fact.get("artifact_id"), str) or not fact["artifact_id"]:
@@ -47,9 +52,9 @@ def assess_impact(changes, facts, dependencies, *, study_id=None):
 
     findings = []
 
-    def add_finding(change, fact_id, path):
+    def add_finding(change, fact_id, path, action="review_document"):
         fact = fact_index[fact_id]
-        identity = json.dumps([change["id"], fact_id], separators=(",", ":"))
+        identity = json.dumps([study_id, change["id"], fact_id], separators=(",", ":"))
         findings.append({
             "id": str(uuid5(NAMESPACE_URL, "trialsync:finding:" + identity)),
             "study_id": study_id,
@@ -57,7 +62,7 @@ def assess_impact(changes, facts, dependencies, *, study_id=None):
             "affected_fact_id": fact_id,
             "affected_artifact_id": fact["artifact_id"],
             "path_edge_ids": list(path),
-            "action": "review_document",
+            "action": action,
             "explanation": "",
             "sources": [],
             "status": "open",
@@ -87,14 +92,25 @@ def assess_impact(changes, facts, dependencies, *, study_id=None):
             raise ValueError("Modified changes require an after_fact_id")
         visited = {root}
         queue = deque([(root, ())])
+        selected = {}
         while queue:
             upstream, path = queue.popleft()
             for edge in adjacency[upstream]:
                 target = edge["to_fact_id"]
-                if target in visited:
+                if target == root or target == upstream or any(
+                    edges[edge_id]["to_fact_id"] == target for edge_id in path
+                ):
                     continue
-                visited.add(target)
                 next_path = path + (edge["id"],)
-                add_finding(change, target, next_path)
-                queue.append((target, next_path))
+                action = impact_action(edge.get("relationship"),
+                                       artifacts.get(fact_index[target]["artifact_id"]))
+                priority = 0 if action == "rerun_analysis" else 1
+                candidate = (priority, len(next_path), next_path, action)
+                if target not in selected or candidate < selected[target]:
+                    selected[target] = candidate
+                if target not in visited:
+                    visited.add(target)
+                    queue.append((target, next_path))
+        for target, (_, _, path, action) in selected.items():
+            add_finding(change, target, path, action)
     return sorted(findings, key=lambda finding: (finding["change_id"], finding["affected_fact_id"]))

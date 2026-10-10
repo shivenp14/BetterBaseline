@@ -53,7 +53,7 @@ def _identity_value(value):
 def _index(facts):
     indexed = {}
     for fact in facts:
-        for field in ("id", "artifact_id", "logical_key"):
+        for field in ("id", "artifact_id", "version_id", "logical_key"):
             if not isinstance(fact.get(field), str) or not fact[field]:
                 raise ValueError(f"Fact {field} must be a nonempty string")
         key = (fact["artifact_id"], fact["logical_key"])
@@ -72,7 +72,8 @@ def compare_facts(before, after):
 
     Match on (artifact_id, logical_key), independent of snapshot IDs, labels,
     and source formatting. IDs use normalized logical change content, independent
-    of regenerated snapshot IDs. Input ordering does not affect output ordering.
+    of regenerated snapshot IDs, scoped to the stable artifact version pair.
+    Input ordering does not affect output ordering.
     """
     old, new = _index(before), _index(after)
     changes = []
@@ -100,6 +101,8 @@ def compare_facts(before, after):
         }
         logical_change = {
             "artifact_id": artifact_id, "logical_key": logical_key, "kind": kind,
+            "before_version_id": previous.get("version_id") if previous is not None else None,
+            "after_version_id": replacement.get("version_id") if replacement is not None else None,
             "before_value": _identity_value(change["before_value"]),
             "after_value": _identity_value(change["after_value"]),
             "before_unit": _unit_key(change["before_unit"]),
