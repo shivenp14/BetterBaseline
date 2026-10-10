@@ -6,8 +6,8 @@ from uuid import UUID
 import psycopg
 from psycopg.rows import dict_row
 
-from app.api.models import Artifact, ArtifactVersion, AuditEvent, Dependency, Fact, Finding, Graph, Study
-from app.persistence.repository import RepositoryUnavailable, StudyNotFound
+from app.api.models import Artifact, ArtifactVersion, AuditEvent, Dependency, Fact, Finding, Graph, Job, Study, UploadReceipt
+from app.persistence.repository import RecordNotFound, RepositoryUnavailable, StoredJob, StoredVersion, StudyNotFound, UploadOutcomeUnknown
 
 
 class PostgresRepository:
@@ -82,3 +82,61 @@ class PostgresRepository:
                    FROM public.audit_events WHERE study_id = %s ORDER BY created_at, id""", (study_id,),
             ).fetchall()
             return [AuditEvent.model_validate(row) for row in rows]
+
+    def get_artifact(self, artifact_id: UUID) -> Artifact:
+        with self._read() as connection:
+            row = connection.execute("SELECT study_id FROM public.artifacts WHERE id = %s", (artifact_id,)).fetchone()
+            if row is None:
+                raise RecordNotFound
+        return next(item for item in self.list_artifacts(row["study_id"]) if item.id == artifact_id)
+
+    def get_job(self, job_id: UUID) -> StoredJob:
+        with self._read() as connection:
+            row = connection.execute("SELECT id, version_id, study_id, status, stage, error FROM public.jobs WHERE id = %s",
+                                     (job_id,)).fetchone()
+            if row is None:
+                raise RecordNotFound
+            study_id = row.pop("study_id")
+            return StoredJob(Job.model_validate(row), study_id)
+
+    def get_version(self, version_id: UUID) -> StoredVersion:
+        with self._read() as connection:
+            row = connection.execute("""SELECT id, artifact_id, study_id, version_number, previous_version_id,
+                filename, status, storage_path, content_hash FROM public.artifact_versions WHERE id = %s""",
+                (version_id,)).fetchone()
+            if row is None:
+                raise RecordNotFound
+            path, digest = row.pop("storage_path"), row.pop("content_hash")
+            return StoredVersion(ArtifactVersion.model_validate(row), path, digest)
+
+    def create_version_job(self, artifact_id, version_id, job_id, filename, storage_path, content_hash):
+        connection = None
+        committing = False
+        try:
+            connection = psycopg.connect(self._database_url, row_factory=dict_row, connect_timeout=5, prepare_threshold=None)
+            row = connection.execute("SELECT study_id FROM public.artifacts WHERE id = %s FOR UPDATE", (artifact_id,)).fetchone()
+            if row is None:
+                raise RecordNotFound
+            previous = connection.execute("""SELECT id, version_number FROM public.artifact_versions
+                WHERE artifact_id = %s ORDER BY version_number DESC LIMIT 1""", (artifact_id,)).fetchone()
+            version = ArtifactVersion(id=version_id, artifact_id=artifact_id, study_id=row["study_id"],
+                version_number=previous["version_number"] + 1 if previous else 1,
+                previous_version_id=previous["id"] if previous else None, filename=filename, status="uploaded")
+            job = Job(id=job_id, version_id=version_id, status="queued", stage="queued", error=None)
+            connection.execute("""INSERT INTO public.artifact_versions
+                (id, artifact_id, study_id, version_number, previous_version_id, filename, status, storage_path, content_hash)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                (version.id, artifact_id, version.study_id, version.version_number, version.previous_version_id,
+                 filename, version.status, storage_path, content_hash))
+            connection.execute("""INSERT INTO public.jobs (id, study_id, version_id, status, stage)
+                VALUES (%s, %s, %s, 'queued', 'queued')""", (job_id, version.study_id, version_id))
+            committing = True
+            connection.commit()
+            return UploadReceipt(version=version, job=job)
+        except psycopg.Error:
+            if committing:
+                raise UploadOutcomeUnknown from None
+            raise RepositoryUnavailable from None
+        finally:
+            if connection is not None:
+                connection.close()

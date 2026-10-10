@@ -15,6 +15,8 @@ OpenAPI and interactive documentation are at `/openapi.json` and `/docs`.
 Set backend-only `DATABASE_URL` to use PostgreSQL reads after applying #14's
 baseline migration and seed; see `app/persistence/README.md`. With no connection
 string, fixture mode remains available.
+Version uploads, queued-job polling, and private source URLs from #15 are
+documented in `app/api/UPLOADS.md`.
 
 ```sh
 curl http://127.0.0.1:8000/health

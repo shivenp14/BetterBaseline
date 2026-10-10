@@ -34,6 +34,23 @@ class Artifact(Record):
     versions: list[ArtifactVersion]
 
 
+class Job(Record):
+    id: UUID
+    version_id: UUID
+    status: Literal["queued", "running", "succeeded", "failed"]
+    stage: str
+    error: str | None
+
+
+class UploadReceipt(Record):
+    version: ArtifactVersion
+    job: Job
+
+
+class SourceURL(Record):
+    url: str
+
+
 class Source(Record):
     fragment_id: UUID
     locator: str
