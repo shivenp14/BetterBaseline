@@ -89,3 +89,8 @@ persisted data, seed idempotence without review loss, study isolation, invalid
 cross-study edges, nullable changes, job uniqueness, RLS, and revoked browser
 grants. Hosted Supabase verification and shared #21 fixture integration remain
 handoffs, not evidence supplied by the disposable PostgreSQL tests.
+
+# Worker
+
+See [WORKER.md](WORKER.md) for the separate worker command, leased claims,
+transactional candidate results, adapters, retry/recovery behavior, and verification.

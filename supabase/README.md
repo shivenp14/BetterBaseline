@@ -12,3 +12,10 @@ and disposable PostgreSQL validation are documented in
 
 Migration ordering is tied to the PR stack: #14 (`pranav14`) depends on #13
 (`pranav13`). Keep subsequent changes in their own issue PRs.
+# Worker migration (#16)
+
+Apply `migrations/20261010230000_worker_candidate_changes.sql` after the baseline,
+before starting the worker. It adds nullable candidate-version identity to change
+rows and scopes their uniqueness to that revision, so distinct revisions can each
+remove the same approved fact. Existing seeded changes remain valid; API response
+shapes and browser grants/RLS are unchanged. Migrations are never applied at startup.
