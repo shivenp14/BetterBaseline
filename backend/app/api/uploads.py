@@ -67,8 +67,10 @@ def upload_version(artifact_id: UUID, repository: Repository, storage: Storage, 
         version_id, job_id = uuid4(), uuid4()
         path = f"{artifact.study_id}/{artifact.id}/{version_id}/{filename}"
         digest = hashlib.sha256(content).hexdigest()
+        object_created = False
         try:
             storage.put(path, content, file.content_type or "application/octet-stream")
+            object_created = True
             return repository.create_version_job(artifact.id, version_id, job_id, filename, path, digest)
         except ObjectAlreadyExists:
             raise HTTPException(503, "Object path collision; retry the upload") from None
@@ -77,6 +79,11 @@ def upload_version(artifact_id: UUID, repository: Repository, storage: Storage, 
             logger.error("Upload commit outcome unknown for version %s and job %s; retain object %s", version_id, job_id, path)
             raise HTTPException(503, f"Upload outcome unknown; reconcile version {version_id} and job {job_id} before retrying") from None
         except Exception:
+            if not object_created:
+                # A failed/uncertain PUT does not establish ownership of this path.
+                # In particular, never delete another attempt's existing object.
+                logger.error("Upload storage outcome unknown; reconcile object %s", path)
+                raise HTTPException(503, "Storage upload failed; object reconciliation may be required") from None
             try:
                 storage.delete(path)
             except Exception:
