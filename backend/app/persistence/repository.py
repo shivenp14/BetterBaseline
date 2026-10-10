@@ -10,6 +10,10 @@ class StudyNotFound(Exception):
     pass
 
 
+class RepositoryUnavailable(Exception):
+    pass
+
+
 class ReadRepository(Protocol):
     def list_studies(self) -> list[Study]: ...
     def list_artifacts(self, study_id: UUID) -> list[Artifact]: ...

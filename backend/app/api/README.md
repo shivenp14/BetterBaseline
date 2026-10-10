@@ -12,6 +12,9 @@ The server binds **127.0.0.1:8000**. This is an unauthenticated synthetic demo;
 keep it on localhost until #18 provides auth and study access checks. The local
 UI at `http://localhost:3000` or `http://127.0.0.1:3000` can read it via CORS.
 OpenAPI and interactive documentation are at `/openapi.json` and `/docs`.
+Set backend-only `DATABASE_URL` to use PostgreSQL reads after applying #14's
+baseline migration and seed; see `app/persistence/README.md`. With no connection
+string, fixture mode remains available.
 
 ```sh
 curl http://127.0.0.1:8000/health
