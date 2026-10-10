@@ -93,3 +93,11 @@ set `TRIALSYNC_TEST_DATABASE_URL` for baseline/read tests and
 number allocation, transactional rollback/cleanup, history/approval preservation,
 content hashes, queued-job reads, signed-URL tampering/expiry, policy denial,
 upload bounds, private-bucket enforcement, and Supabase HTTP request shapes.
+# Incoming body bound
+
+Upload streams are byte-counted before multipart parsing, including when
+Content-Length is missing, invalid, or underreported. The total request envelope
+is capped at 10 MiB plus 64 KiB for multipart headers/boundaries; the file itself
+still has the 10 MiB route limit. Declared oversized requests are rejected before
+reading. A stream that exceeds the envelope stops parsing immediately, closes
+temporary multipart files, and returns 413 without creating an object or job.

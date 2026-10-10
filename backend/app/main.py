@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException
 
 from app.api.routes import router
+from app.api.body_limit import UploadBodyLimit
 from app.api.uploads import LocalDemoAccess, StudyAccessDenied, router as upload_router
 from app.persistence.memory import InMemoryRepository
 from app.persistence.repository import ReadRepository, RecordNotFound, RepositoryUnavailable, StudyNotFound
@@ -32,6 +33,7 @@ def create_app(repository: ReadRepository | None = None, storage: PrivateStorage
     application.state.repository = repository
     application.state.storage = storage if storage is not None else configured_storage()
     application.state.study_access = study_access if study_access is not None else LocalDemoAccess()
+    application.add_middleware(UploadBodyLimit)
     application.add_middleware(
         CORSMiddleware,
         allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
