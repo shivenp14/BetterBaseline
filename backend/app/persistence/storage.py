@@ -118,8 +118,17 @@ class SupabasePrivateStorage:
                     response = client.request(method, self._base + path, headers=headers, **kwargs)
             else:
                 response = self._client.request(method, self._base + path, headers=headers, **kwargs)
-            if method == "POST" and "/object/" in path and "/sign/" not in path and response.status_code == 409:
-                raise ObjectAlreadyExists
+            if method == "POST" and "/object/" in path and "/sign/" not in path:
+                duplicate = response.status_code == 409
+                if response.status_code == 400:
+                    try:
+                        body = response.json()
+                        duplicate = isinstance(body, dict) and (body.get("error") == "Duplicate" or
+                            str(body.get("message", "")).lower() in ("asset already exists", "the resource already exists"))
+                    except ValueError:
+                        pass
+                if duplicate:
+                    raise ObjectAlreadyExists
             response.raise_for_status()
             return response
         except httpx.HTTPError:
