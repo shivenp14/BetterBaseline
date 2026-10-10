@@ -1,4 +1,4 @@
-"""Uploads and source capabilities stay local-only until #18 provides auth."""
+"""Private uploads, job polling, and source capabilities with study access checks."""
 
 import hashlib
 import logging
@@ -6,7 +6,7 @@ from pathlib import PurePosixPath
 from typing import Annotated, Protocol
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
 from fastapi.responses import FileResponse
 
 from app.api.models import Job, SourceURL, UploadReceipt
@@ -27,7 +27,7 @@ class StudyAccess(Protocol):
 
 
 class LocalDemoAccess:
-    """Temporary access policy for the localhost synthetic demo, replaced in #18."""
+    """Access policy selected only by explicit localhost demo mode."""
     def require_study_access(self, study_id: UUID) -> None:
         pass
 
@@ -41,7 +41,9 @@ def get_storage(request: Request) -> PrivateStorage:
 
 
 def get_study_access(request: Request):
-    # Auth integration overrides this dependency with a request-specific policy.
+    if request.app.state.auth_mode == 'required':
+        from app.api.auth import MemberStudyAccess
+        return MemberStudyAccess(request.app.state.repository, request.state.user_id)
     return request.app.state.study_access
 
 
@@ -95,20 +97,23 @@ def get_job(job_id: UUID, repository: Repository, access: Access):
 
 
 @router.get("/versions/{version_id}/source", response_model=SourceURL)
-def get_source(version_id: UUID, request: Request, repository: Repository, storage: Storage, access: Access):
+def get_source(version_id: UUID, request: Request, response: Response, repository: Repository, storage: Storage, access: Access):
     stored = repository.get_version(version_id)
     access.require_study_access(stored.version.study_id)
     if stored.storage_path is None:
         raise HTTPException(404, "Source file is unavailable for this fixture version")
+    response.headers['Cache-Control'] = 'private, no-store'
     return SourceURL(url=storage.signed_url(stored.storage_path, str(request.base_url)))
 
 
 @router.get("/private-source", include_in_schema=False)
-def download_source(path: str, expires: int, signature: str, storage: Storage):
+def download_source(path: str, expires: int, signature: str, storage: Storage, repository: Repository, access: Access):
     if not isinstance(storage, LocalPrivateStorage):
         raise HTTPException(404, "Source route is unavailable")
     try:
         source = storage.download_path(path, expires, signature)
     except InvalidSourceToken:
         raise HTTPException(403, "Source URL is invalid or expired") from None
+    stored = repository.get_version_by_storage_path(path)
+    access.require_study_access(stored.version.study_id)
     return FileResponse(source, filename=source.name, headers={"Cache-Control": "private, no-store"})

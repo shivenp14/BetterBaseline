@@ -13,7 +13,7 @@ import httpx
 import psycopg
 
 from app.api.uploads import MAX_UPLOAD_BYTES, StudyAccessDenied
-from app.main import create_app
+from trialsync_test_support import demo_app as create_app
 from app.persistence.memory import InMemoryRepository
 from app.persistence.postgres import PostgresRepository
 from app.persistence.repository import RepositoryUnavailable, UploadOutcomeUnknown

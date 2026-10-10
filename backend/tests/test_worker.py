@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 import httpx
 import psycopg
 
-from app.main import create_app
+from trialsync_test_support import demo_app as create_app
 from app.persistence.postgres import PostgresRepository
 from app.persistence.repository import RepositoryUnavailable
 from app.persistence.seed import DEMO_STUDY_ID, seed_demo

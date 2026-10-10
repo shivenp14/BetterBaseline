@@ -180,7 +180,7 @@ class SupabasePrivateStorage:
 
 def configured_storage() -> PrivateStorage:
     values = [os.environ.get(name) for name in ("SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_STORAGE_BUCKET")]
-    if any(values):
+    if any(values[1:]):
         if not all(values):
             raise ValueError("Set all three private Supabase storage variables")
         return SupabasePrivateStorage(*values)

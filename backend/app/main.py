@@ -1,15 +1,17 @@
-"""Local-only read API; use trialsync-api or python -m app.main."""
+"""Authenticated API; the local CLI binds to loopback."""
 
 import os
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBearer
 from starlette.exceptions import HTTPException
 
 from app.api.routes import router
 from app.api.body_limit import UploadBodyLimit
+from app.api.auth import AuthGuard, configured_verifier, cors_origins
 from app.api.review_policy import InvalidReview, LocalReviewPolicy, ReviewConflict
 from app.api.reviews import router as review_router
 from app.persistence.seed import DEMO_ACTOR_ID
@@ -24,7 +26,7 @@ def error(status: int, code: str, message: str, headers=None):
 
 
 def create_app(repository: ReadRepository | None = None, storage: PrivateStorage | None = None, study_access=None,
-               review_actor=None, review_policy=None) -> FastAPI:
+               review_actor=None, review_policy=None, auth_mode=None, token_verifier=None) -> FastAPI:
     application = FastAPI(title="TrialSync API", version="0.1.0")
     if repository is None:
         database_url = os.environ.get("DATABASE_URL")
@@ -39,12 +41,18 @@ def create_app(repository: ReadRepository | None = None, storage: PrivateStorage
     application.state.study_access = study_access if study_access is not None else LocalDemoAccess()
     application.state.review_actor = review_actor if review_actor is not None else DEMO_ACTOR_ID
     application.state.review_policy = review_policy if review_policy is not None else LocalReviewPolicy()
+    mode = auth_mode if auth_mode is not None else os.environ.get('TRIALSYNC_AUTH_MODE', 'required')
+    if mode not in ('required', 'demo'):
+        raise ValueError('TRIALSYNC_AUTH_MODE must be required or demo')
+    application.state.auth_mode = mode
     application.add_middleware(UploadBodyLimit)
+    application.add_middleware(AuthGuard, verifier=token_verifier if token_verifier is not None else configured_verifier(),
+                               repository=repository, mode=mode)
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+        allow_origins=cors_origins(),
         allow_methods=["GET", "POST", "PATCH"],
-        allow_headers=["Accept", "Content-Type"],
+        allow_headers=["Accept", "Content-Type", "Authorization"],
     )
 
     @application.exception_handler(StudyNotFound)
@@ -91,9 +99,11 @@ def create_app(repository: ReadRepository | None = None, storage: PrivateStorage
     def health():
         return {"status": "ok"}
 
-    application.include_router(router)
-    application.include_router(upload_router)
-    application.include_router(review_router)
+    # Describe the middleware-enforced bearer contract for Swagger/API clients.
+    security = [Depends(HTTPBearer(auto_error=False, scheme_name='SupabaseBearer'))] if mode == 'required' else None
+    application.include_router(router, dependencies=security)
+    application.include_router(upload_router, dependencies=security)
+    application.include_router(review_router, dependencies=security)
     return application
 
 

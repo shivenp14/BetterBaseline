@@ -46,6 +46,21 @@ class InMemoryRepository:
     def list_studies(self) -> list[Study]:
         return [item.study.model_copy(deep=True) for item in self._studies.values()]
 
+    def list_studies_for_user(self, user_id):
+        with self._lock:
+            return [s for s in self.list_studies() if user_id in self._members[s.id]]
+
+    def has_membership(self, study_id, user_id):
+        with self._lock:
+            return user_id in self._members.get(study_id, set())
+
+    def get_version_by_storage_path(self, path):
+        with self._lock:
+            for version_id, (stored_path, _) in self._paths.items():
+                if stored_path == path:
+                    return self.get_version(version_id)
+        raise RecordNotFound
+
     def list_artifacts(self, study_id: UUID) -> list[Artifact]:
         return self._get(study_id).artifacts
 

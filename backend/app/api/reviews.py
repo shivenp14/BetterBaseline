@@ -1,4 +1,4 @@
-"""Human review mutations use a server-selected local actor until #18."""
+"""Human review mutations derive the actor from verified request identity."""
 
 from typing import Annotated
 from uuid import UUID
@@ -18,6 +18,8 @@ def get_review_repository(request: Request) -> ReviewRepository:
 
 
 def get_review_actor(request: Request) -> UUID:
+    if request.app.state.auth_mode == 'required':
+        return request.state.user_id
     return request.app.state.review_actor
 
 

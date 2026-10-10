@@ -8,7 +8,7 @@ from starlette.formparsers import MultiPartParser
 
 from app.api.body_limit import MAX_UPLOAD_BODY_BYTES
 from app.api.uploads import MAX_UPLOAD_BYTES
-from app.main import create_app
+from trialsync_test_support import demo_app as create_app
 from app.persistence.memory import InMemoryRepository
 from app.persistence.storage import LocalPrivateStorage
 

@@ -91,3 +91,8 @@ remain separate tasks.
 
 See [REVIEWS.md](REVIEWS.md) for review endpoints, validation, explicit version
 approval, historical graph projection, actor/audit transactions, and integration hooks.
+
+# Authentication
+
+See [AUTH.md](AUTH.md). The API now requires verified bearer tokens and study
+membership by default; use explicit `TRIALSYNC_AUTH_MODE=demo` for local fixtures.

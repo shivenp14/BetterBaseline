@@ -36,6 +36,24 @@ class PostgresRepository(PostgresReviews):
             rows = connection.execute("SELECT id, name FROM public.studies ORDER BY id").fetchall()
             return [Study.model_validate(row) for row in rows]
 
+    def list_studies_for_user(self, user_id):
+        with self._read() as connection:
+            rows = connection.execute('''SELECT s.id,s.name FROM public.studies s JOIN public.memberships m
+                ON m.study_id=s.id WHERE m.user_id=%s ORDER BY s.id''', (user_id,)).fetchall()
+            return [Study.model_validate(row) for row in rows]
+
+    def has_membership(self, study_id, user_id):
+        with self._read() as connection:
+            return connection.execute('SELECT 1 FROM public.memberships WHERE study_id=%s AND user_id=%s',
+                                      (study_id, user_id)).fetchone() is not None
+
+    def get_version_by_storage_path(self, path):
+        with self._read() as connection:
+            row = connection.execute('SELECT id FROM public.artifact_versions WHERE storage_path=%s', (path,)).fetchone()
+            if row is None:
+                raise RecordNotFound
+        return self.get_version(row['id'])
+
     def list_artifacts(self, study_id: UUID) -> list[Artifact]:
         with self._read(study_id) as connection:
             artifacts = connection.execute(

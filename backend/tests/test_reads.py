@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 from fastapi.testclient import TestClient
 
 from app.api.models import Artifact, AuditEvent, Finding, Graph, Items, Study
-from app.main import create_app
+from trialsync_test_support import demo_app as create_app
 from app.persistence.memory import InMemoryRepository
 
 
