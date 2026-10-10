@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Protocol
 from uuid import UUID
 
-from app.api.models import Artifact, ArtifactVersion, AuditEvent, Finding, Graph, Job, Study, UploadReceipt
+from app.api.models import Artifact, ArtifactVersion, AuditEvent, Dependency, Finding, FindingReview, Graph, Job, Study, UploadReceipt
 
 
 class StudyNotFound(Exception):
@@ -36,6 +36,12 @@ class StoredVersion:
     content_hash: str | None
 
 
+@dataclass
+class StoredDependency:
+    dependency: Dependency
+    study_id: UUID
+
+
 class ReadRepository(Protocol):
     def list_studies(self) -> list[Study]: ...
     def list_artifacts(self, study_id: UUID) -> list[Artifact]: ...
@@ -50,3 +56,11 @@ class UploadRepository(ReadRepository, Protocol):
                            filename: str, storage_path: str, content_hash: str) -> UploadReceipt: ...
     def get_job(self, job_id: UUID) -> StoredJob: ...
     def get_version(self, version_id: UUID) -> StoredVersion: ...
+
+
+class ReviewRepository(UploadRepository, Protocol):
+    def get_dependency(self, dependency_id: UUID) -> StoredDependency: ...
+    def get_finding(self, finding_id: UUID) -> Finding: ...
+    def confirm_dependency(self, dependency_id: UUID, actor: UUID) -> Dependency: ...
+    def update_finding(self, finding_id: UUID, patch: FindingReview, actor: UUID, policy) -> Finding: ...
+    def approve_version(self, version_id: UUID, actor: UUID, policy) -> ArtifactVersion: ...
