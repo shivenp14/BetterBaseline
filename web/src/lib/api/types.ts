@@ -98,4 +98,5 @@ export interface StudyApi {
   listArtifacts(studyId: string): Promise<ListResponse<Artifact>>;
   listFindings(studyId: string): Promise<ListResponse<Finding>>;
   getDependencyData(studyId: string): Promise<DependencyWorkspaceData>;
+  getOriginalFileUrl(artifactId: string, versionId: string): Promise<string | null>;
 }

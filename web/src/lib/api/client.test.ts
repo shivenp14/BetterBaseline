@@ -13,6 +13,9 @@ describe("fixture API", () => {
     expect(artifacts).toHaveLength(4);
     expect(findings).toHaveLength(2);
     expect(dependencyData.graph?.dependencies).toHaveLength(3);
+    await expect(
+      api.getOriginalFileUrl(artifacts[0].id, artifacts[0].versions[0].id),
+    ).resolves.toBeNull();
     expect(dependencyData.changes[0]).toMatchObject({
       before_fact_id: "00000000-0000-4000-8000-000000000205",
       after_fact_id: "00000000-0000-4000-8000-000000000201",
@@ -73,6 +76,73 @@ describe("live API", () => {
       "https://example.test/api/studies/study%2Fid/graph",
       expect.objectContaining({ headers: { Accept: "application/json" }, cache: "no-store" }),
     );
+  });
+  it("uses the version source route and resolves its URL", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json({ url: "https://files.example.test/protocol.pdf" }),
+    );
+    const api = createStudyApi({ mode: "live", baseUrl: "https://example.test/api", fetcher });
+    await expect(api.getOriginalFileUrl("artifact/id", "version id")).resolves.toBe(
+      "https://files.example.test/protocol.pdf",
+    );
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://example.test/api/versions/version%20id/source",
+      expect.objectContaining({ cache: "no-store" }),
+    );
+  });
+  it("returns a fully resolved URL when the source URL is relative", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json({ url: "../files/protocol.pdf" }),
+    );
+    const api = createStudyApi({ mode: "live", baseUrl: "https://example.test/api", fetcher });
+    await expect(api.getOriginalFileUrl("artifact", "version")).resolves.toBe(
+      "https://example.test/files/protocol.pdf",
+    );
+  });
+  it("treats a source 404 as an unavailable original file", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json(
+        { error: { code: "SOURCE_NOT_FOUND", message: "Original source not found" } },
+        { status: 404 },
+      ),
+    );
+    const api = createStudyApi({ mode: "live", baseUrl: "https://example.test/api", fetcher });
+    await expect(api.getOriginalFileUrl("artifact", "version")).resolves.toBeNull();
+  });
+  it("preserves non-404 source errors", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json(
+        { error: { code: "SOURCE_UNAVAILABLE", message: "Source service unavailable" } },
+        { status: 503 },
+      ),
+    );
+    const api = createStudyApi({ mode: "live", baseUrl: "https://example.test/api", fetcher });
+    await expect(api.getOriginalFileUrl("artifact", "version")).rejects.toMatchObject({
+      code: "SOURCE_UNAVAILABLE",
+      message: "Source service unavailable",
+      status: 503,
+    });
+  });
+  it("treats an explicitly missing source file as unavailable", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ url: null }));
+    const api = createStudyApi({ mode: "live", baseUrl: "https://example.test/api", fetcher });
+    await expect(api.getOriginalFileUrl("artifact", "version")).resolves.toBeNull();
+  });
+  it("rejects malformed source responses", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ file: "x.pdf" }));
+    const api = createStudyApi({ mode: "live", baseUrl: "https://example.test/api", fetcher });
+    await expect(api.getOriginalFileUrl("artifact", "version")).rejects.toMatchObject({
+      code: "INVALID_RESPONSE",
+      status: 200,
+    });
+    const unsafeFetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json({ url: "javascript:alert(1)" }),
+    );
+    await expect(createStudyApi({
+      mode: "live", baseUrl: "https://example.test/api", fetcher: unsafeFetcher,
+    }).getOriginalFileUrl("artifact", "version")).rejects.toMatchObject({
+      code: "INVALID_RESPONSE",
+    });
   });
   it("rejects malformed graph envelopes", async () => {
     for (const body of [

@@ -45,6 +45,8 @@ export function createStudyApi(options: {
         checkStudy(id);
         return structuredClone({ graph, changes });
       },
+      // Fixture artifacts do not include original binary files.
+      getOriginalFileUrl: async () => null,
     };
   }
   const baseUrl = options.baseUrl?.trim().replace(/\/+$/, "");
@@ -115,6 +117,37 @@ export function createStudyApi(options: {
       );
     return body as unknown as Graph;
   }
+  async function originalFileUrl(_artifactId: string, versionId: string) {
+    let result: { body: unknown; status: number };
+    try {
+      result = await request(
+        `/versions/${encodeURIComponent(versionId)}/source`,
+      );
+    } catch (error) {
+      // A version without an uploaded original is documented as a 404.
+      if (error instanceof ApiError && error.status === 404) return null;
+      throw error;
+    }
+    const { body, status } = result;
+    if (!isRecord(body) || !("url" in body))
+      throw new ApiError(
+        "The source response must contain a URL or null.",
+        "INVALID_RESPONSE",
+        status,
+      );
+    if (body.url === null) return null;
+    if (typeof body.url !== "string" || !body.url.trim())
+      throw new ApiError("The source URL must be a non-empty string or null.", "INVALID_RESPONSE", status);
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(body.url, baseUrl);
+    } catch {
+      throw new ApiError("The source URL is invalid.", "INVALID_RESPONSE", status);
+    }
+    if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:")
+      throw new ApiError("The source URL must use HTTP or HTTPS.", "INVALID_RESPONSE", status);
+    return parsedUrl.toString();
+  }
   return {
     listStudies: () => list<Study>("/studies"),
     listArtifacts: (id) =>
@@ -126,5 +159,6 @@ export function createStudyApi(options: {
       // The backend does not expose change records yet; live highlights remain pending.
       changes: [],
     }),
+    getOriginalFileUrl: originalFileUrl,
   };
 }

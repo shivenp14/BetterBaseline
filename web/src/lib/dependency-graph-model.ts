@@ -124,7 +124,7 @@ export function projectDependencyGraph(input: {
         pinned: isPinned,
       },
       draggable: false,
-      selectable: false,
+      selectable: true,
     };
   });
 
@@ -154,7 +154,7 @@ export function projectDependencyGraph(input: {
           tracking: dependency.tracking,
           status: dependency.status,
         },
-        selectable: false,
+        selectable: true,
         deletable: false,
       };
     });
