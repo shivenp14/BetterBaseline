@@ -54,10 +54,9 @@ class PostgresTest(unittest.TestCase):
                 IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'authenticated') THEN CREATE ROLE authenticated; END IF;
                 END $$""")
             connection.execute("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated")
-            migrations = list((Path(__file__).resolve().parents[2] / "supabase/migrations").glob("*.sql"))
-            if len(migrations) != 1:
-                raise RuntimeError("Expected one baseline migration")
-            connection.execute(migrations[0].read_text())
+            migrations = sorted((Path(__file__).resolve().parents[2] / "supabase/migrations").glob("*.sql"))
+            for migration in migrations:
+                connection.execute(migration.read_text())
         seed_demo(TEST_URL)
 
     def setUp(self):

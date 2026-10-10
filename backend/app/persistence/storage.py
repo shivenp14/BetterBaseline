@@ -28,6 +28,7 @@ class PrivateStorage(Protocol):
     def put(self, path: str, content: bytes, content_type: str) -> None: ...
     def delete(self, path: str) -> None: ...
     def signed_url(self, path: str, base_url: str) -> str: ...
+    def read(self, path: str, max_bytes: int = 10 * 1024 * 1024) -> bytes: ...
 
 
 def check_path(path: str) -> None:
@@ -65,6 +66,16 @@ class LocalPrivateStorage:
     def delete(self, path):
         try:
             self._path(path).unlink(missing_ok=True)
+        except OSError:
+            raise StorageUnavailable from None
+
+    def read(self, path, max_bytes=10 * 1024 * 1024):
+        try:
+            with self._path(path).open("rb") as handle:
+                content = handle.read(max_bytes + 1)
+            if len(content) > max_bytes:
+                raise StorageUnavailable
+            return content
         except OSError:
             raise StorageUnavailable from None
 
@@ -131,6 +142,27 @@ class SupabasePrivateStorage:
     def delete(self, path):
         check_path(path)
         self._request("DELETE", f"/object/{self._bucket}", json={"prefixes": [path]})
+
+    def read(self, path, max_bytes=10 * 1024 * 1024):
+        check_path(path)
+        self._private_bucket()
+        def download(client):
+            with client.stream("GET", self._base + f"/object/authenticated/{self._bucket}/{quote(path, safe='/')}",
+                               headers=self._headers) as response:
+                response.raise_for_status()
+                content = bytearray()
+                for chunk in response.iter_bytes(chunk_size=65536):
+                    content.extend(chunk)
+                    if len(content) > max_bytes:
+                        raise StorageUnavailable
+                return bytes(content)
+        try:
+            if self._client is not None:
+                return download(self._client)
+            with httpx.Client(timeout=30) as client:
+                return download(client)
+        except httpx.HTTPError:
+            raise StorageUnavailable from None
 
     def signed_url(self, path, base_url):
         check_path(path)

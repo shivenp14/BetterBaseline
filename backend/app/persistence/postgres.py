@@ -53,18 +53,21 @@ class PostgresRepository:
 
     def get_graph(self, study_id: UUID) -> Graph:
         with self._read(study_id) as connection:
-            facts = connection.execute(
-                """SELECT f.id, f.artifact_id, f.version_id, f.logical_key, f.label, f.value, f.unit,
-                          jsonb_build_object('fragment_id', s.id, 'locator', s.locator, 'quote', s.quote) AS source
-                   FROM public.facts f JOIN public.source_fragments s ON s.id = f.fragment_id
-                   WHERE f.study_id = %s ORDER BY f.id""", (study_id,),
-            ).fetchall()
-            dependencies = connection.execute(
-                """SELECT id, from_fact_id, to_fact_id, relationship, tracking, status, evidence
-                   FROM public.dependencies WHERE study_id = %s ORDER BY id""", (study_id,),
-            ).fetchall()
-            return Graph(facts=[Fact.model_validate(row) for row in facts],
-                         dependencies=[Dependency.model_validate(row) for row in dependencies])
+            return self._graph(connection, study_id)
+
+    def _graph(self, connection, study_id):
+        facts = connection.execute(
+            """SELECT f.id, f.artifact_id, f.version_id, f.logical_key, f.label, f.value, f.unit,
+                      jsonb_build_object('fragment_id', s.id, 'locator', s.locator, 'quote', s.quote) AS source
+               FROM public.facts f JOIN public.source_fragments s ON s.id = f.fragment_id
+               WHERE f.study_id = %s ORDER BY f.id""", (study_id,),
+        ).fetchall()
+        dependencies = connection.execute(
+            """SELECT id, from_fact_id, to_fact_id, relationship, tracking, status, evidence
+               FROM public.dependencies WHERE study_id = %s ORDER BY id""", (study_id,),
+        ).fetchall()
+        return Graph(facts=[Fact.model_validate(row) for row in facts],
+                     dependencies=[Dependency.model_validate(row) for row in dependencies])
 
     def list_findings(self, study_id: UUID) -> list[Finding]:
         with self._read(study_id) as connection:

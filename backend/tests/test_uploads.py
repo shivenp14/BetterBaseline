@@ -171,8 +171,8 @@ class PostgresUploadTest(unittest.TestCase):
             name = connection.execute("SELECT current_database()").fetchone()[0]
             if not name.startswith("trialsync_test") or connection.execute("SELECT to_regclass('public.studies')").fetchone()[0]:
                 raise RuntimeError("Upload tests require an empty trialsync_test* database")
-            migration = next((Path(__file__).resolve().parents[2] / "supabase/migrations").glob("*.sql"))
-            connection.execute(migration.read_text())
+            for migration in sorted((Path(__file__).resolve().parents[2] / "supabase/migrations").glob("*.sql")):
+                connection.execute(migration.read_text())
         seed_demo(UPLOAD_TEST_URL)
 
     def setUp(self):

@@ -15,6 +15,7 @@ test = ["httpx>=0.27,<1"]
 [project.scripts]
 trialsync-api = "app.main:run"
 trialsync-seed = "app.persistence.seed:main"
+trialsync-worker = "app.worker:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
