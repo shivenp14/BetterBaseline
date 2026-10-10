@@ -93,14 +93,17 @@ class UploadTest(unittest.TestCase):
         self.assertEqual(len(self.repository.get_artifact(self.artifact.id).versions), 1)
         self.assertEqual(list(self.storage.root.rglob("*.txt")), [])
 
-    def test_partial_storage_failure_is_compensated(self):
+    def test_uncertain_storage_failure_does_not_delete_unowned_object(self):
         put = self.storage.put
         def partial(*args):
             put(*args)
             raise StorageUnavailable
         with patch.object(self.storage, "put", side_effect=partial):
-            self.assertEqual(self.upload().status_code, 503)
-        self.assertEqual(list(self.storage.root.rglob("*.txt")), [])
+            with patch.object(self.storage, "delete") as remove:
+                with self.assertLogs("app.api.uploads", level="ERROR"):
+                    self.assertEqual(self.upload().status_code, 503)
+                remove.assert_not_called()
+        self.assertEqual(len(list(self.storage.root.rglob("*.txt"))), 1)
 
     def test_cleanup_failure_is_reported_for_reconciliation(self):
         with patch.object(self.repository, "create_version_job", side_effect=RepositoryUnavailable):
@@ -123,6 +126,25 @@ class UploadTest(unittest.TestCase):
             with patch.object(self.storage, "delete") as remove:
                 self.assertEqual(self.upload().status_code, 503)
                 remove.assert_not_called()
+
+    def test_supabase_duplicate_and_failed_put_never_delete_existing_object(self):
+        for status, body in [(400, {"statusCode": "400", "error": "Duplicate", "message": "The resource already exists"}),
+                             (400, {"message": "Asset Already Exists"}), (409, {}),
+                             (400, {"message": "Other failure"}), (500, {})]:
+            with self.subTest(status=status, body=body):
+                requests = []
+                def handler(request):
+                    requests.append(request)
+                    if request.method == "GET":
+                        return httpx.Response(200, json={"public": False})
+                    return httpx.Response(status, json=body)
+                with httpx.Client(transport=httpx.MockTransport(handler)) as remote:
+                    storage = SupabasePrivateStorage("https://project.test", "test-key", "private", remote)
+                    client = TestClient(create_app(self.repository, storage))
+                    response = client.post(self.route, files={"file": ("revision.txt", b"body")})
+                self.assertEqual(response.status_code, 503)
+                self.assertEqual([r.method for r in requests], ["GET", "POST"])
+                self.assertEqual(len(self.repository.get_artifact(self.artifact.id).versions), 1)
 
 
 class SupabaseStorageTest(unittest.TestCase):
