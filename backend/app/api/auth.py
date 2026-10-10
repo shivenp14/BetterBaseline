@@ -117,7 +117,7 @@ class AuthGuard:
                 try:
                     artifact_id = UUID(parts[3])
                 except ValueError:
-                    artifact_id = None  # Let normal route validation reject malformed IDs.
+                    return await error(422, 'invalid_request', 'Request parameters are invalid')(scope, receive, send)
                 if artifact_id is not None:
                     artifact = await run_in_threadpool(self.repository.get_artifact, artifact_id)
                     await run_in_threadpool(MemberStudyAccess(self.repository, user_id).require_study_access, artifact.study_id)
