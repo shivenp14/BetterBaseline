@@ -59,8 +59,10 @@ expiry, rather than public storage objects.
 
 ## Failure handling
 
-Failed storage writes or rolled-back database writes trigger deletion of the new
-object. A path collision never deletes the existing object. Cleanup failures
+Rolled-back database writes after a successful storage PUT trigger deletion of
+the new object. Failed or uncertain storage writes never authorize deletion of
+an object this attempt did not confirm creating; retain it for reconciliation.
+Duplicate paths (including Supabase HTTP 400 and 409) never delete existing objects. Cleanup failures
 return 503 and log the object key for reconciliation. A connection error during
 COMMIT has an uncertain outcome: retain the object and report/log version and job
 IDs, rather than risk deleting a file whose version committed. Check those IDs
