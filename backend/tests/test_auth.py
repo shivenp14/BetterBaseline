@@ -175,7 +175,7 @@ class AuthAPITest(unittest.TestCase):
 
     def test_upload_auth_rejects_before_reading_or_parsing(self):
         import asyncio
-        async def run(headers):
+        async def run(headers, artifact_id=None):
             received=0;messages=[]
             async def receive():
                 nonlocal received
@@ -183,12 +183,20 @@ class AuthAPITest(unittest.TestCase):
                 raise AssertionError('Unauthorized upload body must not be read')
             async def send(message):messages.append(message)
             await self.application({'type':'http','http_version':'1.1','method':'POST','scheme':'http',
-                'path':f'/api/artifacts/{self.artifact.id}/versions','query_string':b'','headers':headers,
+                'path':f'/api/artifacts/{artifact_id or self.artifact.id}/versions','query_string':b'','headers':headers,
                 'server':('testserver',80),'client':('127.0.0.1',123),'root_path':''},receive,send)
             self.assertEqual(received,0)
             return next(m['status'] for m in messages if m['type']=='http.response.start')
         self.assertEqual(asyncio.run(run([])),401)
         self.assertEqual(asyncio.run(run([(b'authorization',b'Bearer outsider')])),403)
+        for token in ('outsider', 'member'):
+            self.assertEqual(asyncio.run(run([(b'authorization',f'Bearer {token}'.encode())], 'not-a-uuid')),422)
+        from starlette.formparsers import MultiPartParser
+        with patch.object(MultiPartParser, 'on_part_data') as parsed:
+            response = self.client.post('/api/artifacts/not-a-uuid/versions', headers=self.nonmember,
+                files={'file': ('revision.txt', b'x' * 100000)})
+            self.assertEqual(response.status_code,422)
+            parsed.assert_not_called()
 
     def test_exact_cors_allows_bearer_and_patch_without_opening_wildcards(self):
         with patch.dict(os.environ,{'CORS_ORIGINS':'https://trialsync.example'}):
