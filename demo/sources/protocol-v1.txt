@@ -1,0 +1,31 @@
+CLINICAL STUDY PROTOCOL
+
+Study Identifier: TX-2026-01
+Study Title: A Randomized, Double-Blind, Placebo-Controlled Study to Evaluate the Efficacy and Safety of Investigational Agent TS-101 in Adults with Moderate-to-Severe Chronic Inflammatory Disease
+Protocol Version: 1.0 (Baseline)
+Date: 2026-01-15
+Sponsor: TrialSync Clinical Therapeutics
+
+1. STUDY SYNOPSIS AND OBJECTIVES
+1.1 Primary Objective
+The primary objective of this study is to evaluate the clinical efficacy of TS-101 compared with placebo in achieving disease remission.
+
+1.2 Secondary Objectives
+- Assess safety and tolerability of TS-101.
+- Measure patient-reported quality of life and physical functioning.
+
+2. STUDY DESIGN AND POPULATION
+This is a multicenter, randomized, double-blind, parallel-group Phase III study. Approximately 240 adult participants will be enrolled across 18 clinical sites and randomized 1:1 to receive either TS-101 (200 mg subcutaneous biweekly) or matching placebo.
+
+3. SCHEDULE OF ASSESSMENTS
+Participants will attend scheduled clinic visits for screening, baseline randomization (Week 0), and regular monitoring visits every 4 weeks. Key assessments include physical examinations, laboratory safety panels, pharmacokinetics, and clinical disease activity indices.
+
+section: endpoint
+Primary endpoint assessment occurs at week 24.
+The primary efficacy estimand is the proportion of participants achieving clinical remission (defined as a reduction in composite inflammatory score >= 50% from baseline) without rescue therapy. All primary statistical inferences will be conducted on the intent-to-treat (ITT) population.
+
+4. SAFETY MONITORING AND REPORTING
+Adverse events and serious adverse events will be monitored continuously from informed consent through the end of safety follow-up. An independent Data Monitoring Committee (DMC) will review unblinded safety data at regular intervals.
+
+5. HISTORICAL BENCHMARK
+Study assumptions and sample size calculations were informed by historical study CSR-2024-09, which evaluated early-generation biologic comparators under equivalent clinical trial conditions.

@@ -1,0 +1,31 @@
+SCHEDULE OF ACTIVITIES AND CLINIC VISITS (SOA)
+
+Study Identifier: TX-2026-01
+Document Title: Schedule of Activities, Patient Encounters, and Clinical Site Calendar
+Document Version: 1.0
+Date: 2026-01-20
+Associated Protocol: Protocol TX-2026-01 Version 1.0
+
+1. VISIT SCHEDULE OVERVIEW
+This document defines the visit windows, clinical assessments, drug administration milestones, and patient burden schedule for participating clinical sites.
+
+Table 1: Clinical Site Visit Milestones
+- Screening: Day -28 to Day -1
+- Visit 1 (Baseline / Day 1): Randomization, initial IP dispensation, safety labs, baseline questionnaires
+- Visit 2 (Week 4 +/- 3 days): Safety assessment, IP dispensation
+- Visit 3 (Week 8 +/- 3 days): Safety assessment, biomarker collection
+- Visit 4 (Week 12 +/- 5 days): Interim clinical assessment, IP dispensation
+- Visit 5 (Week 16 +/- 5 days): Safety review, IP dispensation
+- Visit 6 (Week 24 +/- 7 days): Primary efficacy milestone and comprehensive examination
+
+2. PRIMARY VISIT PROCEDURES
+section: endpoint
+Schedule the endpoint assessment visit for week 24.
+At this critical milestone visit (Visit 6), the following procedures must be completed:
+- Investigator Global Assessment and composite disease activity index calculation
+- Fasting safety laboratory draws and anti-drug antibody (ADA) titers
+- Patient-reported outcome instruments (PROs) and functional questionnaire completion
+- Investigational product accountability, reconciliation, and compliance check
+
+3. PARTICIPANT SUPPORT AND TRAVEL
+Sites must coordinate local participant travel assistance and transit vouchers for Visit 6 to minimize scheduling friction, given the extensive 4-hour clinical assessment duration required for primary endpoint evaluation.

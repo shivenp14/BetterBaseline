@@ -1,0 +1,28 @@
+STATISTICAL ANALYSIS PLAN (SAP)
+
+Study Identifier: TX-2026-01
+Document Title: Statistical Analysis Plan for Primary and Key Secondary Endpoints
+Document Version: 1.0 (Final)
+Date: 2026-02-10
+Author: TrialSync Biostatistics Department
+Associated Protocol: Protocol TX-2026-01 Version 1.0
+
+1. INTRODUCTION AND SCOPE
+This document outlines the statistical methodologies and operational analysis specifications for Study TX-2026-01. It details the primary analysis populations, handling of missing data, multiplicity adjustments, and formal hypothesis testing procedures.
+
+2. ANALYSIS POPULATIONS
+- Intent-to-Treat (ITT) Population: All randomized participants, analyzed according to assigned treatment group.
+- Per-Protocol (PP) Population: All ITT participants without major protocol deviations who completed minimum exposure criteria.
+- Safety Population: All randomized participants who received at least one dose of study medication.
+
+3. EFFICACY ENDPOINTS AND TIMING
+3.1 Primary Efficacy Analysis
+section: endpoint
+Analyze the primary endpoint at week 24.
+The primary comparison will evaluate the difference in proportion of responders between TS-101 and placebo using the Cochran-Mantel-Haenszel (CMH) test stratified by baseline disease severity category. Missing data at the primary assessment time point will be imputed using non-responder imputation (NRI) for the primary sensitivity benchmark.
+
+3.2 Secondary Efficacy Analyses
+Secondary binary endpoints will be tested hierarchically following confirmation of statistical significance at the primary endpoint. Continuous endpoints (change from baseline in disease scores) will be analyzed using a mixed-effects model for repeated measures (MMRM).
+
+4. INTERIM ANALYSES
+No formal interim efficacy stopping boundaries are planned. Safety analyses will be reviewed periodically by the independent Data Monitoring Committee.

@@ -1,0 +1,108 @@
+{
+  "study_id": "30f04fb1-10cd-5674-88a0-2a6b4962a848",
+  "amended_versions": [
+    {
+      "id": "8bb3f404-ae0d-5539-88c0-6716cbfff650",
+      "artifact_id": "7f3ebac6-4bad-5e11-ace2-bed8e680b6f8",
+      "study_id": "30f04fb1-10cd-5674-88a0-2a6b4962a848",
+      "version_number": 2,
+      "previous_version_id": "a149a8d8-f4dc-5249-a36d-d178933d182d",
+      "filename": "protocol-v2.txt",
+      "status": "ready"
+    }
+  ],
+  "new_facts": [
+    {
+      "id": "31497ee5-9aa3-5217-bb6a-7a26b9a7b774",
+      "artifact_id": "7f3ebac6-4bad-5e11-ace2-bed8e680b6f8",
+      "version_id": "8bb3f404-ae0d-5539-88c0-6716cbfff650",
+      "logical_key": "endpoint.week",
+      "label": "Primary endpoint week",
+      "value": 36,
+      "unit": "week",
+      "source": {
+        "fragment_id": "4f328ce6-ee29-5106-b88e-0dfafb2d5800",
+        "locator": "section: endpoint",
+        "quote": "Primary endpoint assessment occurs at week 36."
+      }
+    }
+  ],
+  "changes": [
+    {
+      "id": "ef93adbe-0fcd-5971-8773-5b36cc7c51c3",
+      "artifact_id": "7f3ebac6-4bad-5e11-ace2-bed8e680b6f8",
+      "logical_key": "endpoint.week",
+      "before_fact_id": "f6e7a647-ff9f-5d41-8846-96fadbcbd5f7",
+      "after_fact_id": "31497ee5-9aa3-5217-bb6a-7a26b9a7b774",
+      "before_value": 24,
+      "after_value": 36,
+      "kind": "modified"
+    }
+  ],
+  "findings": [
+    {
+      "id": "d9790400-2ebb-5cc7-a66e-53bee8a404d8",
+      "study_id": "30f04fb1-10cd-5674-88a0-2a6b4962a848",
+      "change_id": "ef93adbe-0fcd-5971-8773-5b36cc7c51c3",
+      "affected_fact_id": "647c8974-5866-57ef-baa7-224a9a4e7f58",
+      "affected_artifact_id": "0962936b-342c-599d-94a7-f481374317bc",
+      "path_edge_ids": [
+        "9059c52f-46b0-5eb8-8e7a-d35dad0b7503"
+      ],
+      "action": "review_document",
+      "explanation": "Protocol endpoint changed from week 24 to week 36; synthetic analysis plan still specifies week 24 via the confirmed dependency and needs review.",
+      "sources": [
+        {
+          "fragment_id": "fe060d6f-0276-56b9-8b12-ee36f34cc22c",
+          "locator": "section: endpoint",
+          "quote": "Primary endpoint assessment occurs at week 24."
+        },
+        {
+          "fragment_id": "4f328ce6-ee29-5106-b88e-0dfafb2d5800",
+          "locator": "section: endpoint",
+          "quote": "Primary endpoint assessment occurs at week 36."
+        },
+        {
+          "fragment_id": "0f415549-fe01-5f3b-9561-c0d07da909b1",
+          "locator": "section: endpoint",
+          "quote": "Analyze the primary endpoint at week 24."
+        }
+      ],
+      "status": "open",
+      "owner_id": null,
+      "resolution": null
+    },
+    {
+      "id": "90923331-aea4-59a1-bd85-4a2da5517677",
+      "study_id": "30f04fb1-10cd-5674-88a0-2a6b4962a848",
+      "change_id": "ef93adbe-0fcd-5971-8773-5b36cc7c51c3",
+      "affected_fact_id": "4bb757ad-fc39-5a1b-b9a7-87335228f7f5",
+      "affected_artifact_id": "c76cebdb-a096-5928-8aea-bce359ba474e",
+      "path_edge_ids": [
+        "baf996ac-b39e-58f1-b604-8a2b6c3c2a3d"
+      ],
+      "action": "review_document",
+      "explanation": "Protocol endpoint changed from week 24 to week 36; synthetic visit schedule still specifies week 24 via the confirmed dependency and needs review.",
+      "sources": [
+        {
+          "fragment_id": "fe060d6f-0276-56b9-8b12-ee36f34cc22c",
+          "locator": "section: endpoint",
+          "quote": "Primary endpoint assessment occurs at week 24."
+        },
+        {
+          "fragment_id": "4f328ce6-ee29-5106-b88e-0dfafb2d5800",
+          "locator": "section: endpoint",
+          "quote": "Primary endpoint assessment occurs at week 36."
+        },
+        {
+          "fragment_id": "a05c26df-613d-5804-9f42-277046ac9d28",
+          "locator": "section: endpoint",
+          "quote": "Schedule the endpoint assessment visit for week 24."
+        }
+      ],
+      "status": "open",
+      "owner_id": null,
+      "resolution": null
+    }
+  ]
+}

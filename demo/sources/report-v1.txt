@@ -1,0 +1,18 @@
+HISTORICAL CLINICAL STUDY REPORT (CSR) — ARCHIVED BENCHMARK
+
+Study Identifier: CSR-2024-09
+Report Title: Clinical Study Report for Phase II Proof-of-Concept Trial in Moderate-to-Severe Chronic Inflammatory Disease
+Report Version: 1.0 (Archived / Final Approved)
+Completion Date: 2024-11-15
+Regulatory Status: Pinned Historical Reference Benchmark
+
+1. EXECUTIVE SYNOPSIS
+This completed historical study evaluated early-generation biologic therapy across 120 adult patients. The dataset was formally locked in Q4 2024 and serves as an immutable comparative reference for future protocol design and effect-size power calculations.
+
+2. STUDY OUTCOMES AND HISTORICAL TIMING
+section: endpoint
+Historical endpoint results were measured at week 24.
+In the historical ITT cohort, 42.5% of active-arm patients achieved composite clinical remission at Week 24 compared to 18.3% of placebo patients (p = 0.004). Secondary radiographic progression and serum biomarker reductions also demonstrated peak separation at this predefined time milestone.
+
+3. GOVERNANCE AND PINNED DEPENDENCY NOTE
+This report reflects finalized historical data. In accordance with clinical trial data governance rules, references to this document represent pinned historical dependencies. Amendments to active study protocols (such as Study TX-2026-01) do not mutate or invalidate this completed historical report.

@@ -1,0 +1,34 @@
+CLINICAL STUDY PROTOCOL — AMENDMENT 1
+
+Study Identifier: TX-2026-01
+Study Title: A Randomized, Double-Blind, Placebo-Controlled Study to Evaluate the Efficacy and Safety of Investigational Agent TS-101 in Adults with Moderate-to-Severe Chronic Inflammatory Disease
+Protocol Version: 2.0 (Amendment 1)
+Date: 2026-06-30
+Sponsor: TrialSync Clinical Therapeutics
+
+RATIONALE FOR PROTOCOL AMENDMENT
+Following review of preliminary blinded pharmacokinetic/pharmacodynamic modeling and evolving regulatory guidance on durability of response in chronic inflammatory indications, the study observation window has been extended to capture long-term therapeutic remission and prevent premature truncation of treatment effect.
+
+1. STUDY SYNOPSIS AND OBJECTIVES
+1.1 Primary Objective
+The primary objective of this study is to evaluate the sustained clinical efficacy of TS-101 compared with placebo in achieving durable disease remission.
+
+1.2 Secondary Objectives
+- Assess long-term safety, tolerability, and immunogenicity of TS-101.
+- Measure sustained patient-reported quality of life and physical functioning over extended follow-up.
+
+2. STUDY DESIGN AND POPULATION
+This is a multicenter, randomized, double-blind, parallel-group Phase III study. Approximately 240 adult participants will be enrolled across 18 clinical sites and randomized 1:1 to receive either TS-101 (200 mg subcutaneous biweekly) or matching placebo.
+
+3. SCHEDULE OF ASSESSMENTS
+Participants will attend scheduled clinic visits for screening, baseline randomization (Week 0), and regular monitoring visits. Additional visit windows have been incorporated to accommodate extended treatment and monitoring.
+
+section: endpoint
+Primary endpoint assessment occurs at week 36.
+The primary efficacy estimand is the proportion of participants achieving sustained clinical remission (defined as a reduction in composite inflammatory score >= 50% from baseline) without rescue therapy. All primary statistical inferences will be conducted on the intent-to-treat (ITT) population at this extended time point.
+
+4. SAFETY MONITORING AND REPORTING
+Adverse events and serious adverse events will continue to be monitored through the extended safety follow-up window. The DMC oversight charter remains active throughout the expanded treatment period.
+
+5. HISTORICAL BENCHMARK
+Historical benchmark CSR-2024-09 remains cited as prior context for the early 24-week milestone, but subsequent operational and statistical plans must be aligned with the amended 36-week primary endpoint.
