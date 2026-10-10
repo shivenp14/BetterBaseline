@@ -58,8 +58,8 @@ class ActionTests(unittest.TestCase):
         baseline = assess_impact(self.changes, self.facts, self.edges)
         enriched = assess_impact(self.changes, self.facts, self.edges, artifact_lookup=self.artifacts)
         for old, new in zip(baseline, enriched):
-            self.assertEqual({k: v for k, v in old.items() if k != "action"},
-                             {k: v for k, v in new.items() if k != "action"})
+            self.assertEqual({k: v for k, v in old.items() if k not in ("action", "explanation")},
+                             {k: v for k, v in new.items() if k not in ("action", "explanation")})
         self.assertTrue(all(f["action"] == "review_document" for f in baseline))
         self.assertEqual(assess_impact(self.changes, self.facts, reversed(self.edges),
                                       artifact_lookup=self.artifacts), enriched)

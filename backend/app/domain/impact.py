@@ -5,6 +5,7 @@ from collections import defaultdict, deque
 from uuid import NAMESPACE_URL, uuid5
 
 from .actions import impact_action
+from .explanations import explain_impact
 
 
 def _records_by_id(records, label):
@@ -55,6 +56,7 @@ def assess_impact(changes, facts, dependencies, *, study_id=None, artifact_looku
     def add_finding(change, fact_id, path, action="review_document"):
         fact = fact_index[fact_id]
         identity = json.dumps([study_id, change["id"], fact_id], separators=(",", ":"))
+        explanation, sources = explain_impact(change, fact, path, fact_index, edges, action)
         findings.append({
             "id": str(uuid5(NAMESPACE_URL, "trialsync:finding:" + identity)),
             "study_id": study_id,
@@ -63,8 +65,8 @@ def assess_impact(changes, facts, dependencies, *, study_id=None, artifact_looku
             "affected_artifact_id": fact["artifact_id"],
             "path_edge_ids": list(path),
             "action": action,
-            "explanation": "",
-            "sources": [],
+            "explanation": explanation,
+            "sources": sources,
             "status": "open",
             "owner_id": None,
             "resolution": None,
