@@ -86,3 +86,8 @@ endpoint beyond the agreed HTTP contract.
 still needs coordination with #21. #18 continues to depend on #15 and #17.
 Uploads, jobs, review mutations, storage, database, auth, and hosted deployment
 remain separate tasks.
+
+# Reviews
+
+See [REVIEWS.md](REVIEWS.md) for review endpoints, validation, explicit version
+approval, historical graph projection, actor/audit transactions, and integration hooks.

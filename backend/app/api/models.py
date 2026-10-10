@@ -113,6 +113,16 @@ class Finding(Record):
     resolution: Resolution | None
 
 
+class DependencyReview(Record):
+    status: Literal['confirmed']
+
+
+class FindingReview(Record):
+    status: Literal['open', 'in_review', 'resolved', 'dismissed'] | None = None
+    owner_id: UUID | None = None
+    resolution: Resolution | None = None
+
+
 class AuditEvent(Record):
     id: UUID
     study_id: UUID

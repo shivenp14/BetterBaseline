@@ -12,6 +12,7 @@ from psycopg.types.json import Jsonb
 from app.persistence.memory import StudyFixture
 
 DEMO_STUDY_ID = UUID("30f04fb1-10cd-5674-88a0-2a6b4962a848")
+DEMO_ACTOR_ID = UUID("f0e3b7e5-deb8-5441-b668-c7acfb4daab2")
 
 
 def seed_demo(database_url: str) -> UUID:

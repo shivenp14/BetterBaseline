@@ -8,9 +8,10 @@ from psycopg.rows import dict_row
 
 from app.api.models import Artifact, ArtifactVersion, AuditEvent, Dependency, Fact, Finding, Graph, Job, Study, UploadReceipt
 from app.persistence.repository import RecordNotFound, RepositoryUnavailable, StoredJob, StoredVersion, StudyNotFound, UploadOutcomeUnknown
+from app.persistence.reviews import PostgresReviews
 
 
-class PostgresRepository:
+class PostgresRepository(PostgresReviews):
     def __init__(self, database_url: str):
         self._database_url = database_url
 
