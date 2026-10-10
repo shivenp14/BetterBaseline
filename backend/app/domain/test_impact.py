@@ -4,8 +4,7 @@ import copy
 import unittest
 from uuid import UUID
 
-from comparison import compare_facts
-from impact import assess_impact
+from app.domain import assess_impact, compare_facts
 
 
 def fact(identifier, artifact=None, value=24):
