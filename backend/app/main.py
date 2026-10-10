@@ -1,4 +1,6 @@
-"""Local-only unauthenticated fixture API; use trialsync-api or python -m app.main."""
+"""Local-only read API; use trialsync-api or python -m app.main."""
+
+import os
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -8,7 +10,7 @@ from starlette.exceptions import HTTPException
 
 from app.api.routes import router
 from app.persistence.memory import InMemoryRepository
-from app.persistence.repository import ReadRepository, StudyNotFound
+from app.persistence.repository import ReadRepository, RepositoryUnavailable, StudyNotFound
 
 
 def error(status: int, code: str, message: str, headers=None):
@@ -16,8 +18,16 @@ def error(status: int, code: str, message: str, headers=None):
 
 
 def create_app(repository: ReadRepository | None = None) -> FastAPI:
-    application = FastAPI(title="TrialSync fixture API", version="0.1.0")
-    application.state.repository = repository if repository is not None else InMemoryRepository()
+    application = FastAPI(title="TrialSync API", version="0.1.0")
+    if repository is None:
+        database_url = os.environ.get("DATABASE_URL")
+        if database_url:
+            from app.persistence.postgres import PostgresRepository
+
+            repository = PostgresRepository(database_url)
+        else:
+            repository = InMemoryRepository()
+    application.state.repository = repository
     application.add_middleware(
         CORSMiddleware,
         allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -28,6 +38,10 @@ def create_app(repository: ReadRepository | None = None) -> FastAPI:
     @application.exception_handler(StudyNotFound)
     async def study_not_found(request: Request, exc: StudyNotFound):
         return error(404, "study_not_found", "Study not found")
+
+    @application.exception_handler(RepositoryUnavailable)
+    async def repository_unavailable(request: Request, exc: RepositoryUnavailable):
+        return error(503, "repository_unavailable", "Database reads are temporarily unavailable")
 
     @application.exception_handler(RequestValidationError)
     async def invalid_request(request: Request, exc: RequestValidationError):
