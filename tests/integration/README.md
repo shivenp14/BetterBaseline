@@ -114,3 +114,10 @@ calculate/evaluate/grid HTTP checker against the rebuilt backend container.
 Full provenance/UI-export acceptance still awaits #67/#76. See DEPLOYMENT.md
 for the separate built-container browser smoke; it does not establish exports
 or complete offline acceptance.
+
+
+After merged #60 and the completed #73 standalone handoff, the locked environment
+passes 340 backend/fixture tests (201 subtests), 14 integration invariant tests
+and real calculate/evaluate/grid HTTP checks. The #73 component test's explicit
+live mode also renders raw API curve/comparison data through the merged #72 state.
+Final page/export wiring remains #76's scope.
