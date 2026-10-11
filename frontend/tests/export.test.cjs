@@ -99,7 +99,7 @@ function currentRuns() {
 test("current export binds endpoint hashes to detached requests; edits and pending/errors disable it", () => {
   const { state, runs } = currentRuns();
   assert.deepEqual(buildScenarioExport(state, runs, fixture.exported_at), fixture);
-  for (const mutate of [s => s.requestRevision++, s => s.stressBaseline = .12, s => s.stressDropout = .2, s => s.plannedDraft.alpha = .01, s => s.frozenEnrollment.control++, s => s.provenanceLedger["/planned_design/alpha"].source = "manual_user", s => s.gridResult.inputs_hash = "different", s => s.evaluateResult.metadata.inputs_hash = "different"]) {
+  for (const mutate of [s => s.inputGeneration++, s => s.stressBaseline = .12, s => s.stressDropout = .2, s => s.plannedDraft.alpha = .01, s => s.frozenEnrollment.control++, s => s.provenanceLedger["/planned_design/alpha"].source = "manual_user", s => s.gridResult.inputs_hash = "different", s => s.evaluateResult.metadata.inputs_hash = "different"]) {
     const next = structuredClone(state); mutate(next); assert.throws(() => buildScenarioExport(next, runs));
   }
   for (const [field, statuses] of [["designStatus", ["idle", "calculating", "error"]], ["evaluateStatus", ["idle", "stale", "evaluating", "error"]], ["gridStatus", ["idle", "stale", "loading", "error"]]]) {

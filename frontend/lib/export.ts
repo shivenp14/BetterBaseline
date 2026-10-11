@@ -199,7 +199,7 @@ export function validateScenarioExport(value: unknown): ScenarioExportPayload {
 
 function planningIdentity(state: WorkspaceState) { return [state.plannedDraft, state.calculatedDesign?.inputs_hash, state.frozenEnrollment]; }
 export function exportWorkspaceIdentity(state: WorkspaceState): string {
-  return JSON.stringify([state.requestRevision, ...planningIdentity(state), state.stressBaseline, state.stressDropout, state.provenanceLedger]);
+  return JSON.stringify([state.inputGeneration, ...planningIdentity(state), state.stressBaseline, state.stressDropout, state.provenanceLedger]);
 }
 
 export function buildScenarioExport(state: WorkspaceState, runs: ExportRuns, exportedAt = new Date().toISOString()): ScenarioExportPayload {

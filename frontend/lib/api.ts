@@ -5,6 +5,7 @@ import type {
 } from "./contracts";
 import type { ProvenanceLedger } from "./workspace-contracts";
 import { computeLiveDesign, computeLiveEvaluation, computeLiveGrid } from "./statistical-engine";
+import type { ExportGridResult } from "./export";
 
 export interface ExtendedCalculateRequest extends CalculateRequest {
   provenance_ledger?: ProvenanceLedger;
@@ -105,7 +106,7 @@ export async function calculateDesign(request: ExtendedCalculateRequest, signal?
   return backendResult({ ...result, provenance: backendProvenance(request.provenance_ledger), mock: false });
 }
 
-export async function evaluateScenario(request: ExtendedEvaluateRequest, signal?: AbortSignal): Promise<EvaluateResponse> {
+export async function evaluateScenario(request: ExtendedEvaluateRequest, signal?: AbortSignal, mode: "full" | "analytic" = "full"): Promise<EvaluateResponse> {
   if (getApiMode() === "demo") {
     if (signal?.aborted) throw new DOMException("Evaluation aborted", "AbortError");
     const preset = getPresetById(request.preset_id);
@@ -117,13 +118,13 @@ export async function evaluateScenario(request: ExtendedEvaluateRequest, signal?
   }
   const provenance_ledger = request.provenance_ledger;
   const acceptedFields = omitKeys(request, "preset_id", "provenance_ledger");
-  const payload = { ...acceptedFields, provenance: provenance_ledger ?? {} };
+  const payload = { ...acceptedFields, simulation: mode === "analytic" ? null : request.simulation, provenance: provenance_ledger ?? {} };
   const result = await post<Omit<EvaluateResponse, "provenance" | "mock"> & { provenance?: ProvenanceLedger }>("/api/v1/scenarios/evaluate", payload, signal);
   const { provenance: ledgerFromBackend, ...core } = result;
   return backendResult({ ...core, provenance: backendProvenance(ledgerFromBackend ?? provenance_ledger), mock: false });
 }
 
-export async function getStressGrid(request: ExtendedGridRequest, signal?: AbortSignal): Promise<GridResponse> {
+export async function getStressGrid(request: ExtendedGridRequest, signal?: AbortSignal, captureRaw?: (response: ExportGridResult) => void): Promise<GridResponse> {
   if (getApiMode() === "demo") {
     if (signal?.aborted) throw new DOMException("Grid request aborted", "AbortError");
     const preset = getPresetById(request.preset_id);
@@ -160,8 +161,11 @@ export async function getStressGrid(request: ExtendedGridRequest, signal?: Abort
       dropout: request.planned_design.dropout,
       effect_override: null,
     },
+    provenance: request.provenance_ledger ?? {},
   };
-  const result = await post<Record<string, unknown>>("/api/v1/scenarios/grid", payload, signal);
+  const result = await post<ExportGridResult>("/api/v1/scenarios/grid", payload, signal);
+  // Detached canonical response before any presentation aliases/envelopes.
+  captureRaw?.(structuredClone(result));
   const point = (raw: unknown) => {
     const value = raw as Record<string, unknown> & { p_control: number; dropout: number };
     // Retain canonical backend fields for ExportPayload while adding the
@@ -176,7 +180,7 @@ export async function getStressGrid(request: ExtendedGridRequest, signal?: Abort
       ? null
       : point(result.selected_point),
     frontier_points: ((result.frontier_points ?? []) as unknown[]).map(point),
-    provenance: backendProvenance(request.provenance_ledger ?? {}),
+    provenance: backendProvenance(result.provenance),
     mock: false,
   } as unknown as GridResponse;
   return backendResult(normalized);
