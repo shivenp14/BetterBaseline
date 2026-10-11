@@ -3,6 +3,9 @@ import {
   initializeWorkspaceState,
   workspaceReducer,
 } from "../lib/workspace-state";
+import {
+  evaluateScenario,
+} from "../lib/api";
 import type { CalculateResponse } from "../lib/contracts";
 
 function testPresetLoading() {
@@ -33,7 +36,7 @@ function testStressAdjustmentPreservesFrozenEnrollment() {
   assert.strictEqual(state.stressBaseline, 0.15);
   assert.strictEqual(state.evaluateStatus, "stale");
   assert.strictEqual(
-    state.stressProvenance["/stress_scenario/control_event_rate"]?.source,
+    state.provenanceLedger["/stress_scenario/control_event_rate"]?.source,
     "manual_user"
   );
 
@@ -48,7 +51,7 @@ function testStressAdjustmentPreservesFrozenEnrollment() {
   assert.strictEqual(state.stressDropout, 0.25);
   assert.strictEqual(state.evaluateStatus, "stale");
   assert.strictEqual(
-    state.stressProvenance["/stress_scenario/dropout/control"]?.source,
+    state.provenanceLedger["/stress_scenario/dropout/control"]?.source,
     "manual_user"
   );
   console.log("✔ Stress adjustment preserves frozen enrollment test passed");
@@ -65,7 +68,7 @@ function testRecalculateLocksNewEnrollment() {
   });
 
   assert.strictEqual(
-    state.plannedProvenance["/planned_design/control_event_rate"]?.source,
+    state.provenanceLedger["/planned_design/control_event_rate"]?.source,
     "manual_user"
   );
   assert.strictEqual(state.evaluateStatus, "stale");
@@ -87,6 +90,7 @@ function testRecalculateLocksNewEnrollment() {
   state = workspaceReducer(state, {
     type: "CALCULATE_SUCCESS",
     response: mockNewDesign,
+    requestRevision: state.requestRevision,
   });
 
   assert.strictEqual(state.frozenEnrollment?.control, 560);
@@ -103,7 +107,7 @@ function testSwitchingPresetResetsStateAndProvenance() {
     baseline: 0.18,
   });
   assert.strictEqual(
-    state.stressProvenance["/stress_scenario/control_event_rate"]?.source,
+    state.provenanceLedger["/stress_scenario/control_event_rate"]?.source,
     "manual_user"
   );
 
@@ -117,19 +121,130 @@ function testSwitchingPresetResetsStateAndProvenance() {
   assert.strictEqual(state.frozenEnrollment?.control, 951);
   assert.strictEqual(state.stressDropout, 0.25);
   assert.strictEqual(
-    state.stressProvenance["/stress_scenario/control_event_rate"]?.source,
+    state.provenanceLedger["/stress_scenario/control_event_rate"]?.source,
     "synthetic_preset"
   );
   console.log("✔ Switching preset resets state and provenance test passed");
 }
 
-try {
+function testRejectOutdatedLateResponses() {
+  let state = initializeWorkspaceState("baseline-collapse-v1");
+  const initialRevision = state.requestRevision;
+
+  // Dispatch an async calculate start at initialRevision
+  state = workspaceReducer(state, { type: "START_CALCULATE" });
+
+  // User subsequently modifies stress baseline before calculation finishes
+  state = workspaceReducer(state, {
+    type: "UPDATE_STRESS_BASELINE",
+    baseline: 0.30,
+  });
+  assert.strictEqual(state.requestRevision > initialRevision, true);
+
+  // Now outdated response arrives with initialRevision
+  const outdatedResponse: CalculateResponse = {
+    model_version: "binary-v1",
+    method: "cohen_h_normal_v1",
+    p_treatment: 0.15,
+    evaluable_n: { control: 903, treatment: 903 },
+    enrolled_n: { control: 903, treatment: 903 },
+    nominal_power_evaluable: 0.8,
+    warnings: [],
+    inputs_hash: "sha256:outdated",
+    provenance: state.calculatedDesign!.provenance,
+    mock: true,
+  };
+
+  const stateAfterLateArrival = workspaceReducer(state, {
+    type: "CALCULATE_SUCCESS",
+    response: outdatedResponse,
+    requestRevision: initialRevision,
+  });
+
+  // Must reject: displayedInputsHash must NOT be overwritten by outdated hash
+  assert.strictEqual(stateAfterLateArrival.displayedInputsHash, null);
+  assert.strictEqual(stateAfterLateArrival.evaluateStatus, "stale");
+  console.log("✔ Outdated late response rejected by revision guard");
+}
+
+async function testLiveEvaluationCalculatesDifferentAssumptions() {
+  const state = initializeWorkspaceState("baseline-collapse-v1");
+  // Preset has stress baseline 0.10, yielding approx 0.470 power
+  const defaultEval = await evaluateScenario({
+    planned_design: state.plannedDraft,
+    fixed_enrollment: state.frozenEnrollment!,
+    stress_scenario: {
+      control_event_rate: 0.10,
+      dropout: { control: 0.0, treatment: 0.0 },
+      effect_override: null,
+    },
+    simulation: { replicates: 10000, seed: 42 },
+    preset_id: state.presetId,
+  });
+  assert.strictEqual(defaultEval.analytic.conditional_power_approx, 0.47);
+
+  // When user stresses baseline to 0.15, power must be computed live and different
+  const stressedEval = await evaluateScenario({
+    planned_design: state.plannedDraft,
+    fixed_enrollment: state.frozenEnrollment!,
+    stress_scenario: {
+      control_event_rate: 0.15,
+      dropout: { control: 0.0, treatment: 0.0 },
+      effect_override: null,
+    },
+    simulation: { replicates: 10000, seed: 42 },
+    preset_id: state.presetId,
+  });
+  assert.notStrictEqual(stressedEval.analytic.conditional_power_approx, 0.47);
+  assert.strictEqual(typeof stressedEval.analytic.conditional_power_approx, "number");
+  assert.strictEqual(stressedEval.analytic.conditional_power_approx! > 0.47, true);
+  console.log("✔ Live evaluation recalculates dynamically for modified assumptions");
+}
+
+function testSingleAuthoritativeLedgerPreservesManualOrigin() {
+  let state = initializeWorkspaceState("baseline-collapse-v1");
+  // Edit planned control event rate
+  state = workspaceReducer(state, {
+    type: "UPDATE_PLANNED_FIELD",
+    fieldPointer: "/planned_design/control_event_rate",
+    update: { control_event_rate: 0.25 },
+  });
+
+  // Edit stress baseline
+  state = workspaceReducer(state, {
+    type: "UPDATE_STRESS_BASELINE",
+    baseline: 0.12,
+  });
+
+  // In the single authoritative ledger, both must remain manual_user without being overwritten
+  assert.strictEqual(
+    state.provenanceLedger["/planned_design/control_event_rate"]?.source,
+    "manual_user"
+  );
+  assert.strictEqual(
+    state.provenanceLedger["/stress_scenario/control_event_rate"]?.source,
+    "manual_user"
+  );
+  // Untouched field must still be synthetic_preset
+  assert.strictEqual(
+    state.provenanceLedger["/planned_design/alpha"]?.source,
+    "synthetic_preset"
+  );
+  console.log("✔ Single authoritative ledger preserves manual origin across planned and stress fields");
+}
+
+async function runAll() {
   testPresetLoading();
   testStressAdjustmentPreservesFrozenEnrollment();
   testRecalculateLocksNewEnrollment();
   testSwitchingPresetResetsStateAndProvenance();
-  console.log("\nALL WORKSPACE STATE INVARIANT TESTS PASSED!");
-} catch (err) {
+  testRejectOutdatedLateResponses();
+  await testLiveEvaluationCalculatesDifferentAssumptions();
+  testSingleAuthoritativeLedgerPreservesManualOrigin();
+  console.log("\nALL 7 WORKSPACE STATE INVARIANT TESTS PASSED!");
+}
+
+runAll().catch((err) => {
   console.error("Test failed:", err);
   process.exit(1);
-}
+});

@@ -8,10 +8,11 @@ import type {
   GridResponse,
 } from "./contracts";
 import type { ProvenanceLedger } from "./workspace-contracts";
-
-function fixture(presetId: string) {
-  return getPresetById(presetId);
-}
+import {
+  computeLiveDesign,
+  computeLiveEvaluation,
+  computeLiveGrid,
+} from "./statistical-engine";
 
 export interface ExtendedCalculateRequest extends CalculateRequest {
   provenance_ledger?: ProvenanceLedger;
@@ -21,24 +22,70 @@ export interface ExtendedEvaluateRequest extends EvaluateRequest {
   provenance_ledger?: ProvenanceLedger;
 }
 
-/** Local typed mock boundary. Supports cancelation, provenance inspection, and mock response fetching. */
+export interface ExtendedGridRequest extends GridRequest {
+  provenance_ledger?: ProvenanceLedger;
+}
+
+function matchesPresetInputs(request: EvaluateRequest): boolean {
+  const preset = getPresetById(request.preset_id);
+  if (!preset) return false;
+  const p = preset.planned_design;
+  const s = preset.stress_scenario;
+  const f = preset.fixed_enrollment;
+
+  return (
+    p.control_event_rate === request.planned_design.control_event_rate &&
+    p.alpha === request.planned_design.alpha &&
+    p.target_power === request.planned_design.target_power &&
+    p.dropout.control === request.planned_design.dropout.control &&
+    f.control === request.fixed_enrollment.control &&
+    s.control_event_rate === request.stress_scenario.control_event_rate &&
+    s.dropout.control === request.stress_scenario.dropout.control
+  );
+}
+
+function matchesPresetDesign(request: CalculateRequest): boolean {
+  const preset = getPresetById(request.preset_id);
+  if (!preset) return false;
+  const p = preset.planned_design;
+  return (
+    p.control_event_rate === request.control_event_rate &&
+    p.alpha === request.alpha &&
+    p.target_power === request.target_power &&
+    p.dropout.control === request.dropout.control
+  );
+}
+
+/**
+ * Calculates design enrollment and power.
+ * If inputs match the unedited preset, returns the exact versioned preset response.
+ * If inputs have been customized, performs live Cohen's-h minimum sample size calculation.
+ */
 export async function calculateDesign(
-  request: CalculateRequest,
+  request: ExtendedCalculateRequest,
   signal?: AbortSignal
 ): Promise<CalculateResponse> {
   if (signal?.aborted) {
     throw new DOMException("Calculation aborted", "AbortError");
   }
-  // Simulate minimal async microtask debounce
   await new Promise((resolve) => setTimeout(resolve, 10));
   if (signal?.aborted) {
     throw new DOMException("Calculation aborted", "AbortError");
   }
-  return fixture(request.preset_id).design_response;
+
+  if (matchesPresetDesign(request)) {
+    return getPresetById(request.preset_id).design_response;
+  }
+  return computeLiveDesign(request);
 }
 
+/**
+ * Evaluates stress scenario under fixed enrollment.
+ * If inputs match the unedited preset, returns the exact versioned preset response.
+ * If stress or design assumptions differ, computes live conditional power at floored expected retention.
+ */
 export async function evaluateScenario(
-  request: EvaluateRequest,
+  request: ExtendedEvaluateRequest,
   signal?: AbortSignal
 ): Promise<EvaluateResponse> {
   if (signal?.aborted) {
@@ -48,11 +95,25 @@ export async function evaluateScenario(
   if (signal?.aborted) {
     throw new DOMException("Evaluation aborted", "AbortError");
   }
-  return fixture(request.preset_id).evaluate_response;
+
+  if (matchesPresetInputs(request)) {
+    return getPresetById(request.preset_id).evaluate_response;
+  }
+  return computeLiveEvaluation(
+    request.planned_design,
+    request.fixed_enrollment,
+    request.stress_scenario.control_event_rate,
+    request.stress_scenario.dropout.control
+  );
 }
 
+/**
+ * Generates sensitivity grid.
+ * If inputs match the unedited preset, returns the preset grid response.
+ * Otherwise, computes the live matrix of power values across axes.
+ */
 export async function getStressGrid(
-  request: GridRequest,
+  request: ExtendedGridRequest,
   signal?: AbortSignal
 ): Promise<GridResponse> {
   if (signal?.aborted) {
@@ -62,5 +123,24 @@ export async function getStressGrid(
   if (signal?.aborted) {
     throw new DOMException("Grid request aborted", "AbortError");
   }
-  return fixture(request.preset_id).grid_response;
+
+  const preset = getPresetById(request.preset_id);
+  const isDefaultPreset =
+    preset.planned_design.control_event_rate === request.planned_design.control_event_rate &&
+    preset.fixed_enrollment.control === request.fixed_enrollment.control;
+
+  if (isDefaultPreset) {
+    return preset.grid_response;
+  }
+
+  return computeLiveGrid(
+    request.planned_design,
+    request.fixed_enrollment,
+    request.x_baseline,
+    request.y_dropout,
+    {
+      baseline: request.planned_design.control_event_rate,
+      dropout: request.planned_design.dropout.control,
+    }
+  );
 }

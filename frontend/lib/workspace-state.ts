@@ -14,16 +14,16 @@ export type WorkspaceAction =
   | { type: "LOAD_PRESET"; presetId: string }
   | { type: "UPDATE_PLANNED_FIELD"; fieldPointer: string; update: Partial<TrialAssumptions> }
   | { type: "START_CALCULATE" }
-  | { type: "CALCULATE_SUCCESS"; response: CalculateResponse }
-  | { type: "CALCULATE_ERROR"; error: string }
+  | { type: "CALCULATE_SUCCESS"; response: CalculateResponse; requestRevision: number }
+  | { type: "CALCULATE_ERROR"; error: string; requestRevision: number }
   | { type: "UPDATE_STRESS_BASELINE"; baseline: number }
   | { type: "UPDATE_STRESS_DROPOUT"; dropout: number }
   | { type: "START_EVALUATE" }
-  | { type: "EVALUATE_SUCCESS"; response: EvaluateResponse }
-  | { type: "EVALUATE_ERROR"; error: string }
+  | { type: "EVALUATE_SUCCESS"; response: EvaluateResponse; requestRevision: number }
+  | { type: "EVALUATE_ERROR"; error: string; requestRevision: number }
   | { type: "START_GRID" }
-  | { type: "GRID_SUCCESS"; response: GridResponse }
-  | { type: "GRID_ERROR"; error: string }
+  | { type: "GRID_SUCCESS"; response: GridResponse; requestRevision: number }
+  | { type: "GRID_ERROR"; error: string; requestRevision: number }
   | { type: "RESET_TO_PRESET" };
 
 export function initializeWorkspaceState(presetId = "baseline-collapse-v1"): WorkspaceState {
@@ -31,14 +31,13 @@ export function initializeWorkspaceState(presetId = "baseline-collapse-v1"): Wor
   return {
     presetId: preset.preset_id,
     plannedDraft: JSON.parse(JSON.stringify(preset.planned_design)),
-    plannedProvenance: JSON.parse(JSON.stringify(preset.provenance)),
     calculatedDesign: preset.design_response,
     frozenEnrollment: JSON.parse(JSON.stringify(preset.fixed_enrollment)),
     designStatus: "idle",
     designError: null,
     stressBaseline: preset.stress_scenario.control_event_rate,
     stressDropout: preset.stress_scenario.dropout.control,
-    stressProvenance: JSON.parse(JSON.stringify(preset.provenance)),
+    provenanceLedger: JSON.parse(JSON.stringify(preset.provenance)),
     evaluateResult: preset.evaluate_response,
     evaluateStatus: "idle",
     evaluateError: null,
@@ -46,6 +45,7 @@ export function initializeWorkspaceState(presetId = "baseline-collapse-v1"): Wor
     gridStatus: "idle",
     gridError: null,
     displayedInputsHash: preset.inputs_hash,
+    requestRevision: 0,
   };
 }
 
@@ -83,15 +83,16 @@ export function workspaceReducer(
         ...state.plannedDraft,
         ...action.update,
       };
-      const nextProvenance = markFieldManual(state.plannedProvenance, action.fieldPointer);
+      const nextProvenance = markFieldManual(state.provenanceLedger, action.fieldPointer);
       return {
         ...state,
         plannedDraft: nextPlanned,
-        plannedProvenance: nextProvenance,
+        provenanceLedger: nextProvenance,
         designStatus: "idle",
         evaluateStatus: "stale",
         gridStatus: "stale",
         displayedInputsHash: null,
+        requestRevision: state.requestRevision + 1,
       };
     }
 
@@ -104,6 +105,10 @@ export function workspaceReducer(
     }
 
     case "CALCULATE_SUCCESS": {
+      // Reject stale late responses
+      if (action.requestRevision < state.requestRevision) {
+        return state;
+      }
       return {
         ...state,
         calculatedDesign: action.response,
@@ -117,6 +122,9 @@ export function workspaceReducer(
     }
 
     case "CALCULATE_ERROR": {
+      if (action.requestRevision < state.requestRevision) {
+        return state;
+      }
       return {
         ...state,
         designStatus: "error",
@@ -125,39 +133,41 @@ export function workspaceReducer(
     }
 
     case "UPDATE_STRESS_BASELINE": {
-      const nextStressProv = markFieldManual(
-        state.stressProvenance,
+      const nextProv = markFieldManual(
+        state.provenanceLedger,
         "/stress_scenario/control_event_rate",
         "Stress baseline risk adjusted"
       );
       return {
         ...state,
         stressBaseline: action.baseline,
-        stressProvenance: nextStressProv,
+        provenanceLedger: nextProv,
         evaluateStatus: "stale",
         gridStatus: "stale",
         displayedInputsHash: null,
+        requestRevision: state.requestRevision + 1,
       };
     }
 
     case "UPDATE_STRESS_DROPOUT": {
-      let nextStressProv = markFieldManual(
-        state.stressProvenance,
+      let nextProv = markFieldManual(
+        state.provenanceLedger,
         "/stress_scenario/dropout/control",
         "Stress dropout adjusted"
       );
-      nextStressProv = markFieldManual(
-        nextStressProv,
+      nextProv = markFieldManual(
+        nextProv,
         "/stress_scenario/dropout/treatment",
         "Stress dropout adjusted"
       );
       return {
         ...state,
         stressDropout: action.dropout,
-        stressProvenance: nextStressProv,
+        provenanceLedger: nextProv,
         evaluateStatus: "stale",
         gridStatus: "stale",
         displayedInputsHash: null,
+        requestRevision: state.requestRevision + 1,
       };
     }
 
@@ -170,6 +180,9 @@ export function workspaceReducer(
     }
 
     case "EVALUATE_SUCCESS": {
+      if (action.requestRevision < state.requestRevision) {
+        return state;
+      }
       return {
         ...state,
         evaluateResult: action.response,
@@ -180,6 +193,9 @@ export function workspaceReducer(
     }
 
     case "EVALUATE_ERROR": {
+      if (action.requestRevision < state.requestRevision) {
+        return state;
+      }
       return {
         ...state,
         evaluateStatus: "error",
@@ -196,6 +212,9 @@ export function workspaceReducer(
     }
 
     case "GRID_SUCCESS": {
+      if (action.requestRevision < state.requestRevision) {
+        return state;
+      }
       return {
         ...state,
         gridResult: action.response,
@@ -206,6 +225,9 @@ export function workspaceReducer(
     }
 
     case "GRID_ERROR": {
+      if (action.requestRevision < state.requestRevision) {
+        return state;
+      }
       return {
         ...state,
         gridStatus: "error",

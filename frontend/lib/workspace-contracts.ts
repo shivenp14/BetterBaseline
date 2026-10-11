@@ -42,14 +42,14 @@ export interface RawPresetData {
 export interface WorkspaceState {
   presetId: string;
   plannedDraft: TrialAssumptions;
-  plannedProvenance: ProvenanceLedger;
   calculatedDesign: CalculateResponse | null;
   frozenEnrollment: FixedEnrollment | null;
   designStatus: "idle" | "calculating" | "success" | "error";
   designError: string | null;
   stressBaseline: number;
   stressDropout: number;
-  stressProvenance: ProvenanceLedger;
+  /** Single authoritative ledger tracking field provenance across all planned and stress inputs */
+  provenanceLedger: ProvenanceLedger;
   evaluateResult: EvaluateResponse | null;
   evaluateStatus: "idle" | "evaluating" | "stale" | "success" | "error";
   evaluateError: string | null;
@@ -57,4 +57,6 @@ export interface WorkspaceState {
   gridStatus: "idle" | "loading" | "stale" | "success" | "error";
   gridError: string | null;
   displayedInputsHash: string | null;
+  /** Monotonically increasing revision counter to detect and reject stale responses */
+  requestRevision: number;
 }

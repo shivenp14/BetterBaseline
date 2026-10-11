@@ -25,43 +25,59 @@ export default function Home() {
   const {
     presetId,
     plannedDraft,
-    plannedProvenance,
     calculatedDesign,
     frozenEnrollment,
     designStatus,
     stressBaseline,
     stressDropout,
-    stressProvenance,
+    provenanceLedger,
     evaluateResult,
     evaluateStatus,
     evaluateError,
     gridResult,
     gridStatus,
     displayedInputsHash,
+    requestRevision,
   } = state;
 
   const displayedDesign = calculatedDesign;
   const displayedEvaluate = evaluateResult;
   const displayedGrid = gridResult;
 
-  function handleSelectPreset(nextPresetId: string) {
+  function abortAllPending() {
     calculateAbortRef.current?.abort();
     evaluateAbortRef.current?.abort();
     gridAbortRef.current?.abort();
+  }
+
+  function handleSelectPreset(nextPresetId: string) {
+    abortAllPending();
     dispatch({ type: "LOAD_PRESET", presetId: nextPresetId });
   }
 
   function handleResetPreset() {
-    calculateAbortRef.current?.abort();
-    evaluateAbortRef.current?.abort();
-    gridAbortRef.current?.abort();
+    abortAllPending();
     dispatch({ type: "RESET_TO_PRESET" });
   }
 
+  function handleStressBaselineChange(val: number) {
+    // Abort pending evaluations on edit
+    evaluateAbortRef.current?.abort();
+    gridAbortRef.current?.abort();
+    dispatch({ type: "UPDATE_STRESS_BASELINE", baseline: val });
+  }
+
+  function handleStressDropoutChange(val: number) {
+    evaluateAbortRef.current?.abort();
+    gridAbortRef.current?.abort();
+    dispatch({ type: "UPDATE_STRESS_DROPOUT", dropout: val });
+  }
+
   async function handleCalculate() {
-    calculateAbortRef.current?.abort();
+    abortAllPending();
     const controller = new AbortController();
     calculateAbortRef.current = controller;
+    const revision = requestRevision;
 
     dispatch({ type: "START_CALCULATE" });
     try {
@@ -69,15 +85,17 @@ export default function Home() {
         {
           ...plannedDraft,
           preset_id: presetId,
+          provenance_ledger: provenanceLedger,
         },
         controller.signal
       );
-      dispatch({ type: "CALCULATE_SUCCESS", response });
+      dispatch({ type: "CALCULATE_SUCCESS", response, requestRevision: revision });
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === "AbortError") return;
       dispatch({
         type: "CALCULATE_ERROR",
         error: err instanceof Error ? err.message : String(err),
+        requestRevision: revision,
       });
     }
   }
@@ -87,6 +105,7 @@ export default function Home() {
     evaluateAbortRef.current?.abort();
     const controller = new AbortController();
     evaluateAbortRef.current = controller;
+    const revision = requestRevision;
 
     dispatch({ type: "START_EVALUATE" });
     try {
@@ -101,15 +120,17 @@ export default function Home() {
           },
           simulation: { replicates: 10000, seed: 42 },
           preset_id: presetId,
+          provenance_ledger: provenanceLedger,
         },
         controller.signal
       );
-      dispatch({ type: "EVALUATE_SUCCESS", response });
+      dispatch({ type: "EVALUATE_SUCCESS", response, requestRevision: revision });
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === "AbortError") return;
       dispatch({
         type: "EVALUATE_ERROR",
         error: err instanceof Error ? err.message : String(err),
+        requestRevision: revision,
       });
     }
   }
@@ -119,6 +140,7 @@ export default function Home() {
     gridAbortRef.current?.abort();
     const controller = new AbortController();
     gridAbortRef.current = controller;
+    const revision = requestRevision;
 
     dispatch({ type: "START_GRID" });
     try {
@@ -129,15 +151,17 @@ export default function Home() {
           x_baseline: displayedGrid.x_baseline,
           y_dropout: displayedGrid.y_dropout,
           preset_id: presetId,
+          provenance_ledger: provenanceLedger,
         },
         controller.signal
       );
-      dispatch({ type: "GRID_SUCCESS", response });
+      dispatch({ type: "GRID_SUCCESS", response, requestRevision: revision });
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === "AbortError") return;
       dispatch({
         type: "GRID_ERROR",
         error: err instanceof Error ? err.message : String(err),
+        requestRevision: revision,
       });
     }
   }
@@ -171,7 +195,7 @@ export default function Home() {
             Planned control event risk:{" "}
             {percent(plannedDraft.control_event_rate)} (Provenance:{" "}
             <code>
-              {plannedProvenance["/planned_design/control_event_rate"]?.source ??
+              {provenanceLedger["/planned_design/control_event_rate"]?.source ??
                 "synthetic_preset"}
             </code>
             )
@@ -235,12 +259,8 @@ export default function Home() {
         frozenEnrollment={frozenEnrollment}
         stressBaseline={stressBaseline}
         stressDropout={stressDropout}
-        onBaselineChange={(val) =>
-          dispatch({ type: "UPDATE_STRESS_BASELINE", baseline: val })
-        }
-        onDropoutChange={(val) =>
-          dispatch({ type: "UPDATE_STRESS_DROPOUT", dropout: val })
-        }
+        onBaselineChange={handleStressBaselineChange}
+        onDropoutChange={handleStressDropoutChange}
         onEvaluate={handleEvaluate}
         evaluateStatus={evaluateStatus}
         evaluateError={evaluateError}
@@ -367,7 +387,7 @@ export default function Home() {
           {evaluateStatus === "stale" && (
             <p>
               <strong>
-                ⚠️ NOTICE: Stress inputs have changed since this result was
+                ⚠️ NOTICE: Inputs have changed since this result was
                 evaluated. Results below are STALE. Click &ldquo;Evaluate Stress
                 Scenario&rdquo; to update.
               </strong>
@@ -376,7 +396,7 @@ export default function Home() {
           <p>Analytic method: {displayedEvaluate.analytic.method}.</p>
           <ul>
             <li>
-              Illustrative conditional power:{" "}
+              Conditional power:{" "}
               {displayedEvaluate.analytic.conditional_power_approx === null
                 ? "Unavailable: zero expected retention"
                 : percent(
@@ -427,9 +447,8 @@ export default function Home() {
             <li>Seed: {displayedEvaluate.monte_carlo.seed}</li>
           </ul>
           <p>
-            <strong>Mock simulation fields only.</strong> No Monte Carlo run
-            occurred. An estimate of statistical power is not a prediction that
-            treatment works.
+            <strong>Statistical estimate only.</strong> An estimate of
+            statistical power is not a prediction that treatment works.
           </p>
           <ul>
             {displayedEvaluate.warnings.map((warning) => (
@@ -460,10 +479,7 @@ export default function Home() {
             </tr>
           </thead>
           <tbody>
-            {Object.entries({
-              ...plannedProvenance,
-              ...stressProvenance,
-            }).map(([pointer, record]) => (
+            {Object.entries(provenanceLedger).map(([pointer, record]) => (
               <tr key={pointer}>
                 <td>
                   <code>{pointer}</code>
