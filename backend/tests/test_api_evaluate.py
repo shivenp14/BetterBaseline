@@ -1,4 +1,4 @@
-"""Prospective acceptance tests for #65's real scenario-evaluation endpoint.
+"""Acceptance tests for #65's real scenario-evaluation endpoint.
 
 Run from the repo root after #64's registered scaffold and #56/#58's engines:
   PYTHONPATH=backend python3 -m unittest discover -s backend/tests \
@@ -10,7 +10,9 @@ can run independently while the shared router handoff is pending:
   PYTHONPATH=backend python3 -m unittest discover -s backend/tests \
       -p test_api_evaluate.py -k EvaluationAssertionTests -v
 
-Metadata/provenance placement is pending #63/#64's final helper interfaces.
+The registered router uses typed extensions of #63 for optional simulation,
+count aggregates and reproducibility metadata; export schema alignment is a
+separate #67 handoff.
 Tests require the issue's semantics while allowing metadata at the result or
 response level. They do not replace schemas or edit shared bootstrap files.
 """
@@ -19,6 +21,7 @@ from copy import deepcopy
 import importlib
 import json
 import math
+from decimal import Decimal
 import unittest
 
 
@@ -51,12 +54,15 @@ def assert_result_semantics(test, request, result):
     test.assertEqual(result["model_version"], "binary-v1")
     analytic = result["analytic"]
     test.assertEqual(analytic["method"], "cohen_h_normal_v1")
-    test.assertTrue(0 <= analytic["conditional_power_approx"] <= 1)
     for arm in ("control", "treatment"):
-        count = math.floor(request["fixed_enrollment"][arm]
-                           * (1 - request["stress_scenario"]["dropout"][arm]))
+        count = int(Decimal(request["fixed_enrollment"][arm])
+                    * (1 - Decimal(str(request["stress_scenario"]["dropout"][arm]))))
         test.assertEqual(analytic["assumed_evaluable_n"][arm], count)
         test.assertIs(type(analytic["assumed_evaluable_n"][arm]), int)
+    if analytic["assumed_evaluable_n"]["control"] == 0:
+        test.assertIsNone(analytic["conditional_power_approx"])
+    else:
+        test.assertTrue(0 <= analytic["conditional_power_approx"] <= 1)
     if request["simulation"] is None:
         test.assertIn("monte_carlo", result)
         test.assertIsNone(result["monte_carlo"])
@@ -255,6 +261,39 @@ class ScenarioEvaluationAPITests(unittest.TestCase):
                     payload = request_payload()
                     payload["simulation"][field] = value
                     self.assert_error(payload)
+
+    def test_zero_expected_retention_keeps_random_simulation_separate(self):
+        result = self.evaluate(request_payload(enrolled=1, dropout=.90))
+        self.assertIsNone(result["analytic"]["conditional_power_approx"])
+        self.assertEqual(result["analytic"]["assumed_evaluable_n"], {"control": 0, "treatment": 0})
+        self.assertGreater(result["monte_carlo"]["mean_retained_control"], 0)
+        self.assertGreater(result["monte_carlo"]["invalid_test_fraction"], .95)
+
+    def test_decimal_floor_boundary_and_metadata_fixed_enrollment(self):
+        payload = request_payload(enrolled=50, dropout=.58)
+        result = self.evaluate(payload)
+        self.assertEqual(result["analytic"]["assumed_evaluable_n"], {"control": 21, "treatment": 21})
+        self.assertEqual(result["metadata"]["fixed_enrollment"], payload["fixed_enrollment"])
+
+    def test_replicate_boundary_values_and_resource_ceiling(self):
+        for reps in (1, 100_000):
+            payload = request_payload()
+            payload["simulation"]["replicates"] = reps
+            self.assertEqual(self.evaluate(payload)["monte_carlo"]["replicates"], reps)
+        payload = request_payload(enrolled=1_000_001, simulation=False)
+        self.assert_error(payload)
+        payload = request_payload()
+        payload["simulation"]["seed"] = None
+        self.assert_error(payload)
+
+    def test_request_provenance_survives_point_response(self):
+        payload = request_payload()
+        payload["provenance"] = {"planned_design.control_event_rate": {
+            "source": "synthetic_preset", "description": "Synthetic checker assumption",
+            "source_url": None, "retrieved_at": None,
+        }}
+        result = self.evaluate(payload)
+        self.assertEqual(result["provenance"], payload["provenance"])
 
     def test_metadata_records_versions_and_rng(self):
         result = self.evaluate(request_payload())
