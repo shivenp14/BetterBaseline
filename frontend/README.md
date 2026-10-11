@@ -6,6 +6,25 @@ implement statistical formulas and does not contact a backend or any external se
 The interface is raw semantic HTML with native controls and no styling; appearance is
 left for a later pass.
 
+## Functionality-first delivery
+
+C1–C7 deliver an unstyled functional interface. Use semantic HTML, native browser
+inputs, buttons, and tables in ordinary document flow. Do not add custom CSS,
+Tailwind styling classes, a themed component kit, decorative branding, custom
+typography, animations, or a polished responsive/dashboard layout in this phase.
+Better Baseline appears as a plain-text heading.
+
+Preserve functional controls, validation, loading/error/stale states, provenance,
+keyboard access, chart labels, and scientific warnings as the flow is implemented.
+Charts may use their library's default appearance and the minimum data encodings
+needed to distinguish traces, target lines, selected points, and invalid cells.
+The current mock shell presents its curve and grid as native HTML tables.
+
+Acceptance is based on behavior, data correctness, and accessibility. After the
+real calculate → stress → charts → simulation → export flow is complete, review
+the component inventory and screen arrangement together. Define visual design
+and styling in a separate later task; it does not block these functional issues.
+
 ## Start locally
 
 Requires Node.js 20.9+ and npm.
