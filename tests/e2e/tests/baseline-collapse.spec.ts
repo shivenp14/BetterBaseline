@@ -2,11 +2,13 @@
  * E2E acceptance tests for the real baseline-collapse workflow (#78).
  *
  * Every calculation assertion is tied to an HTTP request made by a UI action
- * and the corresponding local FastAPI response. The current mock shell does
- * not satisfy these tests; its missing integration is reported as pending #76.
+ * and the corresponding local FastAPI response. Missing API/export integration
+ * fails explicitly; fixture-only success cannot satisfy acceptance.
  */
 
 import { test, expect, Page, Response } from "@playwright/test";
+import { spawnSync } from "node:child_process";
+import path from "node:path";
 
 const BACKEND_PORT = Number(process.env.BACKEND_PORT || 8001);
 const FRONTEND_PORT = Number(process.env.FRONTEND_PORT || 3001);
@@ -14,7 +16,6 @@ const BACKEND_ORIGIN = `http://127.0.0.1:${BACKEND_PORT}`;
 const FRONTEND_ORIGIN = `http://localhost:${FRONTEND_PORT}`;
 const LOCAL_ORIGINS = new Set([BACKEND_ORIGIN, FRONTEND_ORIGIN]);
 const PRESET_ID = "baseline-collapse-v1";
-const ATTRITION_PRESET_ID = "attrition-shock-v1";
 const REFERENCE_N = 903;
 const RESPONSE_TIMEOUT_MS = 12_000;
 
@@ -79,13 +80,13 @@ async function requireUiApiResponse(
     },
     { timeout: RESPONSE_TIMEOUT_MS },
   );
-  await action();
   try {
-    return await pendingResponse;
+    const [response] = await Promise.all([pendingResponse, action()]);
+    return response;
   } catch (error) {
     throw new Error(
       `[E2E integration pending #76] UI action did not receive ${endpoint} from ${BACKEND_ORIGIN}. ` +
-        `The current mock-only shell performs no API I/O. Original error: ${String(error)}`,
+        `Verify live API configuration and UI request wiring. Original error: ${String(error)}`,
     );
   }
 }
@@ -93,7 +94,7 @@ async function requireUiApiResponse(
 async function selectPreset(page: Page, id = PRESET_ID): Promise<void> {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /better baseline/i })).toBeVisible();
-  await page.getByLabel("Synthetic scenario").selectOption(id);
+  await page.getByLabel("Select Preset:").selectOption(id);
 }
 
 async function calculateFromUi(page: Page): Promise<Record<string, any>> {
@@ -141,7 +142,7 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
   test("Evaluate sends the frozen enrollment and current stress input to the local API", async ({ page }) => {
     await selectPreset(page);
     const design = await calculateFromUi(page);
-    await page.locator("#baseline").fill("10");
+    await page.locator("#stress-baseline-num").fill("0.10");
 
     const { response, body } = await evaluateFromUi(page);
     expect(response.status()).toBe(200);
@@ -160,20 +161,20 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
 
     const evaluateSection = page.locator('section[aria-labelledby="evaluate-heading"]');
     await expect(evaluateSection).toContainText(`${(body.analytic.conditional_power_approx * 100).toFixed(0)}%`);
-    await expect(evaluateSection).toContainText(String(body.monte_carlo.replicates));
+    await expect(evaluateSection).toContainText(Number(body.monte_carlo.replicates).toLocaleString("en-US"));
   });
 
   test("changed stress produces a fresh backend calculation and updated MC fields", async ({ page }) => {
     await selectPreset(page);
     const design = await calculateFromUi(page);
-    await page.locator("#baseline").fill("10");
+    await page.locator("#stress-baseline-num").fill("0.10");
     const first = await evaluateFromUi(page);
     expect(first.response.status()).toBe(200);
     const firstRequest = first.response.request().postDataJSON();
     expect(firstRequest.fixed_enrollment).toEqual(design.enrolled_n);
     expect(firstRequest.stress_scenario.control_event_rate).toBe(0.1);
 
-    await page.locator("#baseline").fill("15");
+    await page.locator("#stress-baseline-num").fill("0.15");
     const changed = await evaluateFromUi(page);
     expect(changed.response.status()).toBe(200);
     const changedRequest = changed.response.request().postDataJSON();
@@ -226,12 +227,21 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
     await expect(gridSection.locator("table caption")).toContainText(/dropout.*baseline/i);
     await expect(gridSection.locator('thead th[scope="col"]').first()).toContainText(/dropout.*baseline/i);
     await expect(gridSection.locator('tbody th[scope="row"]').first()).toBeVisible();
+    await expect(gridSection.locator("tbody tr")).toHaveCount(body.y_dropout.length);
+    await expect(gridSection.locator("tbody td")).toHaveCount(body.x_baseline.length * body.y_dropout.length);
+    await expect(gridSection.locator("tbody td")).toHaveText(
+      body.power.flat().map((power: number | null) =>
+        power === null ? "Invalid (power null)" : `${(power * 100).toFixed(0)}%`),
+    );
   });
 
   test("invalid ARR reaches FastAPI and displays the actual 422 validation error", async ({ page }) => {
-    await selectPreset(page, ATTRITION_PRESET_ID);
+    await selectPreset(page);
+    // All shipped presets use RR; select ARR explicitly in the planning form.
+    await page.getByLabel("Hypothetical treatment effect").selectOption("absolute_risk_reduction");
+    await page.locator('[name="reductionPoints"]').fill("5");
     const design = await calculateFromUi(page);
-    await page.locator("#baseline").fill("5");
+    await page.locator("#stress-baseline-num").fill("0.05");
 
     const { response, body } = await evaluateFromUi(page);
     expect(response.status()).toBe(422);
@@ -241,22 +251,28 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
     expect(request.stress_scenario.control_event_rate).toBe(0.05);
     expect(body.error.message).toMatch(/invalid arr|cannot equal or exceed/i);
 
-    const alert = page.getByRole("alert");
-    await expect(alert, "the visible UI must expose the backend's invalid ARR 422").toBeVisible();
-    await expect(alert).toContainText(/arr/i);
+    const errorSection = page.locator('section[aria-labelledby="stress-heading"]');
+    await expect(errorSection, "the visible UI must expose the backend's invalid ARR 422").toContainText(body.error.message);
+    await expect(errorSection.getByText(/Error:/)).toBeVisible();
     await expect(page.getByRole("heading", { name: /better baseline/i })).toBeVisible();
   });
 
-  test("export is available and downloads JSON containing provenance and real calculation metadata", async ({ page }) => {
+  test("export is available and downloads JSON containing provenance and real calculation metadata", async ({ page }, testInfo) => {
     await selectPreset(page);
-    const exportButton = page.getByRole("button", { name: /export/i });
+    const exportButton = page.locator('section[aria-labelledby="export-heading"]').getByRole("button", { name: /download.*json/i });
     await expect(
       exportButton,
       "[E2E integration pending #76] export button is missing; export assembly is not integrated",
     ).toBeVisible();
 
-    await calculateFromUi(page);
-    await evaluateFromUi(page);
+    const design = await calculateFromUi(page);
+    const evaluation = await evaluateFromUi(page);
+    expect(evaluation.response.status()).toBe(200);
+    const gridResponse = await requireUiApiResponse(page, "/api/v1/scenarios/grid",
+      () => page.getByRole("button", { name: /grid/i }).click());
+    expect(gridResponse.status()).toBe(200);
+    const grid = await gridResponse.json();
+    await expect(exportButton).toBeEnabled();
     const [download] = await Promise.all([
       page.waitForEvent("download"),
       exportButton.click(),
@@ -265,12 +281,27 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
     expect(stream, "export action must create a downloadable file").not.toBeNull();
     const chunks: Buffer[] = [];
     for await (const chunk of stream!) chunks.push(Buffer.from(chunk));
-    const exported = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    const downloadedJson = Buffer.concat(chunks).toString("utf8");
+    const exported = JSON.parse(downloadedJson);
+    await testInfo.attach("downloaded-workspace-export", { body: downloadedJson, contentType: "application/json" });
+    const backendDir = path.resolve(__dirname, "../../../backend");
+    const python = process.platform === "win32"
+      ? path.join(backendDir, ".venv", "Scripts", "python.exe")
+      : path.join(backendDir, ".venv", "bin", "python");
+    const validation = spawnSync(python, ["-c",
+      "import sys; from app.schemas import ExportPayload; ExportPayload.model_validate_json(sys.stdin.read())"],
+      { cwd: backendDir, input: downloadedJson, encoding: "utf8", timeout: 10_000 });
+    expect(validation.error, "backend export validator must execute").toBeUndefined();
+    expect(validation.status, validation.stderr).toBe(0);
 
     expect(exported.export_schema_version).toBe(1);
     expect(exported.exported_at).toBeTruthy();
     expect(Object.keys(exported.provenance ?? {})).not.toHaveLength(0);
-    expect(exported.evaluation_result.metadata.inputs_hash).toMatch(/^[a-f0-9]{64}$/);
+    expect(exported.fixed_enrollment).toEqual(design.enrolled_n);
+    expect(exported.design_result).toEqual(design);
+    expect(exported.evaluation_result).toEqual(evaluation.body);
+    expect(exported.grid_result).toEqual(grid);
+    expect(exported.evaluation_result.metadata.inputs_hash).toMatch(/^(?:sha256:)?[a-f0-9]{64}$/);
     expect(exported.software_versions ?? exported.evaluation_result.metadata.software_versions).toBeTruthy();
   });
 
@@ -283,8 +314,10 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
       "/api/v1/scenarios/grid",
       () => page.getByRole("button", { name: /grid/i }).click(),
     );
-    const exportButton = page.getByRole("button", { name: /export/i });
+    const exportButton = page.locator('section[aria-labelledby="export-heading"]').getByRole("button", { name: /download.*json/i });
     await expect(exportButton, "[E2E integration pending #76] export action is missing").toBeVisible();
+    await expect(exportButton).toBeEnabled();
+    await Promise.all([page.waitForEvent("download"), exportButton.click()]);
   });
 
   test("external WebSockets are intercepted and closed before connecting", async ({ page }) => {

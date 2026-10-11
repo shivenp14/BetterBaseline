@@ -42,6 +42,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # ── Python / Backend ──
       - uses: actions/setup-python@v5
@@ -54,7 +56,7 @@ jobs:
 
       - name: Install backend dependencies
         working-directory: backend
-        run: uv sync --extra dev
+        run: uv sync --locked --extra dev
 
       # ── Node / Frontend ──
       - uses: actions/setup-node@v4
@@ -71,6 +73,7 @@ jobs:
         working-directory: frontend
         env:
           NEXT_PUBLIC_API_BASE_URL: "http://127.0.0.1:${{ env.BACKEND_PORT }}"
+          NEXT_PUBLIC_API_MODE: "live"
         run: npm run build
 
       # ── E2E package ──
@@ -95,6 +98,7 @@ jobs:
           BACKEND_PORT: ${{ env.BACKEND_PORT }}
           FRONTEND_PORT: ${{ env.FRONTEND_PORT }}
           NEXT_PUBLIC_API_BASE_URL: "http://127.0.0.1:${{ env.BACKEND_PORT }}"
+          NEXT_PUBLIC_API_MODE: "live"
         run: npm test
 
       - name: Upload Playwright report
@@ -104,3 +108,4 @@ jobs:
           name: playwright-report
           path: tests/e2e/playwright-report/
           retention-days: 14
+          if-no-files-found: error

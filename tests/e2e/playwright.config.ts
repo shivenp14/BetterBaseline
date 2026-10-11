@@ -38,7 +38,7 @@ export default defineConfig({
     baseURL: FRONTEND_URL,
     // Playwright cannot route service worker controlled requests.
     serviceWorkers: "block",
-    trace: "on-first-retry",
+    trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
 
@@ -73,6 +73,7 @@ export default defineConfig({
       timeout: 60_000,
       env: {
         NEXT_PUBLIC_API_BASE_URL: BACKEND_URL,
+        NEXT_PUBLIC_API_MODE: "live",
         PORT: String(FRONTEND_PORT),
       },
     },
