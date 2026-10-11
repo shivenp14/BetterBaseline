@@ -163,8 +163,10 @@ export async function getStressGrid(request: ExtendedGridRequest, signal?: Abort
   };
   const result = await post<Record<string, unknown>>("/api/v1/scenarios/grid", payload, signal);
   const point = (raw: unknown) => {
-    const value = raw as { p_control: number; dropout: number };
-    return { baseline: value.p_control, dropout: value.dropout };
+    const value = raw as Record<string, unknown> & { p_control: number; dropout: number };
+    // Retain canonical backend fields for ExportPayload while adding the
+    // baseline alias used by the view layer.
+    return { ...value, baseline: value.p_control };
   };
   const normalized = {
     ...result,
