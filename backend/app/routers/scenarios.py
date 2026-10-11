@@ -13,16 +13,17 @@ import json
 import platform
 from typing import Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from pydantic import ConfigDict, Field
 
+from ..cache import make_cache_key
 from ..data.provenance import normalize_provenance
 from ..schemas import (
     AnalyticEvaluation, ArmCounts, ErrorEnvelope, ExpectedRetainedCounts,
     FieldProvenance, MonteCarloEvaluation, ScenarioEvaluateRequest,
     ScenarioEvaluateResponse, ScenarioMetadata, SimulationOptions,
 )
-from ..services.compute import execute_guarded_computation
+from ..services.compute import ComputeResourceGuard, execute_guarded_computation
 from ..statistics.analytic import analytic_power
 from ..statistics.diagnostics import analytic_diagnostics
 from ..statistics.effect import resolve_treatment_risk
@@ -68,18 +69,35 @@ class EvaluationResponse(ScenarioEvaluateResponse):
 
 router = APIRouter(
     prefix='/api/v1/scenarios', tags=['scenarios'],
-    responses={422: {'model': ErrorEnvelope, 'description': 'Validation Error'}},
+    responses={
+        422: {'model': ErrorEnvelope, 'description': 'Validation Error'},
+        413: {'model': ErrorEnvelope, 'description': 'Payload Too Large'},
+        429: {
+            'model': ErrorEnvelope,
+            'description': 'Compute Resource Saturated',
+            'headers': {
+                'Retry-After': {
+                    'description': 'Seconds to wait before retrying.',
+                    'schema': {'type': 'integer'},
+                }
+            },
+        },
+    },
 )
 
 
-def _evaluate(request: EvaluationRequest) -> EvaluationResponse:
+def _evaluate(request: EvaluationRequest, guard: ComputeResourceGuard) -> EvaluationResponse:
     enrollment = request.fixed_enrollment
+    guard.check_enrollment(enrollment.control, enrollment.treatment)
     for arm in ('control', 'treatment'):
         if getattr(enrollment, arm) > MAX_ENROLLED_PER_ARM:
             raise StatisticalInputError(
                 f'Enrollment exceeds {MAX_ENROLLED_PER_ARM} per arm',
                 field=f'fixed_enrollment.{arm}', code='RESOURCE_LIMIT',
             )
+    if request.simulation is not None:
+        guard.check_simulation_options(request.simulation.replicates, request.simulation.seed)
+
     stress = request.stress_scenario
     effect = stress.effect_override or request.planned_design.effect
     p_control = stress.control_event_rate
@@ -125,6 +143,12 @@ def _evaluate(request: EvaluationRequest) -> EvaluationResponse:
 
 
 @router.post('/evaluate', response_model=EvaluationResponse)
-def evaluate_scenario(request: EvaluationRequest) -> EvaluationResponse:
+def evaluate_scenario(request: EvaluationRequest, http_request: Request) -> EvaluationResponse:
     """Evaluate stressed reality without solving or modifying planned enrollment."""
-    return execute_guarded_computation(_evaluate, request)
+    cache_key = make_cache_key(
+        route='/api/v1/scenarios/evaluate',
+        model_version='binary-v1',
+        params=request,
+    )
+    guard = http_request.app.state.compute_guard
+    return execute_guarded_computation(_evaluate, request, guard, cache_key=cache_key, guard=guard)
