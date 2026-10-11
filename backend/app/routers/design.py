@@ -1,15 +1,17 @@
 """Design calculation route."""
 
 import hashlib
+from typing import Any
 from fastapi import APIRouter
 
+from ..cache import make_cache_key
 from ..schemas import (
     ArmCounts,
     DesignCalculateRequest,
     DesignCalculateResponse,
     ErrorEnvelope,
 )
-from ..services.compute import execute_guarded_computation
+from ..services.compute import execute_guarded_computation, get_compute_guard
 from ..statistics.effect import resolve_treatment_risk
 from ..statistics.inputs import Dropout as StatDropout, Effect as StatEffect
 from ..statistics.sample_size import minimum_sample_size
@@ -36,13 +38,30 @@ def calculate_design(request: DesignCalculateRequest) -> DesignCalculateResponse
         treatment=request.dropout.treatment,
     )
 
+    cache_key = make_cache_key(
+        route="/api/v1/design/calculate",
+        model_version="binary-v1",
+        params=request,
+    )
+
+    def _compute(**_kwargs: Any) -> Any:
+        return minimum_sample_size(
+            p_control=request.control_event_rate,
+            p_treatment=p_treatment,
+            target_power=request.target_power,
+            alpha=request.alpha,
+            dropout=stat_dropout,
+        )
+
     size_result = execute_guarded_computation(
-        minimum_sample_size,
-        p_control=request.control_event_rate,
-        p_treatment=p_treatment,
-        target_power=request.target_power,
-        alpha=request.alpha,
-        dropout=stat_dropout,
+        _compute,
+        cache_key=cache_key,
+    )
+
+    # Verify inflated enrollment ceiling before returning response
+    get_compute_guard().check_enrollment(
+        control_enrolled=size_result.enrolled_per_arm,
+        treatment_enrolled=size_result.enrolled_per_arm,
     )
 
     evaluable_n = ArmCounts(
