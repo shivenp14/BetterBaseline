@@ -2,6 +2,7 @@
 // evaluation/grid ownership and debounced input-generation behavior. Requires
 // PLAYWRIGHT_MODULE and PAGE_URL; API replies are fulfilled by browser routes.
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 const { chromium } = await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).href);
@@ -193,6 +194,7 @@ async function runLiveDebouncedStressEvaluation() {
 
 async function runPendingDebounceInvalidation({ label, transition }) {
   const page = await browser.newPage();
+  await captureStressTimers(page);
   const requests = [];
   await mountLiveWorkspace(page, async (route) => {
     requests.push(route.request().postDataJSON());
@@ -214,6 +216,7 @@ async function runPendingDebounceInvalidation({ label, transition }) {
     await page.waitForFunction(() => document.querySelector("#stress-baseline-num")?.value === "0.1");
   }
 
+  await page.evaluate(() => window.stressTimers.forEach((callback) => callback()));
   await page.waitForTimeout(450);
   assert.equal(requests.length, 0, `${label} invalidates a pending stress debounce before it reaches the API`);
   assert.notEqual(
@@ -224,7 +227,106 @@ async function runPendingDebounceInvalidation({ label, transition }) {
   await page.close();
 }
 
+async function captureStressTimers(page, pauseTimers = false) {
+  // Retain canceled callbacks to exercise timers already queued for delivery.
+  await page.addInitScript((pause) => {
+    const originalSetTimeout = window.setTimeout.bind(window);
+    window.stressTimers = [];
+    window.setTimeout = (callback, delay, ...args) => {
+      if (delay === 350 && typeof callback === "function") {
+        window.stressTimers.push(callback);
+        if (pause) delay = 10000;
+      }
+      return originalSetTimeout(callback, delay, ...args);
+    };
+  }, pauseTimers);
+}
+
+async function runManualEvaluationDuringDebounce({ delayResponse = false, deliverCancelledTimer = false } = {}) {
+  const page = await browser.newPage();
+  if (deliverCancelledTimer) await captureStressTimers(page);
+  await mountLiveWorkspace(page, async () => {});
+  const requests = [];
+  await page.route("**/api/v1/scenarios/evaluate", async (route) => {
+    const requestNumber = requests.push(route.request().postDataJSON());
+    if (delayResponse) await new Promise((resolve) => setTimeout(resolve, 450));
+    await route.fulfill(requestNumber === 1
+      ? { status: 200, contentType: "application/json", body: JSON.stringify({
+        ...evaluateResponse,
+        monte_carlo: {
+          method: "pooled_two_proportion_z_v1",
+          significant_two_sided_fraction: 0.47,
+          significant_favorable_fraction: 0.47,
+          mcse_two_sided: 0.005,
+          mcse_favorable: 0.005,
+          invalid_test_fraction: 0,
+          replicates: 10000,
+          seed: 2026,
+        },
+      }) }
+      : { status: 503, contentType: "application/json", body: JSON.stringify({ detail: "Late duplicate evaluation failure" }) });
+  });
+
+  await page.locator("#stress-baseline-num").fill("0.16");
+  await page.waitForTimeout(80);
+  await page.getByRole("button", { name: "Evaluate Stress Scenario", exact: true }).click();
+  if (deliverCancelledTimer) {
+    await page.evaluate(() => {
+      if (window.stressTimers.length === 0) throw new Error("No stress debounce callback was captured");
+      window.stressTimers.forEach((callback) => callback());
+    });
+  }
+  await waitForStatus(page, "evaluation", "SUCCESS");
+  await page.waitForTimeout(600);
+  assert.equal(requests.length, 1, "manual evaluation consumes the pending stress debounce without a second request");
+  assert.equal(requests[0].stress_scenario.control_event_rate, 0.16);
+  assert.deepEqual(requests[0].fixed_enrollment, { control: 903, treatment: 903 });
+  await waitForStatus(page, "evaluation", "SUCCESS");
+  assert.equal(await page.getByRole("button", { name: "Download current results (JSON)", exact: true }).isEnabled(), true,
+    "successful manual evaluation remains exportable after the debounce window");
+  const downloadStarted = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download current results (JSON)", exact: true }).click();
+  const download = await downloadStarted;
+  const exported = JSON.parse(await readFile(await download.path(), "utf8"));
+  assert.equal(exported.evaluation_result.metadata.inputs_hash, evaluateResponse.metadata.inputs_hash,
+    "download preserves the successful manual evaluation");
+  assert.equal(exported.stress_scenario.control_event_rate, 0.16);
+  await page.close();
+}
+
+async function runCancelledDebounceAfterCallbackChange() {
+  const page = await browser.newPage();
+  await captureStressTimers(page, true);
+  const requests = [];
+  await mountLiveWorkspace(page, async (route) => {
+    requests.push(route.request().postDataJSON());
+  });
+  await page.route("**/api/v1/scenarios/grid", (route) => route.fulfill({
+    status: 200, contentType: "application/json", body: JSON.stringify(gridResponse),
+  }));
+
+  await page.locator("#stress-baseline-num").fill("0.16");
+  await page.waitForFunction(() => window.stressTimers.length > 0);
+  // Grid ownership changes page state and hence handleEvaluate's identity,
+  // without invalidating the stress-input generation or its pending intent.
+  await page.getByRole("button", { name: "Load grid response from backend", exact: true }).click();
+  await waitForStatus(page, "grid", "Status: SUCCESS");
+  await page.waitForFunction(() => window.stressTimers.length > 1);
+  await page.evaluate(() => window.stressTimers.slice(0, -1).forEach((callback) => callback()));
+  await page.waitForTimeout(80);
+  assert.equal(requests.length, 0, "obsolete callbacks cannot start work after callback identity changes");
+  await page.evaluate(() => window.stressTimers.at(-1)());
+  await waitForStatus(page, "evaluation", "SUCCESS");
+  assert.equal(requests.length, 1, "the current pending automatic evaluation still runs once");
+  await waitForStatus(page, "grid", "Status: SUCCESS");
+  await page.close();
+}
+
 try {
+  await runManualEvaluationDuringDebounce();
+  await runManualEvaluationDuringDebounce({ delayResponse: true });
+  await runManualEvaluationDuringDebounce({ deliverCancelledTimer: true });
+  await runCancelledDebounceAfterCallbackChange();
   for (const evaluationOutcome of ["success", "error"]) {
     for (const gridOutcome of ["success", "error"]) {
       for (const startFirst of ["evaluation", "grid"]) {
@@ -242,7 +344,7 @@ try {
   ]) {
     await runPendingDebounceInvalidation(invalidation);
   }
-  console.log("PASS: mounted production page preserves evaluation/grid overlap, sends one fixed-enrollment live stress evaluation, and cancels pending debounces across planned edits, presets, and reset.");
+  console.log("PASS: mounted production page preserves manual success/export through pending and canceled stress timers, evaluation/grid overlap, one automatic fixed-enrollment stress evaluation, and debounce invalidation across planned edits, presets, and reset.");
 } finally {
   await browser.close();
 }
