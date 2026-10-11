@@ -6,7 +6,7 @@ A clinical trial can be designed for 80% statistical power **only under the assu
 
 **Better Baseline** makes those vulnerabilities visible. It is a reproducible, interactive planning tool for exploring how uncertain assumptions affect the statistical power and sample size of a proposed trial.
 
-> **Project status:** HackRU implementation blueprint. This folder currently contains planning documents; the application and commands below describe the intended build, not a deployed or verified product.
+> **Project status:** Implemented local planning workspace with real FastAPI calculations, charts, seeded simulation, and validated JSON export. See the [judge runbook](docs/DEMO_SCRIPT.md) for measured rehearsals and remaining acceptance gates. This is a synthetic planning demonstration, not clinical validation.
 
 ## The idea in 30 seconds
 
@@ -44,12 +44,12 @@ The core product is **statistical computation**, not generated text:
 
 **MVP boundaries:** individually randomized, two-arm, 1:1 superiority trials; one binary primary endpoint; a two-sided test. Survival outcomes, adaptive designs, multiple endpoints, and real-world efficacy predictions are **not** part of the initial release.
 
-## Planned technology
+## Technology
 
 | Layer | Technology | Purpose |
 | --- | --- | --- |
-| Frontend | Next.js, React, TypeScript, Tailwind | Design controls, comparisons, charts |
-| Visualization | Plotly or a compatible chart library | Power curves, heatmap, threshold boundary |
+| Frontend | Next.js, React, TypeScript | Design controls, comparisons, charts |
+| Visualization | Semantic SVG charts | Power curves, heatmap, threshold boundary |
 | API | Python, FastAPI, Pydantic | Validated scenario endpoints and contracts |
 | Statistical core | NumPy, SciPy, statsmodels | Analytic power, sample sizing, Monte Carlo |
 | Optional trial metadata | ClinicalTrials.gov API v2 | Source-linked study metadata; **not** assumed original design inputs |
@@ -57,7 +57,7 @@ The core product is **statistical computation**, not generated text:
 
 No database, authentication, paid AI API, or individual patient records are required for the hackathon MVP.
 
-### Intended data flow
+### Data flow
 
 ```text
 User inputs + synthetic presets
@@ -80,25 +80,13 @@ User inputs + synthetic presets
  Charts · comparisons · export
 ```
 
-## Getting started (after the code is implemented)
+## Getting started
 
-**Prerequisites:** Python 3.12, Node.js LTS, and npm. Install and pin compatible dependency versions when scaffolding.
-
-Start the backend:
+Use Python **3.12.x** (`>=3.12,<3.13`), **Node 24.15.0** (the CI version), npm, and **uv 0.9.26**. Install these tools and dependencies while online; a clean machine cannot install packages without a network or preloaded caches/images. Run from the repository root:
 
 ```bash
 cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -e '.[dev]'
-uvicorn app.main:app --reload --port 8000
-```
-
-Start the frontend in another terminal:
-
-```bash
-cd backend
-uv sync --locked --extra dev
+uv sync --locked --python 3.12 --extra dev
 uv run --locked python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
@@ -111,29 +99,27 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open **http://localhost:3000**. The default frontend configuration sends fresh
-calculate and evaluate requests to the local API. Set `NEXT_PUBLIC_API_MODE=demo`
-in `frontend/.env.local` only when intentionally using labeled fixtures and local
-analytic calculations. The backend grid endpoint is currently a #66 scaffold that
-returns HTTP 501; the live frontend reports that limitation and does not substitute
-client-side grid formulas.
+Open **http://localhost:3000**. The default configuration selects LIVE mode and the local API. Bundled presets need no NCT lookup. Calculate & Lock Design, evaluate stress, load the grid, run the selected simulation, and download/reopen JSON using the [105-second walkthrough](docs/DEMO_SCRIPT.md).
 
-Run backend tests and the frontend's real-service integration check:
+For production startup and prebuilt offline containers, follow [Deployment](docs/DEPLOYMENT.md). API addresses are embedded at frontend build time; rebuild when changing them.
+
+Run checks from the repository root:
 
 ```bash
 cd backend
-uv run --locked --extra dev pytest -q
+uv run --locked pytest -q tests ../tests/fixtures
 cd ../frontend
+npm run lint
+npm run typecheck
+npm run build
 npm run test:backend-integration
 ```
 
-The integration command starts and cleans up its own temporary Uvicorn process. See
-[`frontend/README.md`](frontend/README.md) for frontend lint, typecheck, build, and
-workspace invariant commands.
+The integration command starts its own temporary backend. The [judge runbook](docs/DEMO_SCRIPT.md) also gives the isolated #118 E2E commands and the timed rehearsal runner. Fixture-only DEMO mode remains available when the backend is unavailable; it does not provide fresh backend Monte Carlo or a complete current export. Restore LIVE mode to complete acceptance.
 
 ## API overview
 
-The planned v1 API has three essential endpoints:
+The v1 API has three essential endpoints:
 
 | Endpoint | What it does |
 | --- | --- |
@@ -141,7 +127,7 @@ The planned v1 API has three essential endpoints:
 | `POST /api/v1/scenarios/evaluate` | Evaluate a fixed design under a stress scenario; optionally run seeded simulation |
 | `POST /api/v1/scenarios/grid` | Return the analytic power surface for charts |
 
-Optional: `GET /api/v1/trials/{nct_id}` for public trial metadata. See the [infrastructure specification](02_INFRASTRUCTURE_ARCHITECTURE.md) for request/response examples and field definitions.
+Optional: `GET /api/v1/trials/{nct_id}` for public trial metadata. See the [infrastructure specification](docs/02_INFRASTRUCTURE_ARCHITECTURE.md) for request/response examples and field definitions.
 
 ## Development priorities
 
@@ -153,9 +139,11 @@ Optional: `GET /api/v1/trials/{nct_id}` for public trial metadata. See the [infr
 
 | Read | Document | Contents |
 | --- | --- | --- |
-| **1** | [Product & Statistical Specification](01_BETTER_BASELINE_SPEC.md) | The problem, scope, mathematical definitions, UX requirements, scientific guardrails, and acceptance criteria |
-| **2** | [Infrastructure & Architecture](02_INFRASTRUCTURE_ARCHITECTURE.md) | Repository layout, stack decisions, JSON contracts, API design, caching, deployment, and CI |
-| **3** | [Implementation Playbook](03_IMPLEMENTATION_PLAYBOOK.md) | Module-by-module tasks, code examples, tests, four-person ownership, and the 24-hour build schedule |
+| **1** | [Product & Statistical Specification](docs/01_BASELINE_BREAKER_SPEC.md) | The problem, scope, mathematical definitions, UX requirements, scientific guardrails, and acceptance criteria |
+| **2** | [Infrastructure & Architecture](docs/02_INFRASTRUCTURE_ARCHITECTURE.md) | Repository layout, stack decisions, JSON contracts, API design, caching, deployment, and CI |
+| **3** | [Implementation Playbook](docs/03_IMPLEMENTATION_PLAYBOOK.md) | Module-by-module tasks, code examples, tests, four-person ownership, and the 24-hour build schedule |
+
+**Ownership tracks:** A covers the statistical core; B covers API/contracts/provenance; C covers frontend workspace/charts/export; D covers QA, deployment, fixtures, and documentation. These are product tracks, not permanent people assignments. Active issues own their named files; shared wiring transfers only after the predecessor merges and records its handoff. #83 owns this README, `docs/DEMO_SCRIPT.md`, and `scripts/demo/**`; #85 retains presentation ownership.
 
 **For contributors:** Start with the spec's MVP constraints and numerical test fixture. Freeze the API contract before splitting into parallel branches. Keep one reproducible synthetic demo working throughout development.
 
@@ -170,4 +158,4 @@ Optional: `GET /api/v1/trials/{nct_id}` for public trial metadata. See the [infr
 
 ---
 
-*Built as a HackRU project concept. Current deliverables are the specification, architecture, and implementation plan—not a claim of a validated or production-ready clinical application.*
+*Built for HackRU. Measured local behavior, recovery prerequisites, and dependency gates are recorded in the judge runbook. No public hosted deployment or clinical suitability is claimed.*
