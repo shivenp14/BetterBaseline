@@ -1,4 +1,4 @@
-# Baseline Breaker — Infrastructure, Architecture & Interfaces
+# Better Baseline — Infrastructure, Architecture & Interfaces
 
 **Document:** `02_INFRASTRUCTURE_ARCHITECTURE.md`  
 **Version:** 1.0, 10 October 2026  
@@ -72,10 +72,10 @@ flowchart LR
 
 **Version policy:** prefer currently compatible stable versions at scaffold time, check the lockfile into Git, pin the exact image/runtime and library versions before demo freeze. Do not put unverified future library version numbers in infrastructure claims. The research references statsmodels 0.15 docs; runtime compatibility must be checked against the actually installed version.
 
-## 4. Repository and ownership boundaries
+## 4. Repository and work boundaries
 
 ```text
-baseline-breaker/
+better-baseline/
 ├── frontend/
 │   ├── app/
 │   │   ├── page.tsx
@@ -145,7 +145,7 @@ baseline-breaker/
 └── README.md
 ```
 
-**Ownership:** A = backend/statistics modules and numerical tests; B = API/data/cache/deployment; C = frontend/charts; D = integration/contract tests/presets/demo. Avoid simultaneous edits to `schemas.py` or `contracts.ts`; designate B as contract owner and obtain signoff from A/C.
+**Task categories (not permanent owners):** A = backend/statistics and numerical checks; B = API/data/cache/deployment; C = frontend/charts; D = integration/contract checks/presets/demo. Assign or rotate categories according to the team's current workload. Coordinate edits to shared contracts and get cross-functional review; do not treat one category as the permanent owner of a contract.
 
 ## 5. Canonical API: shared type rules
 
@@ -169,7 +169,13 @@ export interface TrialAssumptions {
 }
 
 export interface FixedEnrollment {
-  control: number;
+  control: number; // strict integer >= 1; equal to treatment in MVP
+  treatment: number;
+}
+
+// Enrollment is positive. Expected retained counts are floored values and may be zero.
+export interface ExpectedRetainedCounts {
+  control: number; // strict integer >= 0; equal to treatment in MVP
   treatment: number;
 }
 
@@ -180,7 +186,7 @@ export interface StressScenario {
 }
 ```
 
-**Validation:** reject invalid ARR stress points rather than auto-clipping. `model_version` is required. `allocation_ratio` non-1.0 currently returns a structured `UNSUPPORTED_MODEL` error until its formula is tested. Same for a higher-is-better primary endpoint.
+**Validation:** reject invalid ARR stress points rather than auto-clipping. `model_version` is required. The supported MVP uses equal 1:1 enrollment and equal dropout rates between arms for both planned and stress scenarios; asymmetric arm counts or dropout are unsupported. Enrollment uses positive strict integers (`ArmCounts`); `ExpectedRetainedCounts` uses strict, equal nonnegative integers because floored expected retention may be zero. `allocation_ratio` must be `1.0`. A higher-is-better primary endpoint is unsupported.
 
 ### 5.2 `POST /api/v1/design/calculate`
 
@@ -254,7 +260,8 @@ Response contract:
     "method": "pooled_two_proportion_z_v1",
     "significant_two_sided_fraction": 0.47,
     "significant_favorable_fraction": 0.47,
-    "mcse": 0.005,
+    "mcse_two_sided": 0.005,
+    "mcse_favorable": 0.005,
     "invalid_test_fraction": 0.0,
     "replicates": 10000,
     "seed": 42
@@ -264,7 +271,7 @@ Response contract:
 }
 ```
 
-**Numbers in this JSON are schematic rounded illustrations, not reference assertions for seed 42.** The implementation must generate them. `assumed_evaluable_n` should be computed using the explicitly chosen conservative floor-of-expected-retention convention or replaced with a more explicit `expected_evaluable_n` field; do not conflate it with actual random retained counts in simulation.
+**Numbers in this JSON are schematic rounded illustrations, not reference assertions for seed 42.** The implementation must generate them. `assumed_evaluable_n` is a strict, equal, nonnegative integer count per arm computed by flooring expected retention; it is distinct from random retained counts in simulation. If it is zero, return `conditional_power_approx: null`, include a warning, and still run Monte Carlo. Never substitute fabricated zero analytic power. Statistical internals may expose additional diagnostics, but the API response uses only its declared fields and canonical names.
 
 ### 5.4 `POST /api/v1/scenarios/grid`
 
@@ -281,10 +288,11 @@ Response fields:
 ```text
 model_version, method, x_baseline[], y_dropout[], power[][],
 invalid_mask[][], target_power, planned_point, selected_point,
-frontier_points[], warnings[], computed_at, inputs_hash
+frontier_points[], contour_segments[], power_curve[], invalid_cell_count,
+worst_case_power, warnings[], computed_at, inputs_hash
 ```
 
-For MVP when dropout is symmetric, use conservative integer expected retained N `floor(enrolled_n × (1-d))` per arm for each grid cell, calculate `NormalIndPower.power` on that count, and **label grid as expected-count approximation**. It is not an exact integration over random retention. The selected cell receives the full Monte Carlo check. No silent mixing of approximate and simulated grid values.
+Use the selected effect by precedence: top-level `effect_override`, then `selected_scenario.effect_override`, then `planned_design.effect`. Conflicting explicit overrides are invalid. `selected_scenario` supplies the selected baseline/dropout point; its dropout also selects the power-curve slice, with 0.0 when omitted. For each grid cell use floored expected retained count `floor(enrolled_n × (1-d))` per arm and label the grid as an expected-count approximation. If the count is zero, that analytic cell is invalid (`null` plus mask); do not report zero power. The selected cell can receive the full Monte Carlo check. `contour_segments` follow the request's `target_power`; 80% is only the demo/default target. `worst_case_power` is the minimum among valid cells and is null iff there are none. No silent mixing of approximate and simulated grid values.
 
 ### 5.5 `GET /api/v1/trials/{nct_id}`
 
@@ -329,6 +337,38 @@ Error envelope:
 ```
 
 Recommended status mapping: 422 invalid input, 404 unknown NCT, 429 compute quota, 502/504 external upstream error, 500 internal unexpected fault. Display human-readable errors in UI and log server exceptions internally without raw private request data.
+
+### 5.7 Full reproducible export
+
+`ExportPayload` is the canonical export shape. Serialize complete typed objects from the API schemas; do not replace them with presentation-only summaries or alternate export fields.
+
+```json
+{
+  "export_schema_version": 1,
+  "model_version": "binary-v1",
+  "planned_design": {
+    "model_version": "binary-v1",
+    "control_event_rate": 0.2,
+    "effect": {"kind": "relative_risk", "value": 0.75},
+    "alpha": 0.05,
+    "target_power": 0.8,
+    "allocation_ratio": 1.0,
+    "dropout": {"control": 0.0, "treatment": 0.0}
+  },
+  "fixed_enrollment": {"control": 903, "treatment": 903},
+  "stress_scenario": null,
+  "design_result": null,
+  "evaluation_result": null,
+  "grid_result": null,
+  "software_versions": {"python": "3.12", "betterbaseline": "0.1.0"},
+  "provenance": {
+    "control_event_rate": {"source": "synthetic_preset", "description": "Baseline collapse preset"}
+  },
+  "exported_at": "2026-10-10T23:30:00Z"
+}
+```
+
+`planned_design` and `fixed_enrollment` are required. Result and stress fields are nullable; non-null results use their canonical response models. Provenance values use the declared source tags. `software_versions` is a string-to-string map. `exported_at` is the export timestamp; calculation timestamps and hashes remain inside their typed result metadata where defined. Do not introduce alternate top-level `project`, `scenario_origin`, `source_links`, `generated_at`, or `inputs_hash` fields.
 
 ## 6. Data ingestion boundary & provenance
 
