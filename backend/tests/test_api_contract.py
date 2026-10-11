@@ -180,3 +180,109 @@ def test_scenarios_grid_stub_501(client: TestClient) -> None:
     }
     response = client.post("/api/v1/scenarios/grid", json=payload)
     assert response.status_code == 501
+
+
+def test_cors_preflight_default_allowed_origins(client: TestClient) -> None:
+    """Default configuration allows localhost preflight."""
+    response = client.options(
+        "/api/v1/design/calculate",
+        headers={
+            "Origin": "http://localhost:3000",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "http://localhost:3000"
+
+
+def test_cors_preflight_configured_environment_origin(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Configured ALLOWED_ORIGINS in environment is parsed and honored in preflight."""
+    from app.main import create_app
+
+    monkeypatch.setenv("ALLOWED_ORIGINS", '["https://review.example"]')
+    test_app = create_app()
+    test_client = TestClient(test_app)
+
+    response = test_client.options(
+        "/api/v1/design/calculate",
+        headers={
+            "Origin": "https://review.example",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "https://review.example"
+
+    disallowed = test_client.options(
+        "/api/v1/design/calculate",
+        headers={
+            "Origin": "https://disallowed.example",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+    assert disallowed.status_code == 400
+
+
+def test_parse_allowed_origins_formats() -> None:
+    """parse_allowed_origins supports JSON arrays, comma-delimited strings, and lists."""
+    from app.settings import parse_allowed_origins
+
+    assert parse_allowed_origins('["https://a.com", "https://b.com"]') == [
+        "https://a.com",
+        "https://b.com",
+    ]
+    assert parse_allowed_origins("https://a.com, https://b.com") == [
+        "https://a.com",
+        "https://b.com",
+    ]
+    assert parse_allowed_origins(["https://a.com", "https://b.com"]) == [
+        "https://a.com",
+        "https://b.com",
+    ]
+    assert parse_allowed_origins(None) == [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+
+
+def test_openapi_documents_error_envelope_for_422() -> None:
+    """OpenAPI schema declares ErrorEnvelope for 422 responses and omits HTTPValidationError."""
+    schema = app.openapi()
+    for endpoint in ["/api/v1/design/calculate", "/api/v1/scenarios/evaluate", "/api/v1/scenarios/grid"]:
+        post_op = schema["paths"][endpoint]["post"]
+        resp_422 = post_op["responses"]["422"]
+        schema_ref = resp_422["content"]["application/json"]["schema"]["$ref"]
+        assert schema_ref == "#/components/schemas/ErrorEnvelope"
+
+    schemas = schema["components"]["schemas"]
+    assert "ErrorEnvelope" in schemas
+    assert "ErrorDetail" in schemas
+    assert "HTTPValidationError" not in schemas
+    assert "ValidationError" not in schemas
+
+
+def test_design_calculate_routes_through_compute_helper(client: TestClient) -> None:
+    """POST /api/v1/design/calculate routes computation through execute_guarded_computation."""
+    from unittest.mock import patch
+    from app.routers import design
+
+    called = False
+
+    def spy_compute(func, *args, **kwargs):
+        nonlocal called
+        called = True
+        return func(*args, **kwargs)
+
+    with patch.object(design, "execute_guarded_computation", side_effect=spy_compute):
+        payload = {
+            "model_version": "binary-v1",
+            "control_event_rate": 0.20,
+            "effect": {"kind": "relative_risk", "value": 0.75},
+            "alpha": 0.05,
+            "target_power": 0.80,
+            "allocation_ratio": 1.0,
+            "dropout": {"control": 0.10, "treatment": 0.10},
+        }
+        response = client.post("/api/v1/design/calculate", json=payload)
+        assert response.status_code == 200
+        assert called is True

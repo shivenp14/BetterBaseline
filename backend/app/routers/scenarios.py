@@ -1,9 +1,13 @@
 """Scenario evaluation route scaffold (owned by Issue #65)."""
 
 from fastapi import APIRouter, HTTPException, status
-from ..schemas import ScenarioEvaluateRequest, ScenarioEvaluateResponse
+from ..schemas import ErrorEnvelope, ScenarioEvaluateRequest, ScenarioEvaluateResponse
 
-router = APIRouter(prefix="/api/v1/scenarios", tags=["scenarios"])
+router = APIRouter(
+    prefix="/api/v1/scenarios",
+    tags=["scenarios"],
+    responses={422: {"model": ErrorEnvelope, "description": "Validation Error"}},
+)
 
 
 @router.post("/evaluate", response_model=ScenarioEvaluateResponse)

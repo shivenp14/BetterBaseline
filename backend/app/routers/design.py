@@ -3,12 +3,22 @@
 import hashlib
 from fastapi import APIRouter
 
-from ..schemas import ArmCounts, DesignCalculateRequest, DesignCalculateResponse
+from ..schemas import (
+    ArmCounts,
+    DesignCalculateRequest,
+    DesignCalculateResponse,
+    ErrorEnvelope,
+)
+from ..services.compute import execute_guarded_computation
 from ..statistics.effect import resolve_treatment_risk
 from ..statistics.inputs import Dropout as StatDropout, Effect as StatEffect
 from ..statistics.sample_size import minimum_sample_size
 
-router = APIRouter(prefix="/api/v1/design", tags=["design"])
+router = APIRouter(
+    prefix="/api/v1/design",
+    tags=["design"],
+    responses={422: {"model": ErrorEnvelope, "description": "Validation Error"}},
+)
 
 
 def compute_inputs_hash(request: DesignCalculateRequest) -> str:
@@ -26,7 +36,8 @@ def calculate_design(request: DesignCalculateRequest) -> DesignCalculateResponse
         treatment=request.dropout.treatment,
     )
 
-    size_result = minimum_sample_size(
+    size_result = execute_guarded_computation(
+        minimum_sample_size,
         p_control=request.control_event_rate,
         p_treatment=p_treatment,
         target_power=request.target_power,

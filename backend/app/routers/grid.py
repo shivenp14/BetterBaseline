@@ -2,9 +2,13 @@
 
 from fastapi import APIRouter, HTTPException, status
 
-from ..schemas import ScenarioGridRequest, ScenarioGridResponse
+from ..schemas import ErrorEnvelope, ScenarioGridRequest, ScenarioGridResponse
 
-router = APIRouter(prefix="/api/v1/scenarios", tags=["grid"])
+router = APIRouter(
+    prefix="/api/v1/scenarios",
+    tags=["grid"],
+    responses={422: {"model": ErrorEnvelope, "description": "Validation Error"}},
+)
 
 
 @router.post("/grid", response_model=ScenarioGridResponse)
