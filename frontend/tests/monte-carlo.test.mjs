@@ -5,7 +5,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { request, selection, alternative, nullFixture } from './monte-carlo.fixtures.mjs';
 const load=createRequire(import.meta.url);
-const { parseSimulationOptions, simulationIdentity, createSimulationClient, createSharedSimulationTransport }=load(`${process.env.C6_RENDER_ROOT}/lib/simulation-client.js`);
+const { SimulationError, validateSimulationRequest, parseSimulationResult, parseSimulationOptions, simulationIdentity, createSimulationClient, createSharedSimulationTransport }=load(`${process.env.C6_RENDER_ROOT}/lib/simulation-client.js`);
 const { MonteCarloPanel, MonteCarloResults }=load(`${process.env.C6_RENDER_ROOT}/components/MonteCarloPanel.js`);
 const { MethodDisclosures }=load(`${process.env.C6_RENDER_ROOT}/components/MethodDisclosures.js`);
 const render=(component,props)=>renderToStaticMarkup(React.createElement(component,props));
@@ -74,4 +74,25 @@ test('native controls show defaults, empty/unavailable and invalid states honest
   assert.ok(render(MonteCarloPanel,{selection:null}).includes('Simulation unavailable'));
   const invalid=render(MonteCarloPanel,{selection:{...selection,stress_scenario:{...selection.stress_scenario,effect_override:{kind:'absolute_risk_reduction',value:.2}}},runSimulation:async()=>alternative});
   assert.ok(invalid.includes('role="alert"')&&invalid.includes('disabled='));
+});
+
+test('domain validation exposes actionable codes and affected fields',()=>{
+  assert.throws(()=>parseSimulationOptions('42','0'),{name:'SimulationError',code:'INVALID_MODEL_INPUT',field:'simulation.replicates'});
+  const invalid=structuredClone(request);invalid.stress_scenario.effect_override={kind:'absolute_risk_reduction',value:.2};
+  assert.throws(()=>validateSimulationRequest(invalid),{code:'INVALID_MODEL_INPUT',field:'stress_scenario.effect_override'});
+  const unsupported=structuredClone(request);unsupported.stress_scenario.dropout.treatment=.2;
+  assert.throws(()=>validateSimulationRequest(unsupported),{code:'UNSUPPORTED_MODEL',field:'stress_scenario.dropout'});
+  const malformed=structuredClone(alternative);delete malformed.monte_carlo.mcse_favorable;
+  assert.throws(()=>parseSimulationResult(malformed,request),error=>error instanceof SimulationError&&error.code==='INVALID_RESPONSE');
+  assert.throws(()=>parseSimulationResult({...alternative,monte_carlo:null},request),{code:'SIMULATION_UNAVAILABLE'});
+});
+test('disclosures accompany result metrics rather than the empty input form',()=>{
+  const empty=render(MonteCarloPanel,{selection,runSimulation:async()=>alternative});
+  assert.ok(!empty.includes('Simulation method disclosures'));
+  for(const result of [alternative,nullFixture]){
+    const html=render(MonteCarloResults,{result});
+    assert.equal((html.match(/Simulation method disclosures/g)||[]).length,1);
+    assert.ok(html.indexOf('Simulation method disclosures')<html.indexOf('Two-sided significance fraction'));
+    assert.ok(html.includes('Conditional power estimates do not establish treatment efficacy or clinical benefit'));
+  }
 });

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { MethodDisclosures } from "./MethodDisclosures";
-import { MAX_REPLICATES, MAX_SEED, parseSimulationOptions, simulationIdentity, validateSimulationRequest,
+import { simulationErrorMessage, MAX_REPLICATES, MAX_SEED, parseSimulationOptions, simulationIdentity, validateSimulationRequest,
   type RunSimulation, type SimulationRequest, type SimulationResult, type SimulationSelection } from "../lib/simulation-client";
 export interface MonteCarloPanelProps {
   selection: SimulationSelection | null;
@@ -14,6 +14,7 @@ const percent = (n: number) => `${(n * 100).toFixed(3)}%`;
 export function MonteCarloResults({ result }: { result: SimulationResult }) {
   const mc = result.monte_carlo;
   return <>
+    <MethodDisclosures />
     <dl>
       <dt>Two-sided significance fraction</dt><dd>{percent(mc.significant_two_sided_fraction)}</dd>
       <dt>Two-sided MCSE (percentage points)</dt><dd>{(mc.mcse_two_sided * 100).toFixed(3)}</dd>
@@ -53,7 +54,7 @@ export function MonteCarloPanel({ selection, runSimulation, unavailableReason, o
   try {
     const options = parseSimulationOptions(seed, replicates);
     if (selection) { request = { ...selection, simulation: options }; validateSimulationRequest(request); }
-  } catch (error) { invalid = error instanceof Error ? error.message : "Invalid simulation inputs."; }
+  } catch (error) { invalid = simulationErrorMessage(error); }
   const identity = request ? simulationIdentity(request) : JSON.stringify([selection, seed, replicates]);
   const available = Boolean(selection && runSimulation && !unavailableReason);
   const pending = pendingRequest?.identity === identity && !pendingRequest.signal.aborted;
@@ -74,13 +75,13 @@ export function MonteCarloPanel({ selection, runSimulation, unavailableReason, o
       onResult?.(result, captured);
     } catch (error) {
       if (generation.current !== token || active.signal.aborted) return;
-      setFailure({ identity, message: error instanceof Error ? error.message : "Simulation failed. Try again." });
+      setFailure({ identity, message: simulationErrorMessage(error) });
     } finally {
       if (generation.current === token) { setPendingRequest(null); controller.current = null; inFlight.current = null; }
     }
   }
   return <section aria-labelledby={`${id}-heading`} aria-busy={pending}>
-    <h2 id={`${id}-heading`}>Selected-scenario Monte Carlo simulation</h2><MethodDisclosures />
+    <h2 id={`${id}-heading`}>Selected-scenario Monte Carlo simulation</h2>
     {!available && <p role="status">Simulation unavailable: {unavailableReason ?? (!selection ? "calculate and select a valid frozen design first." : "the live simulation adapter is not connected.")}</p>}
     <form onSubmit={run} noValidate>
       <label htmlFor={`${id}-seed`}>Simulation seed</label>{" "}<input id={`${id}-seed`} type="text" inputMode="numeric" value={seed} onChange={(event) => setSeed(event.target.value)} aria-describedby={`${id}-bounds`} />

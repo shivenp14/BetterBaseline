@@ -9,6 +9,7 @@ try {
   const field=name=>page.getByLabel(name,{exact:true});
   const run=()=>page.getByRole('button',{name:'Run simulation',exact:true});
   const value=label=>page.locator('dt').filter({hasText: new RegExp(`^${label}$`)}).locator('xpath=following-sibling::dd[1]').textContent();
+  assert.equal(await page.getByRole('complementary',{name:'Simulation method disclosures'}).count(),0);
   assert.equal(await field('Simulation seed').inputValue(),'42');assert.equal(await field('Simulation replicates').inputValue(),'10000');
   await field('Simulation replicates').fill('100001');
   await page.waitForFunction(()=>Array.from(document.querySelectorAll('button')).some(button=>button.textContent==='Run simulation'&&button.disabled));
@@ -16,6 +17,7 @@ try {
   await field('Simulation replicates').fill('10000');
   await field('Simulation seed').press('Enter');
   await page.getByText('Mean actual retained participants (simulation)',{exact:true}).waitFor();
+  assert.equal(await page.getByRole('complementary',{name:'Simulation method disclosures'}).count(),1);
   assert.equal(await field('Run calls').textContent(),'1');assert.equal(await value('Seed'),'42');assert.equal(await value('Replicates'),'10000');
   assert.match(await value('Inputs hash'),/^sha256:/);
   assert.equal(requests.length,1);assert.equal(requests[0].simulation.replicates,10000);assert.equal(requests[0].simulation.seed,42);

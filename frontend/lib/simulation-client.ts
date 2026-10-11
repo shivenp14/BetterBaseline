@@ -29,40 +29,54 @@ export interface SimulationResult {
 export type SimulationTransport = (request: SimulationRequest, signal: AbortSignal) => Promise<unknown>;
 export type RunSimulation = (request: SimulationRequest, signal: AbortSignal) => Promise<SimulationResult>;
 export const MAX_REPLICATES = 100_000, MAX_SEED = 2 ** 32 - 1, MAX_ENROLLMENT = 1_000_000;
-function object(value: unknown): Record<string, unknown> {
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Malformed simulation response.");
+export type SimulationErrorCode = "INVALID_MODEL_INPUT" | "UNSUPPORTED_MODEL" | "INVALID_RESPONSE" | "SIMULATION_UNAVAILABLE";
+export class SimulationError extends Error {
+  constructor(readonly code: SimulationErrorCode, message: string, readonly field: string | null = null) {
+    super(message);
+    this.name = "SimulationError";
+  }
+}
+export function simulationErrorMessage(error: unknown): string {
+  if (error instanceof SimulationError) return `${error.code}${error.field ? ` (${error.field})` : ""}: ${error.message}`;
+  return error instanceof Error ? error.message : "Simulation failed. Try again.";
+}
+function requireRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new SimulationError("INVALID_RESPONSE", "Malformed simulation response.");
   return Object.fromEntries(Object.entries(value));
 }
-function number(value: unknown, min = 0, max = Infinity): number {
-  if (typeof value !== "number" || !Number.isFinite(value) || value < min || value > max) throw new Error("Invalid simulation number.");
+function requireNumber(value: unknown, min = 0, max = Infinity, field: string | null = null): number {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < min || value > max) throw new SimulationError("INVALID_MODEL_INPUT", "Enter a finite number within the allowed range.", field);
   return value;
 }
-function integer(value: unknown, min: number, max: number): number {
-  const result = number(value, min, max);
-  if (!Number.isInteger(result)) throw new Error("Enter a whole number within the allowed range.");
+function requireInteger(value: unknown, min: number, max: number, field: string | null = null): number {
+  const result = requireNumber(value, min, max, field);
+  if (!Number.isInteger(result)) throw new SimulationError("INVALID_MODEL_INPUT", "Enter a whole number within the allowed range.", field);
   return result;
 }
-function text(value: unknown): string {
-  if (typeof value !== "string" || !value) throw new Error("Missing simulation metadata.");
+function requireText(value: unknown): string {
+  if (typeof value !== "string" || !value) throw new SimulationError("INVALID_RESPONSE", "Missing simulation metadata.");
   return value;
 }
-function versions(value: unknown): Record<string, string> {
-  return Object.fromEntries(Object.entries(object(value)).map(([key, item]) => [key, text(item)]));
+function requireVersions(value: unknown): Record<string, string> {
+  return Object.fromEntries(Object.entries(requireRecord(value)).map(([key, item]) => [key, requireText(item)]));
 }
-function counts(value: unknown, min = 0): FixedEnrollment {
-  const v = object(value), control = integer(v.control, min, MAX_ENROLLMENT), treatment = integer(v.treatment, min, MAX_ENROLLMENT);
-  if (control !== treatment) throw new Error("Equal arm counts are required.");
+function requireCounts(value: unknown, min = 0, field: string | null = null): FixedEnrollment {
+  const armCounts = requireRecord(value);
+  const control = requireInteger(armCounts.control, min, MAX_ENROLLMENT, field ? `${field}.control` : null);
+  const treatment = requireInteger(armCounts.treatment, min, MAX_ENROLLMENT, field ? `${field}.treatment` : null);
+  if (control !== treatment) throw new SimulationError("UNSUPPORTED_MODEL", "Equal arm counts are required.", field);
   return { control, treatment };
 }
-function sources(value: unknown): Record<string, FieldSource> {
-  return Object.fromEntries(Object.entries(object(value)).map(([key, item]) => {
-    const v = object(item), tag = v.source;
-    if (tag !== "manual_user" && tag !== "synthetic_preset" && tag !== "protocol_curated" && tag !== "clinicaltrials_registry") throw new Error("Invalid source metadata.");
+function requireSources(value: unknown): Record<string, FieldSource> {
+  return Object.fromEntries(Object.entries(requireRecord(value)).map(([key, item]) => {
+    const sourceRecord = requireRecord(item);
+    const tag = sourceRecord.source;
+    if (tag !== "manual_user" && tag !== "synthetic_preset" && tag !== "protocol_curated" && tag !== "clinicaltrials_registry") throw new SimulationError("INVALID_RESPONSE", "Invalid source metadata.");
     const result: FieldSource = { source: tag };
     for (const field of ["description", "retrieved_at", "source_url"] as const) {
-      const entry = v[field];
+      const entry = sourceRecord[field];
       if (entry !== undefined) {
-        if (entry !== null && typeof entry !== "string") throw new Error("Invalid source metadata.");
+        if (entry !== null && typeof entry !== "string") throw new SimulationError("INVALID_RESPONSE", "Invalid source metadata.");
         result[field] = entry;
       }
     }
@@ -70,61 +84,96 @@ function sources(value: unknown): Record<string, FieldSource> {
   }));
 }
 export function parseSimulationOptions(seed: string, replicates: string) {
-  if (!/^\d+$/.test(seed.trim()) || !/^\d+$/.test(replicates.trim())) throw new Error("Seed and replicates must be whole numbers.");
-  return { seed: integer(Number(seed), 0, MAX_SEED), replicates: integer(Number(replicates), 1, MAX_REPLICATES) };
+  for (const [field, value] of [["simulation.seed", seed], ["simulation.replicates", replicates]]) {
+    if (!/^\d+$/.test(value.trim())) {
+      throw new SimulationError("INVALID_MODEL_INPUT", "Seed and replicates must be whole numbers.", field);
+    }
+  }
+  return { seed: requireInteger(Number(seed), 0, MAX_SEED, "simulation.seed"),
+    replicates: requireInteger(Number(replicates), 1, MAX_REPLICATES, "simulation.replicates") };
 }
-function probability(value: number, zero = false) {
-  number(value, 0, 1);
-  if (value >= 1 || (!zero && value === 0)) throw new Error("Scenario rates are outside supported bounds.");
+function validateProbability(value: number, zero = false, field: string | null = null) {
+  requireNumber(value, 0, 1, field);
+  if (value >= 1 || (!zero && value === 0)) throw new SimulationError("INVALID_MODEL_INPUT", "Scenario rates are outside supported bounds.", field);
 }
-function effect(value: Effect, baseline: number) {
-  probability(value.value);
-  if (value.kind !== "relative_risk" && value.kind !== "absolute_risk_reduction") throw new Error("Unsupported effect.");
-  if (value.kind === "absolute_risk_reduction" && value.value >= baseline) throw new Error("Absolute risk reduction must be smaller than selected baseline risk.");
+function validateEffect(value: Effect, baseline: number, field: string | null = null) {
+  validateProbability(value.value, false, field);
+  if (value.kind !== "relative_risk" && value.kind !== "absolute_risk_reduction") throw new SimulationError("UNSUPPORTED_MODEL", "Unsupported effect.", field);
+  if (value.kind === "absolute_risk_reduction" && value.value >= baseline) throw new SimulationError("INVALID_MODEL_INPUT", "Absolute risk reduction must be smaller than selected baseline risk.", field);
 }
 export function validateSimulationRequest(request: SimulationRequest): void {
-  const d = request.planned_design, s = request.stress_scenario;
-  if (d.model_version !== "binary-v1" || d.allocation_ratio !== 1) throw new Error("Only equal-allocation binary-v1 is supported.");
-  counts(request.fixed_enrollment, 1);
-  for (const scenario of [d, s]) {
-    probability(scenario.control_event_rate); probability(scenario.dropout.control, true); probability(scenario.dropout.treatment, true);
-    if (scenario.dropout.control !== scenario.dropout.treatment) throw new Error("Symmetric dropout is required.");
+  const plannedDesign = request.planned_design;
+  const stressScenario = request.stress_scenario;
+  if (plannedDesign.model_version !== "binary-v1" || plannedDesign.allocation_ratio !== 1) {
+    throw new SimulationError("UNSUPPORTED_MODEL", "Only equal-allocation binary-v1 is supported.", "planned_design");
   }
-  probability(d.alpha); probability(d.target_power);
-  if (d.target_power <= d.alpha) throw new Error("Target power must exceed alpha.");
-  effect(d.effect, d.control_event_rate); effect(s.effect_override ?? d.effect, s.control_event_rate);
-  integer(request.simulation.seed, 0, MAX_SEED); integer(request.simulation.replicates, 1, MAX_REPLICATES);
-  if (request.provenance) sources(request.provenance);
+  requireCounts(request.fixed_enrollment, 1, "fixed_enrollment");
+  for (const [field, scenario] of [["planned_design", plannedDesign], ["stress_scenario", stressScenario]] as const) {
+    validateProbability(scenario.control_event_rate, false, `${field}.control_event_rate`);
+    validateProbability(scenario.dropout.control, true, `${field}.dropout.control`);
+    validateProbability(scenario.dropout.treatment, true, `${field}.dropout.treatment`);
+    if (scenario.dropout.control !== scenario.dropout.treatment) {
+      throw new SimulationError("UNSUPPORTED_MODEL", "Symmetric dropout is required.", `${field}.dropout`);
+    }
+  }
+  validateProbability(plannedDesign.alpha, false, "planned_design.alpha");
+  validateProbability(plannedDesign.target_power, false, "planned_design.target_power");
+  if (plannedDesign.target_power <= plannedDesign.alpha) {
+    throw new SimulationError("INVALID_MODEL_INPUT", "Target power must exceed alpha.", "planned_design.target_power");
+  }
+  validateEffect(plannedDesign.effect, plannedDesign.control_event_rate, "planned_design.effect");
+  validateEffect(stressScenario.effect_override ?? plannedDesign.effect, stressScenario.control_event_rate, "stress_scenario.effect_override");
+  requireInteger(request.simulation.seed, 0, MAX_SEED, "simulation.seed");
+  requireInteger(request.simulation.replicates, 1, MAX_REPLICATES, "simulation.replicates");
+  if (request.provenance) {
+    try {
+      requireSources(request.provenance);
+    } catch (error) {
+      throw new SimulationError("INVALID_MODEL_INPUT", simulationErrorMessage(error), "provenance");
+    }
+  }
 }
 export function simulationIdentity(request: SimulationRequest): string {
   function ordered(value: unknown): unknown {
     if (Array.isArray(value)) return value.map(ordered);
-    if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, item]) => [key, ordered(item)]));
+    if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).sort(([firstKey], [secondKey]) => firstKey.localeCompare(secondKey)).map(([key, item]) => [key, ordered(item)]));
     return value;
   }
   return JSON.stringify(ordered(request));
 }
 export function parseSimulationResult(value: unknown, request: SimulationRequest): SimulationResult {
-  const r = object(value), a = object(r.analytic), metadata = object(r.metadata);
-  if (r.model_version !== "binary-v1" || a.method !== "cohen_h_normal_v1") throw new Error("Unsupported simulation model or analytic method.");
-  if (!r.monte_carlo) throw new Error("Simulation is unavailable in this response.");
-  const m = object(r.monte_carlo);
-  if (m.method !== "pooled_two_proportion_z_v1" || m.invalid_test_policy !== "nonrejection_over_all_replicates") throw new Error("Unsupported simulation method or invalid-test policy.");
-  const mc: SimulationMetrics = {
+  try {
+    return validateSimulationResult(value, request);
+  } catch (error) {
+    if (error instanceof SimulationError && error.code === "INVALID_MODEL_INPUT") {
+      throw new SimulationError("INVALID_RESPONSE", error.message, error.field);
+    }
+    throw error;
+  }
+}
+function validateSimulationResult(value: unknown, request: SimulationRequest): SimulationResult {
+  const response = requireRecord(value);
+  const analytic = requireRecord(response.analytic);
+  const metadata = requireRecord(response.metadata);
+  if (response.model_version !== "binary-v1" || analytic.method !== "cohen_h_normal_v1") throw new SimulationError("UNSUPPORTED_MODEL", "Unsupported simulation model or analytic method.");
+  if (!response.monte_carlo) throw new SimulationError("SIMULATION_UNAVAILABLE", "Simulation is unavailable in this response.");
+  const monteCarlo = requireRecord(response.monte_carlo);
+  if (monteCarlo.method !== "pooled_two_proportion_z_v1" || monteCarlo.invalid_test_policy !== "nonrejection_over_all_replicates") throw new SimulationError("UNSUPPORTED_MODEL", "Unsupported simulation method or invalid-test policy.");
+  const metrics: SimulationMetrics = {
     method: "pooled_two_proportion_z_v1", invalid_test_policy: "nonrejection_over_all_replicates",
-    significant_two_sided_fraction: number(m.significant_two_sided_fraction, 0, 1), significant_favorable_fraction: number(m.significant_favorable_fraction, 0, 1),
-    mcse_two_sided: number(m.mcse_two_sided, 0, .5), mcse_favorable: number(m.mcse_favorable, 0, .5), invalid_test_fraction: number(m.invalid_test_fraction, 0, 1),
-    mean_retained_control: number(m.mean_retained_control, 0, request.fixed_enrollment.control), mean_retained_treatment: number(m.mean_retained_treatment, 0, request.fixed_enrollment.treatment),
-    mean_control_events: number(m.mean_control_events), mean_treatment_events: number(m.mean_treatment_events),
-    seed: integer(m.seed, 0, MAX_SEED), replicates: integer(m.replicates, 1, MAX_REPLICATES), rng: text(m.rng), software_versions: versions(m.software_versions),
+    significant_two_sided_fraction: requireNumber(monteCarlo.significant_two_sided_fraction, 0, 1), significant_favorable_fraction: requireNumber(monteCarlo.significant_favorable_fraction, 0, 1),
+    mcse_two_sided: requireNumber(monteCarlo.mcse_two_sided, 0, .5), mcse_favorable: requireNumber(monteCarlo.mcse_favorable, 0, .5), invalid_test_fraction: requireNumber(monteCarlo.invalid_test_fraction, 0, 1),
+    mean_retained_control: requireNumber(monteCarlo.mean_retained_control, 0, request.fixed_enrollment.control), mean_retained_treatment: requireNumber(monteCarlo.mean_retained_treatment, 0, request.fixed_enrollment.treatment),
+    mean_control_events: requireNumber(monteCarlo.mean_control_events), mean_treatment_events: requireNumber(monteCarlo.mean_treatment_events),
+    seed: requireInteger(monteCarlo.seed, 0, MAX_SEED), replicates: requireInteger(monteCarlo.replicates, 1, MAX_REPLICATES), rng: requireText(monteCarlo.rng), software_versions: requireVersions(monteCarlo.software_versions),
   };
-  const fixed = counts(metadata.fixed_enrollment, 1);
-  if (mc.seed !== request.simulation.seed || mc.replicates !== request.simulation.replicates || fixed.control !== request.fixed_enrollment.control || fixed.treatment !== request.fixed_enrollment.treatment) throw new Error("Simulation response does not match requested seed, replicates or frozen enrollment.");
-  if (mc.significant_favorable_fraction > mc.significant_two_sided_fraction || mc.mean_control_events > mc.mean_retained_control || mc.mean_treatment_events > mc.mean_retained_treatment) throw new Error("Inconsistent simulation aggregates.");
-  if (!Array.isArray(r.warnings) || !r.warnings.every((item): item is string => typeof item === "string")) throw new Error("Invalid simulation warnings.");
-  return { model_version: "binary-v1", monte_carlo: mc,
-    analytic: { method: "cohen_h_normal_v1", conditional_power_approx: a.conditional_power_approx === null ? null : number(a.conditional_power_approx, 0, 1), assumed_evaluable_n: counts(a.assumed_evaluable_n) },
-    warnings: r.warnings, metadata: { computed_at: text(metadata.computed_at), inputs_hash: text(metadata.inputs_hash), fixed_enrollment: fixed, software_versions: versions(metadata.software_versions) }, provenance: sources(r.provenance) };
+  const fixedEnrollment = requireCounts(metadata.fixed_enrollment, 1);
+  if (metrics.seed !== request.simulation.seed || metrics.replicates !== request.simulation.replicates || fixedEnrollment.control !== request.fixed_enrollment.control || fixedEnrollment.treatment !== request.fixed_enrollment.treatment) throw new SimulationError("INVALID_RESPONSE", "Simulation response does not match requested seed, replicates or frozen enrollment.");
+  if (metrics.significant_favorable_fraction > metrics.significant_two_sided_fraction || metrics.mean_control_events > metrics.mean_retained_control || metrics.mean_treatment_events > metrics.mean_retained_treatment) throw new SimulationError("INVALID_RESPONSE", "Inconsistent simulation aggregates.");
+  if (!Array.isArray(response.warnings) || !response.warnings.every((item): item is string => typeof item === "string")) throw new SimulationError("INVALID_RESPONSE", "Invalid simulation warnings.");
+  return { model_version: "binary-v1", monte_carlo: metrics,
+    analytic: { method: "cohen_h_normal_v1", conditional_power_approx: analytic.conditional_power_approx === null ? null : requireNumber(analytic.conditional_power_approx, 0, 1), assumed_evaluable_n: requireCounts(analytic.assumed_evaluable_n) },
+    warnings: response.warnings, metadata: { computed_at: requireText(metadata.computed_at), inputs_hash: requireText(metadata.inputs_hash), fixed_enrollment: fixedEnrollment, software_versions: requireVersions(metadata.software_versions) }, provenance: requireSources(response.provenance) };
 }
 export function createSimulationClient(transport: SimulationTransport): RunSimulation {
   return async (request, signal) => {
@@ -147,7 +196,7 @@ export function createSharedSimulationTransport(
       preset_id: "selected-simulation", provenance_ledger: request.provenance ?? {},
     }, signal);
     if (response.mock !== false || response.execution?.mode !== "backend") {
-      throw new Error("Live simulation unavailable: shared API is in demo mode.");
+      throw new SimulationError("SIMULATION_UNAVAILABLE", "Live simulation unavailable: shared API is in demo mode.");
     }
     return { ...response, provenance: response.provenance.field_provenance ?? {} };
   };

@@ -92,6 +92,15 @@ states, and unmount abort. Acceptance additionally verifies the actual HTTP payl
 seed/replicates and no UI-only keys, and that returned field provenance is visible.
 Production page assembly and downloaded-export acceptance remain with #76.
 
-Validated: 11 unit/render tests, real shared-helper browser checks, lint,
+Validated: 13 unit/render tests, real shared-helper browser checks, lint,
 typecheck and a clean production build. Temporary acceptance wiring and generated
 Next files are excluded from the PR.
+
+
+Review corrections: method disclosures are part of MonteCarloResults so they
+remain beside every current or stale result. Local validation throws SimulationError
+with code and optional field: INVALID_MODEL_INPUT, UNSUPPORTED_MODEL,
+INVALID_RESPONSE or SIMULATION_UNAVAILABLE. The panel displays those codes and
+fields with actionable messages; shared backend errors keep their existing codes.
+AbortError remains cancellation. The branch is rebased onto current main; only
+the eight #75-owned files belong to its review diff.
