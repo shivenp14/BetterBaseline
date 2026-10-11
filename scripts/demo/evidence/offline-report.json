@@ -1,0 +1,49 @@
+{
+  "tested_commit": "80216ea7a8260d0b5547c457219a7705f8e46937",
+  "date": "2026-10-11T13:16:44.968Z",
+  "offline": true,
+  "paced": true,
+  "duration_seconds": 105.008,
+  "node": "v24.15.0",
+  "browser": "156.0.8078.4",
+  "steps": [
+    {
+      "name": "Load synthetic baseline-collapse preset",
+      "elapsed_seconds": 0.085
+    },
+    {
+      "name": "Calculate and lock 903 per arm",
+      "elapsed_seconds": 15.134
+    },
+    {
+      "name": "Fresh stress .12 risk / .13 dropout, frozen enrollment",
+      "elapsed_seconds": 30.066
+    },
+    {
+      "name": "Load live grid and inspect heatmap/curve",
+      "elapsed_seconds": 45.037
+    },
+    {
+      "name": "Selected Monte Carlo seed 42 / 10000 replicates",
+      "elapsed_seconds": 60.075
+    },
+    {
+      "name": "Download complete JSON and validate backend schema",
+      "elapsed_seconds": 75.15
+    },
+    {
+      "name": "Reopen artifact and explain provenance / scientific boundary",
+      "elapsed_seconds": 90.275
+    }
+  ],
+  "external_requests": [],
+  "page_errors": [],
+  "baseline_power": 0.46999657396642885,
+  "stressed_power": 0.4934706317083697,
+  "frozen_enrollment": {
+    "control": 903,
+    "treatment": 903
+  },
+  "export_sha256": "7242a11f4e612e3b3f3a9110b24973279bbd99d7c31cbdcbe64867461cafa447",
+  "scope": "Browser exact-origin routing and backend socket/DNS guard; host network remains available"
+}

@@ -6,7 +6,7 @@ A clinical trial can be designed for 80% statistical power **only under the assu
 
 **Better Baseline** makes those vulnerabilities visible. It is a reproducible, interactive planning tool for exploring how uncertain assumptions affect the statistical power and sample size of a proposed trial.
 
-> **Project status:** Hackathon research prototype with a Next.js workspace and a FastAPI statistical backend. The MVP models two-arm binary endpoints and includes synthetic demos, sensitivity charts, seeded simulations, and scenario exports. It requires independent statistical review before use in real study planning.
+> **Project status:** Implemented local planning workspace with real FastAPI calculations, charts, seeded simulation, and validated JSON export. See the [judge runbook](docs/DEMO_SCRIPT.md) for measured rehearsals and remaining acceptance gates. This is a synthetic planning demonstration, not clinical validation.
 
 ## The real-world question behind Better Baseline
 
@@ -109,15 +109,13 @@ User inputs + synthetic presets
  Charts · comparisons · export
 ```
 
-## Run locally
+## Getting started
 
-**Prerequisites:** Python 3.12, uv, Node.js LTS, and npm. Use the committed dependency locks.
-
-Start the backend:
+Use Python **3.12.x** (`>=3.12,<3.13`), **Node 24.15.0** (the CI version), npm, and **uv 0.9.26**. Install these tools and dependencies while online; a clean machine cannot install packages without a network or preloaded caches/images. Run from the repository root:
 
 ```bash
 cd backend
-uv sync --locked --extra dev
+uv sync --locked --python 3.12 --extra dev
 uv run --locked python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
@@ -130,26 +128,30 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open **http://localhost:3000**. The default frontend configuration sends fresh
-calculate and evaluate requests to the local API. Set `NEXT_PUBLIC_API_MODE=demo`
+Open **http://localhost:3000**. The default configuration selects LIVE mode and the local API. Bundled presets need no NCT lookup. Calculate & Lock Design, evaluate stress, load the grid, run the selected simulation, and download/reopen JSON using the [105-second walkthrough](docs/DEMO_SCRIPT.md).
+
+Set `NEXT_PUBLIC_API_MODE=demo`
 in `frontend/.env.local` only when intentionally using labeled fixtures and local
 analytic calculations. In live mode, the backend calculates the fixed-enrollment
 power surface and target-power boundary; demo mode is explicitly labeled. The
 default `baseline-collapse-v1` preset contains synthetic assumptions, even when
 the backend calculates its results.
 
-Run backend tests and the frontend's real-service integration check:
+For production startup and prebuilt offline containers, follow [Deployment](docs/DEPLOYMENT.md). API addresses are embedded at frontend build time; rebuild when changing them.
+
+Run checks from the repository root:
 
 ```bash
 cd backend
-uv run --locked --extra dev pytest -q
+uv run --locked pytest -q tests ../tests/fixtures
 cd ../frontend
+npm run lint
+npm run typecheck
+npm run build
 npm run test:backend-integration
 ```
 
-The integration command starts and cleans up its own temporary Uvicorn process. See
-[`frontend/README.md`](frontend/README.md) for frontend lint, typecheck, build, and
-workspace invariant commands.
+The integration command starts its own temporary backend. The [judge runbook](docs/DEMO_SCRIPT.md) also gives the isolated #118 E2E commands and the timed rehearsal runner. Fixture-only DEMO mode remains available when the backend is unavailable; it does not provide fresh backend Monte Carlo or a complete current export. Restore LIVE mode to complete acceptance.
 
 ## API overview
 
@@ -178,6 +180,8 @@ future research direction, not a feature of this MVP.
 | **2** | [Infrastructure & Architecture](docs/02_INFRASTRUCTURE_ARCHITECTURE.md) | Repository layout, stack decisions, JSON contracts, API design, caching, deployment, and CI |
 | **3** | [Implementation Playbook](docs/03_IMPLEMENTATION_PLAYBOOK.md) | Module-by-module tasks, code examples, tests, four-person ownership, and the 24-hour build schedule |
 
+**Ownership tracks:** A covers the statistical core; B covers API/contracts/provenance; C covers frontend workspace/charts/export; D covers QA, deployment, fixtures, and documentation. These are product tracks, not permanent people assignments. Active issues own their named files; shared wiring transfers only after the predecessor merges and records its handoff. #83 owns this README, `docs/DEMO_SCRIPT.md`, and `scripts/demo/**`; #85 retains presentation ownership.
+
 **For contributors:** Start with the spec's MVP constraints, the statistical methods, and the numerical fixtures. Preserve the frozen-enrollment invariant and keep historical context separate from numerical input provenance.
 
 ## Scientific scope and responsibility
@@ -191,4 +195,4 @@ future research direction, not a feature of this MVP.
 
 ---
 
-*Built for HackRU. Better Baseline makes conditional design risk visible; clinical use requires endpoint-specific methods and independent validation.*
+*Built for HackRU. Measured local behavior, recovery prerequisites, and dependency gates are recorded in the judge runbook. No public hosted deployment or clinical suitability is claimed.*
