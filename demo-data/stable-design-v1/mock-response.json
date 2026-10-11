@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "contract_status": "draft_pending_B1",
+  "result_status": "illustrative_hand_authored",
+  "preset_id": "stable-design-v1",
+  "project": "Better Baseline",
+  "design": {
+    "model_version": "binary-v1",
+    "method": "cohen_h_normal_v1",
+    "p_treatment": 0.15,
+    "evaluable_n": {
+      "control": 903,
+      "treatment": 903
+    },
+    "enrolled_n": {
+      "control": 951,
+      "treatment": 951
+    },
+    "nominal_power_evaluable": 0.8
+  },
+  "point": {
+    "model_version": "binary-v1",
+    "analytic": {
+      "method": "cohen_h_normal_v1",
+      "conditional_power_approx": 0.79,
+      "assumed_evaluable_n": {
+        "control": 893,
+        "treatment": 893
+      },
+      "retention_semantics": "floor_of_expected_retained_count"
+    },
+    "monte_carlo": {
+      "method": "pooled_two_proportion_z_v1",
+      "result_status": "illustrative_hand_authored",
+      "significant_two_sided_fraction": 0.79,
+      "significant_favorable_fraction": 0.79,
+      "mcse_two_sided": 0.00407308237088326,
+      "mcse_favorable": 0.00407308237088326,
+      "invalid_test_fraction": 0.0,
+      "invalid_test_policy": "nonrejection_over_all_replicates",
+      "mean_retained_control": 893.91,
+      "mean_retained_treatment": 893.87,
+      "mean_control_events": 169.843,
+      "mean_treatment_events": 127.376,
+      "retention_semantics": "illustrative_random_retention_aggregates_not_analytic_floor",
+      "replicates": 10000,
+      "seed": 42
+    },
+    "warnings": [
+      "Hand-authored illustrative mock; not measured engine output or clinical evidence.",
+      "Analytic and pooled-z simulation use distinct approximations."
+    ]
+  },
+  "grid": {
+    "model_version": "binary-v1",
+    "method": "cohen_h_normal_v1",
+    "result_status": "illustrative_hand_authored",
+    "label": "Approximate conditional power at expected retained counts",
+    "matrix_order": "dropout_index,baseline_index",
+    "x_baseline": [
+      0.1,
+      0.19,
+      0.2
+    ],
+    "y_dropout": [
+      0.05,
+      0.06
+    ],
+    "power": [
+      [
+        0.47,
+        0.8,
+        0.8
+      ],
+      [
+        0.46,
+        0.79,
+        0.8
+      ]
+    ],
+    "invalid_mask": [
+      [
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false
+      ]
+    ],
+    "target_power": 0.8,
+    "planned_point": {
+      "control_event_rate": 0.2,
+      "dropout": 0.05
+    },
+    "selected_point": {
+      "control_event_rate": 0.19,
+      "dropout": 0.06
+    },
+    "frontier_points": [],
+    "frontier_status": "not_computed_in_mock",
+    "warnings": [
+      "Hand-authored illustrative mock; not measured engine output or clinical evidence.",
+      "This is an analytic surface; Monte Carlo applies only to the selected point."
+    ]
+  },
+  "metadata": {
+    "inputs_hash": "sha256:c63d70d3603bd1db5a8c3942246e253d65507c7526f366cb753ea2f7b3b3bc4a",
+    "computed_at": null,
+    "software_versions": null,
+    "engine_commit": null,
+    "generation_status": "pending_actual_A_B_engine_snapshots"
+  },
+  "warnings": [
+    "Hand-authored illustrative mock; not measured engine output or clinical evidence."
+  ]
+}
