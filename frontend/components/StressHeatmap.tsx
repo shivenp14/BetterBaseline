@@ -136,7 +136,7 @@ export function StressHeatmap({ current, result, status, error, onSelectPoint }:
     <p>Method: {result.method}. Effect: {result.effectKind === "relative_risk" ? "RR" : "ARR"} {result.effectValue}.
       Target: {percent(result.targetPower)}. Conditional power does not predict efficacy.</p>
     <figure>
-      <svg viewBox="0 0 650 345" width="650" height="345" role="img" aria-labelledby={`${id}-title ${id}-desc`}>
+      <svg viewBox="0 0 650 345" width="650" height="345" style={{ maxWidth: "100%", height: "auto" }} role="img" aria-labelledby={`${id}-title ${id}-desc`}>
         <title id={`${id}-title`}>Analytic sensitivity grid, baseline horizontally and dropout vertically</title>
         <desc id={`${id}-desc`}>Rows are dropout and columns are baseline. Higher dropout is at the top.
           Coral crossed cells are invalid, never zero power. Stronger mint means higher power.

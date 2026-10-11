@@ -17,5 +17,33 @@
 .analyticsGrid > section { border-top:1px solid var(--rule); padding-top:24px; }
 .simulation { border-top:1px solid var(--rule); padding-top:24px; }
 .provenance code { color:var(--mint); }
+.stepNav { margin:24px 0 32px; border-bottom:1px solid var(--rule); }
+.stepNav ol { display:flex; gap:8px; list-style:none; margin:0; padding:0 0 16px; }
+.stepNav a { display:inline-flex; align-items:center; gap:10px; min-height:44px; padding:8px 14px; color:var(--muted); text-decoration:none; border:1px solid transparent; }
+.stepNav a span { display:grid; place-items:center; width:24px; height:24px; border:1px solid var(--rule); border-radius:50%; font:12px var(--font-mono); }
+.stepNav a:hover { color:var(--text); border-color:var(--rule); }
+.stepNav a[aria-current="step"] { color:var(--canvas); background:var(--mint); font-weight:700; }
+.stepNav a[aria-current="step"] span { border-color:var(--canvas); }
+.pageContent { display:grid; gap:28px; }
+.pageContent > section,.pageContent > div { min-width:0; }
+.pageControls { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-top:40px; padding-top:22px; border-top:1px solid var(--rule); }
+.pageControls a { min-height:44px; display:inline-flex; align-items:center; padding:10px 14px; border:1px solid var(--rule); text-decoration:none; }
+.pageControls a:hover { border-color:var(--mint); }
+.pageControls .nextLink { margin-left:auto; color:var(--canvas); background:var(--mint); border-color:var(--mint); font-weight:700; }
+.modeNote { color:var(--muted); }
+.recoveryNote { padding:12px 0; color:var(--warning); }
+.advancedRanges { border-top:1px solid var(--rule); padding-top:8px; }
+.advancedRanges summary { min-height:44px; }
+.methodSection { border-top:1px solid var(--rule); padding-top:22px; }
+.methodSection h2 { color:var(--mint); }
+.methodSection > p { max-width:76ch; color:var(--muted); }
+.hash { color:var(--mint); overflow-wrap:anywhere; }
 @media(max-width:900px) { .workspace { padding:24px; } .planningGrid { gap:24px; } .analyticsGrid,.stressWorkspace { grid-template-columns:1fr; } .gridRequest { border-left:0; border-top:1px solid var(--rule); padding:20px 0 0; } }
 @media(max-width:640px) { .workspace { padding:24px 20px 40px; } .planningGrid { grid-template-columns:1fr; } .workspace > section,.workspace > div { margin-top:28px; } .header p:last-child { font-size:11px; } }
+@media(max-width:640px) {
+  .stepNav { overflow-x:auto; margin:20px -20px 24px; padding:0 20px; }
+  .stepNav ol { width:max-content; }
+  .stepNav a { padding:7px 11px; }
+  .pageControls { align-items:stretch; flex-direction:column; }
+  .pageControls a,.pageControls .nextLink { justify-content:center; margin-left:0; }
+}

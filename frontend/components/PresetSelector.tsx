@@ -19,15 +19,14 @@ export function PresetSelector({
 
   return (
     <section className="planning-presets" aria-labelledby="preset-heading">
-      <h2 id="preset-heading">Synthetic Presets & Scenario Selection</h2>
+      <h2 id="preset-heading">Choose a starting example</h2>
       <p>
-        Select a versioned synthetic preset or reset the current scenario to initial defaults.
-        Editing assumptions will update field provenance to <code>manual_user</code>.
+        Examples use made-up assumptions to show how this workspace works; they are not taken from a real trial. Choose one to replace the current values, or keep the selected example and edit it below.
       </p>
 
       <div className="planning-presetControls">
         <label htmlFor="preset-select">
-          <strong>Select Preset:</strong>{" "}
+          <strong>Starting example:</strong>{" "}
         </label>
         <select
           id="preset-select"
@@ -42,7 +41,7 @@ export function PresetSelector({
         </select>
         {onResetPreset && (
           <button type="button" onClick={onResetPreset}>
-            Reset to Preset Defaults
+            Restore example values
           </button>
         )}
       </div>

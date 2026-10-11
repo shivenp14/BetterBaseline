@@ -6,6 +6,21 @@ are fixtures: in live mode they are labeled as stale/demo data until an endpoint
 returns successfully. The explicitly selected demo mode uses fixtures and local
 analytic formulas and labels every result as demo output.
 
+## Workspace pages
+
+The workspace is split into `/plan`, `/stress-test`, `/simulation`, and
+`/methods`; `/` redirects to `/plan`. Use the shared page navigation or the
+next/back links to move between tasks. A persistent workspace provider keeps
+draft inputs, request ownership, calculation snapshots, and simulation state
+alive during client-side navigation. A direct URL or hard reload starts with
+the default preset and gives a calculate-first recovery message on pages that
+need a current enrollment lock.
+
+Planning assumptions, the active stress scenario, export eligibility, and all
+scientific/statistical outputs retain the existing API and provenance rules.
+Range charts live under the advanced disclosure on Stress-test; provenance,
+historical context, disclosures, and JSON export are grouped on Methods.
+
 ## Start locally
 
 Requires Node.js 20.9+, npm, Python 3.12, and `uv`. From the repository root:

@@ -14,6 +14,8 @@ export interface DesignFormProps {
   onCalculate: (request: CalculateRequest) => void | Promise<void>;
   /** Parent marks prior results stale and tracks edited input provenance here. */
   onDraftChange?: (draft: PlanningDraft, changedField: DraftField) => void;
+  /** Shared draft lets the form survive route unmounts, including invalid partial edits. */
+  draft?: PlanningDraft;
   submitLabel?: string;
   isCalculating?: boolean;
   error?: string | null;
@@ -35,12 +37,13 @@ export function DesignForm(props: DesignFormProps) {
   return <DesignFormFields key={resetKey} {...props} initialDraft={initialDraft} />;
 }
 
-function DesignFormFields({ initialDraft, presetId, onCalculate, onDraftChange,
+function DesignFormFields({ initialDraft, presetId, onCalculate, onDraftChange, draft: controlledDraft,
   isCalculating = false, error = null, submitLabel = "Calculate design" }: DesignFormProps & { initialDraft: PlanningDraft }) {
   const id = useId();
   const form = useRef<HTMLFormElement>(null);
   const submitting = useRef(false);
-  const [draft, setDraft] = useState(initialDraft);
+  const [localDraft, setLocalDraft] = useState(initialDraft);
+  const draft = controlledDraft ?? localDraft;
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitted, setSubmitted] = useState(false);
   const [pending, setPending] = useState(false);
@@ -51,7 +54,7 @@ function DesignFormFields({ initialDraft, presetId, onCalculate, onDraftChange,
     if (field === "effectKind" && !isEffectKind(value)) return;
     const next: PlanningDraft = field === "effectKind" && isEffectKind(value)
       ? { ...draft, effectKind: value } : { ...draft, [field]: value };
-    setDraft(next);
+    if (!controlledDraft) setLocalDraft(next);
     setCallbackError(null);
     if (submitted) setErrors(validatePlanningDraft(next).errors);
     onDraftChange?.(next, field);
@@ -101,15 +104,14 @@ function DesignFormFields({ initialDraft, presetId, onCalculate, onDraftChange,
 
   return <section className="planning-formSection" aria-labelledby={`${id}-heading`}>
     <h2 id={`${id}-heading`}>Planning assumptions</h2>
-    <p>Binary adverse endpoint, two-sided test, equal 1:1 arm enrollment, and symmetric dropout.</p>
-    <p>Percent fields use the displayed percent units: enter 20 for 20%. Relative risk uses a decimal ratio.</p>
+    <p>This example models one yes-or-no outcome in two equally sized groups. Percent fields use percent units: enter 20 for 20%. A relative risk is a ratio: 0.75 means the treatment group’s assumed event rate is 75% of the control group’s.</p>
     <form ref={form} onSubmit={submit} noValidate aria-busy={busy}>
       <fieldset className="planning-fields" disabled={busy}>
         <legend>Planned design inputs</legend>
-        {input("controlPercent", "Control endpoint risk (%)",
-          `Endpoint risk in the trial’s eligible control population over the stated follow-up period. This is not general-population disease prevalence.`)}
+        {input("controlPercent", "Control group event rate (%)",
+          `The share of eligible people in the control group expected to have the selected outcome during follow-up. This is not a general-population rate.`)}
         <div className="planning-field">
-          <label htmlFor={`${id}-effectKind`}>Hypothetical treatment effect</label>{" "}
+          <label htmlFor={`${id}-effectKind`}>Assumed difference between groups</label>{" "}
           <select id={`${id}-effectKind`} name="effectKind" value={draft.effectKind}
             aria-invalid={Boolean(errors.effectKind)} aria-describedby={errors.effectKind ? `${id}-effect-error` : undefined}
             onChange={(event) => change("effectKind", event.target.value)}>
@@ -123,7 +125,7 @@ function DesignFormFields({ initialDraft, presetId, onCalculate, onDraftChange,
           : input("reductionPoints", "Absolute risk reduction (percentage points)", "For example, 5 means a reduction of 5 percentage points. It must be smaller than the control endpoint risk.")}
         {input("targetPercent", "Target power (%)")}
         {input("alphaPercent", "Two-sided alpha (%)")}
-        {input("dropoutPercent", "Dropout in each arm (%)", "One shared fraction applies to both arms. Dropout assumes independent missingness; retained participant counts are not guaranteed.")}
+        {input("dropoutPercent", "Dropout in each arm (%)", "One shared estimate applies to both groups. Dropout assumes independent missingness; retained participant counts are not guaranteed.")}
         <button type="submit">{busy ? "Calculating design…" : submitLabel}</button>
       </fieldset>
       {Object.keys(errors).length > 0 && <p role="alert">Correct the marked planning inputs before calculating.</p>}

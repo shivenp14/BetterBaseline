@@ -26,7 +26,7 @@ const summary = (props = {}) => renderToStaticMarkup(React.createElement(DesignS
 
 test("form has explicit units, baseline definition, and associated native controls", () => {
   const html = form();
-  for (const text of ["Control endpoint risk (%)", "eligible control population", "decimal ratio", "independent missingness", "equal 1:1", "symmetric dropout", "Calculate design"]) assert.ok(html.includes(text));
+  for (const text of ["Control group event rate (%)", "eligible people in the control group", "decimal ratio", "0.75 means", "equally sized groups", "shared estimate applies", "Calculate design"]) assert.ok(html.includes(text));
   assert.match(html, /name="controlPercent"[^>]*value="20"/);
   assert.match(html, /name="relativeRisk"[^>]*value="0.75"/);
   assert.ok(html.includes("aria-describedby="));
@@ -52,7 +52,7 @@ test("pending form disables controls and exposes error/status", () => {
 
 test("summary separates counts and preserves method, source, and warnings", () => {
   const html = summary();
-  for (const text of ["Required evaluable participants", "Planned enrolled participants", "903", "1004", "80.01%", "15.00%", "cohen_h_normal_v1", "binary-v1", "Synthetic fixture", "Example warning", "Illustrative mock", "not guaranteed"]) assert.ok(html.includes(text));
+  for (const text of ["Needed with outcome data", "Planned to enroll", "903", "1004", "80.01%", "15.00%", "cohen_h_normal_v1", "binary-v1", "Synthetic fixture", "Example warning", "Illustrative mock", "cannot guarantee"]) assert.ok(html.includes(text));
   const changed = summary({ result: { ...result, evaluable_n: { control: 120, treatment: 120 }, enrolled_n: { control: 150, treatment: 150 } } });
   assert.ok(changed.includes("120") && changed.includes("150"));
   assert.ok(!changed.includes("903"));

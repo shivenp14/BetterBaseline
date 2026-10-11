@@ -20,7 +20,7 @@ export function GridDataTable({ result, onSelectPoint }: {
   const problem = heatmapProblem(result, result);
   if (problem) return <p role="alert">{problem}</p>;
   return <>
-    <div className={"analytics-tableScroll"} role="region" aria-label="Analytic sensitivity grid numerical alternative" tabIndex={0}>
+    <div className={"analytics-tableScroll"} role="region" aria-label="Assumption chart data table" tabIndex={0}>
     <table>
       <caption>Analytic power matrix [dropout][baseline], floor-based expected retained counts; selected MC shown separately.</caption>
       <thead><tr><th scope="col">Symmetric dropout ↓ / Baseline →</th>{result.xBaseline.map(baseline =>
