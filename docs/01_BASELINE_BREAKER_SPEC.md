@@ -1,4 +1,4 @@
-# Baseline Breaker — Product & Statistical Specification
+# Better Baseline — Product & Statistical Specification
 
 **Document:** `01_BASELINE_BREAKER_SPEC.md`  
 **Version:** 1.0 (HackRU handoff, 10 October 2026)  
@@ -9,7 +9,7 @@
 
 ### One-line description
 
-**Baseline Breaker stress-tests the statistical power of a proposed clinical trial when its planning assumptions might be wrong.** It is a prospective, reproducible sensitivity-analysis and simulation workspace, **not** a protocol author, an AI wrapper, or an estimate of whether a drug will work.
+**Better Baseline stress-tests the statistical power of a proposed clinical trial when its planning assumptions might be wrong.** It is a prospective, reproducible sensitivity-analysis and simulation workspace, **not** a protocol author, an AI wrapper, or an estimate of whether a drug will work.
 
 ### Motivating problem
 
@@ -25,7 +25,7 @@ A two-arm trial can be calculated to have 80% power under a particular control-a
 
 ### User benefit and differentiation
 
-Traditional power calculators answer: *What sample size meets a target under one input scenario?* Baseline Breaker adds: *Show the entire set of scenarios in which the proposed enrollment meets or misses that target*, using fast analytic evaluation and reproducible Monte Carlo checks. The main differentiator is the **Assumption Safety Envelope**: an interactive boundary in baseline-risk × dropout/effect space, with clear limitations and source provenance.
+Traditional power calculators answer: *What sample size meets a target under one input scenario?* Better Baseline adds: *Show the entire set of scenarios in which the proposed enrollment meets or misses that target*, using fast analytic evaluation and reproducible Monte Carlo checks. The main differentiator is the **Assumption Safety Envelope**: an interactive boundary in baseline-risk × dropout/effect space, with clear limitations and source provenance.
 
 Existing software can already perform power analysis and advanced simulation. Do **not** claim the underlying math is new. The prototype's value is interpretable, tightly scoped stress testing and live cause-and-effect comparison.
 
@@ -39,7 +39,7 @@ The user can:
 2. See treatment event probability, required **evaluable** subjects, required **enrollment** under dropout assumptions, planned analytic power, and model version.
 3. Freeze enrollment and change the **assumed true** control event rate (the “shock”) without silently recalculating the original enrollment.
 4. Choose **constant relative risk** or **constant absolute risk reduction** and see their different implications.
-5. Inspect power curve, stress heatmap, 80%-power boundary, and a reproducible Monte Carlo estimate at a selected scenario.
+5. Inspect the power curve, stress heatmap, requested target-power contour (80% for the demo/default), and a reproducible Monte Carlo estimate at a selected scenario.
 6. Compare “planning design” and “stress scenario” side by side; export input parameters, results, assumptions, and provenance.
 7. Optionally import trial metadata via an NCT ID. The app must **not automatically equate posted outcome results with original planning assumptions**.
 
@@ -54,13 +54,13 @@ A judge can move a single slider from a 20% to 10% control event rate and see wh
 | Trial | Individually randomized, parallel, two-arm superiority |
 | Endpoint | One **binary** primary endpoint; event denotes an undesirable outcome |
 | Comparison | Treatment vs control, independent observations |
-| Allocation | Equal 1:1 for the shipped MVP; unequal ratio only after validation |
+| Allocation | Equal 1:1 enrollment for the shipped MVP; unequal counts only after validation |
 | Hypothesis | Two-sided difference in event proportions, nominal alpha 0.05 |
 | Statistical target | User-selectable desired conditional power, default 0.80 |
 | Treatment effect | Relative risk `RR = p_treatment / p_control`, default 0.75; positive absolute risk reduction as alternate view |
 | Planning sample size | Arcsine/Cohen's *h* normal approximation, integer search for minimal evaluable sample size |
 | Monte Carlo test | Pooled two-proportion z test (two-sided) with separate favorable-direction indicator |
-| Dropout | Independent, arm-specific retention; simplification disclosed |
+| Dropout | Independent, symmetric arm dropout for the shipped MVP; asymmetric rates only after validation |
 | Multiplicity | Exactly one primary hypothesis; no multiple-comparison adjustment |
 | Data | No individual patient data; generated outcomes are synthetic |
 | Auth / database | Neither needed for the hackathon |
@@ -139,21 +139,23 @@ For the simulated hypothesis test, use a pooled two-sample z statistic:
 Z = \frac{X_T/R_T-X_C/R_C}{\sqrt{\hat p(1-\hat p)(1/R_C+1/R_T)}}.
 \]
 
-Compute `p_two_sided = 2 × norm.sf(abs(Z))`, mark `p_two_sided < alpha`, and separately record whether the observed effect is in the prespecified beneficial direction. Return **both** `significant_two_sided_rate` and `significant_favorable_rate`. No valid normal statistic exists for some degenerate/very small samples; return an **invalid-test frequency** and a method warning, rather than dividing by zero or hiding failures. Decide and document conservative handling for undefined tests before publishing results.
+Compute `p_two_sided = 2 × norm.sf(abs(Z))`, mark `p_two_sided < alpha`, and separately record whether the observed effect is in the prespecified beneficial direction. The API reports `significant_two_sided_fraction`, `significant_favorable_fraction`, `mcse_two_sided`, and `mcse_favorable` as distinct fields. Internal statistical diagnostics may use additional names or include additional summaries, but the API serializer must map to these canonical fields. No valid normal statistic exists for some degenerate/very small samples; return an **invalid-test frequency** and a method warning, rather than dividing by zero or hiding failures.
 
 Because the analytical method uses an arcsine normal approximation and the simulation uses a pooled z test on discrete counts, **small numeric differences are expected**. Validate within a justified tolerance that accounts for both approximation differences and MCSE. Do not force both outputs to match exactly.
 
 ### 5.4 Robustness metrics
 
-For a grid `p_C ∈ [0.05,0.30]`, `dropout ∈ [0,0.30]` at **fixed originally planned enrolled N**:
+For a grid `p_C ∈ [0.05,0.30]`, `dropout ∈ [0,0.30]` at **fixed originally planned enrollment**:
 
-- `power[p_index][dropout_index]`: approximate conditional power at each point.
+- `power[dropout_index][baseline_index]`: approximate conditional power at each point; `invalid_mask` uses the same orientation and invalid cells carry `null`, never zero power.
 - `below_target`: Boolean mask of cells with power < target.
 - `critical_baseline`: lowest modeled baseline attaining target, if applicable; state it depends on chosen effect parameterization and grid resolution.
-- `frontier`: interpolated 80%-power contour; never extrapolate beyond the grid.
+- `contour_segments`: target-dependent interpolated contour segments; the contour follows the request's `target_power` and must not be fixed at 80%. The demo may use the default target of 0.80. Never extrapolate beyond the grid.
 - `worst_case_power`: minimum over the displayed, user-defined domain **only**.
 - `delta_from_nominal`: power at stress point minus power at planned scenario, in percentage points.
-- `simulation_vs_analytic`: side-by-side at chosen stress point, including MCSE, invalid-test rate, and method name.
+- `simulation_vs_analytic`: side-by-side at chosen stress point, including both canonical MCSE fields, invalid-test rate, and method name.
+
+The API supports equal 1:1 enrollment and symmetric planned/stress dropout. `ArmCounts` is for positive enrollment counts. `assumed_evaluable_n` uses strict, equal, nonnegative integer counts for floored expected retention and can be zero. If expected retention is zero, `conditional_power_approx` is `null` and a warning explains why; Monte Carlo still runs. Do not manufacture analytic power of zero for that case. `worst_case_power` is the minimum over valid grid cells and is `null` only when the grid has no valid cells.
 
 **Stretch only:** robust N search over a declared scenario domain, weighted percentiles, Beta-distributed control risk, uncertain RR, and Pareto frontier of enrollment vs worst-case power. If using a prior distribution, preserve its parameters and origin; show a range-based view as a non-probabilistic alternative.
 

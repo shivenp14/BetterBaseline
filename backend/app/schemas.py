@@ -60,6 +60,19 @@ class ArmCounts(BaseModel):
 
 
 
+class ExpectedRetainedCounts(BaseModel):
+    """Floored expected retention, distinct from positive enrollment counts."""
+
+    control: int = Field(strict=True, ge=0)
+    treatment: int = Field(strict=True, ge=0)
+
+    @model_validator(mode="after")
+    def validate_equal(self) -> "ExpectedRetainedCounts":
+        if self.control != self.treatment:
+            raise ValueError("Equal expected retention required in P0 MVP")
+        return self
+
+
 class TrialAssumptions(BaseModel):
     model_version: ModelVersion = "binary-v1"
     control_event_rate: Annotated[float, Field(gt=0.0, lt=1.0, description="Baseline control event probability")]
@@ -131,8 +144,14 @@ class ScenarioEvaluateRequest(BaseModel):
 
 class AnalyticEvaluation(BaseModel):
     method: AnalyticalMethod = "cohen_h_normal_v1"
-    conditional_power_approx: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
-    assumed_evaluable_n: ArmCounts
+    conditional_power_approx: Optional[float] = Field(ge=0.0, le=1.0, allow_inf_nan=False)
+    assumed_evaluable_n: ExpectedRetainedCounts
+
+    @model_validator(mode="after")
+    def validate_power_availability(self) -> "AnalyticEvaluation":
+        if (self.assumed_evaluable_n.control == 0) != (self.conditional_power_approx is None):
+            raise ValueError("Analytic power must be null exactly when expected retention is zero")
+        return self
 
 
 class MonteCarloEvaluation(BaseModel):
@@ -325,10 +344,12 @@ class ScenarioGridResponse(BaseModel):
 
         if powers:
             min_power = min(powers)
-            if self.worst_case_power is not None and abs(self.worst_case_power - min_power) > 1e-4:
+            if self.worst_case_power is None or abs(self.worst_case_power - min_power) > 1e-4:
                 raise ValueError(
                     f"worst_case_power ({self.worst_case_power}) does not match minimum valid power ({min_power})"
                 )
+        elif self.worst_case_power is not None:
+            raise ValueError("worst_case_power must be null when no valid cells exist")
         return self
 
 

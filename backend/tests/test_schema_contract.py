@@ -1,4 +1,5 @@
 import json
+import math
 from pathlib import Path
 import jsonschema
 import pytest
@@ -22,6 +23,8 @@ from app.schemas import (
     GridPoint,
     MonteCarloEvaluation,
     StressScenario,
+    AnalyticEvaluation,
+    ExpectedRetainedCounts,
 )
 
 
@@ -330,3 +333,60 @@ def test_export_payload_preserves_results_and_software_versions():
     assert loaded.design_result is not None
     assert loaded.design_result.p_treatment == 0.15
     assert loaded.software_versions == versions
+
+
+def test_zero_expected_retention_response_round_trip(example_fixtures, json_schema):
+    request = example_fixtures["scenario_evaluate_request"]
+    request["fixed_enrollment"] = {"control": 1, "treatment": 1}
+    request["stress_scenario"]["dropout"] = {"control": 0.9, "treatment": 0.9}
+    parsed = ScenarioEvaluateRequest.model_validate(request)
+    retained = math.floor(parsed.fixed_enrollment.control * (1 - parsed.stress_scenario.dropout.control))
+    assert retained == 0
+    response = example_fixtures["scenario_evaluate_response"]
+    response["analytic"] = {
+        "conditional_power_approx": None,
+        "assumed_evaluable_n": {"control": retained, "treatment": retained},
+    }
+    response["warnings"] = ["Analytic power unavailable: zero expected retention"]
+    result = ScenarioEvaluateResponse.model_validate(response)
+    dumped = result.model_dump(mode="json")
+    assert ScenarioEvaluateResponse.model_validate(dumped).analytic.assumed_evaluable_n.control == 0
+    jsonschema.validate(dumped, {"$ref": "#/$defs/ScenarioEvaluateResponse", "$defs": json_schema["$defs"]})
+    with pytest.raises(ValidationError):
+        ArmCounts(control=0, treatment=0)
+
+
+@pytest.mark.parametrize("value", [-1, True, "0", 0.0])
+def test_expected_retention_rejects_invalid_counts(value):
+    with pytest.raises(ValidationError):
+        ExpectedRetainedCounts(control=value, treatment=value)
+
+
+def test_expected_retention_rejects_unequal_arms():
+    with pytest.raises(ValidationError, match="Equal expected retention"):
+        ExpectedRetainedCounts(control=0, treatment=1)
+
+
+@pytest.mark.parametrize("count,power", [(0, 0.0), (1, None)])
+def test_analytic_power_availability_matches_retention(count, power):
+    with pytest.raises(ValidationError, match="Analytic power must be null"):
+        AnalyticEvaluation(conditional_power_approx=power, assumed_evaluable_n={"control": count, "treatment": count})
+
+
+def test_grid_requires_minimum_with_valid_cells(example_fixtures):
+    grid = example_fixtures["scenario_grid_response"]
+    grid["worst_case_power"] = None
+    with pytest.raises(ValidationError, match="worst_case_power"):
+        ScenarioGridResponse.model_validate(grid)
+
+
+def test_all_invalid_grid_requires_null_minimum(example_fixtures):
+    grid = example_fixtures["scenario_grid_response"]
+    grid["power"] = [[None for _ in grid["x_baseline"]] for _ in grid["y_dropout"]]
+    grid["invalid_mask"] = [[True for _ in grid["x_baseline"]] for _ in grid["y_dropout"]]
+    grid["invalid_cell_count"] = len(grid["x_baseline"]) * len(grid["y_dropout"])
+    grid["worst_case_power"] = 0.75
+    with pytest.raises(ValidationError, match="no valid cells"):
+        ScenarioGridResponse.model_validate(grid)
+    grid["worst_case_power"] = None
+    assert ScenarioGridResponse.model_validate(grid).worst_case_power is None
