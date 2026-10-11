@@ -1,7 +1,9 @@
 """#66 real registered API acceptance; run PYTHONPATH=backend python -m pytest backend/tests/test_api_grid.py."""
 from dataclasses import replace
 from datetime import datetime
+import json
 import math
+from pathlib import Path
 import unittest
 from unittest.mock import patch
 
@@ -63,6 +65,11 @@ class GridApiTests(unittest.TestCase):
         self.assertEqual(result['method'], 'cohen_h_normal_v1')
         self.assertTrue(datetime.fromisoformat(result['computed_at']).tzinfo)
         self.assertEqual(set(result['software_versions']), {'python', 'numpy', 'scipy', 'statsmodels'})
+        diagnostic = next(item for item in result['diagnostics']
+                          if item['code'] == 'CONDITIONAL_POWER_ONLY')
+        self.assertEqual(diagnostic['field'], 'interpretation')
+        self.assertEqual(diagnostic['method'], 'cohen_h_normal')
+        self.assertEqual(diagnostic['severity'], 'info')
 
     def test_default_selected_point_and_curve_use_zero_dropout(self):
         body = payload()
@@ -84,6 +91,35 @@ class GridApiTests(unittest.TestCase):
         self.assertIsNone(result['analytic_delta'])
         self.assertFalse(result['selected_point']['is_safe'])
         self.assertIsNone(result['below_target'][0][0])
+        selected_diagnostic = next(item for item in result['diagnostics']
+                                   if item['severity'] == 'error')
+        self.assertEqual(selected_diagnostic['code'], 'INVALID_MODEL_INPUT')
+        self.assertEqual(selected_diagnostic['field'], 'p_treatment')
+        self.assertEqual(selected_diagnostic['method'], 'cohen_h_normal')
+        self.assertIsNone(selected_diagnostic['expected_count'])
+        self.assertIn('Selected point is unavailable: INVALID_EFFECT_AT_BASELINE.', result['warnings'])
+
+    def test_all_invalid_low_retention_points_keep_structured_diagnostics(self):
+        body = payload()
+        body['fixed_enrollment'] = {'control': 1, 'treatment': 1}
+        body['x_baseline'] = {'min': .1, 'max': .3, 'steps': 3}
+        body['y_dropout'] = {'min': 0, 'max': .2, 'steps': 2}
+        del body['selected_scenario']
+        result = self.success(body)
+        self.assertEqual(result['invalid_cell_count'], 6)
+        self.assertIsNone(result['planned_point']['power'])
+        self.assertEqual(result['planned_point']['invalid_reason'], 'INSUFFICIENT_EXPECTED_RETAINED')
+        self.assertIsNone(result['selected_point']['power'])
+        self.assertEqual(result['selected_point']['invalid_reason'], 'INSUFFICIENT_EXPECTED_RETAINED')
+        low_count = next(item for item in result['diagnostics'] if item['code'] == 'LOW_EXPECTED_COUNT')
+        self.assertIn(low_count['field'], {'p_control', 'p_treatment'})
+        self.assertEqual(low_count['method'], 'cohen_h_normal')
+        self.assertEqual(low_count['severity'], 'warning')
+        self.assertEqual(low_count['count_basis'], 'evaluable_count')
+        self.assertNotIn('power', low_count)
+        self.assertIn('All grid cells are invalid; worst-case power is unavailable and the frontier is empty.',
+                      result['warnings'])
+        self.assertIn('Selected point is unavailable: INSUFFICIENT_EXPECTED_RETAINED.', result['warnings'])
 
     def test_effect_override_preserves_original_planned_power(self):
         body = payload()
@@ -201,7 +237,14 @@ class GridApiTests(unittest.TestCase):
         self.assertIn('expected_evaluable_n', point['properties'])
         self.assertIn('analytic_delta', props)
         self.assertIn('software_versions', props)
+        self.assertIn('$ref', props['diagnostics']['items'])
+        diagnostic = schema['components']['schemas'][props['diagnostics']['items']['$ref'].split('/')[-1]]
+        self.assertTrue({'code', 'field', 'method', 'severity'} <= set(diagnostic['properties']))
         self.assertIn('422', operation['responses'])
+
+    def test_openapi_snapshot_matches_registered_app(self):
+        snapshot_path = Path(__file__).resolve().parents[2] / 'contracts' / 'openapi.snapshot.json'
+        self.assertEqual(json.loads(snapshot_path.read_text()), self.client.get('/openapi.json').json())
 
     def test_all_invalid_arr_domain_keeps_valid_off_grid_comparison(self):
         body = payload()

@@ -63,6 +63,9 @@ def test_design_calculate_reference_scenario(client: TestClient) -> None:
     assert data["enrolled_n"] == {"control": 1004, "treatment": 1004}
     assert data["nominal_power_evaluable"] >= 0.80
     assert data["nominal_power_evaluable"] == pytest.approx(0.80, abs=0.01)
+    assert data["diagnostics"]
+    assert all({"code", "field", "method", "severity"} <= set(item) for item in data["diagnostics"])
+    assert any(item["method"] == "cohen_h_normal" for item in data["diagnostics"])
     assert "inputs_hash" in data and len(data["inputs_hash"]) > 0
     assert (
         "Dropout inflation represents expected retention, not guaranteed evaluable counts."

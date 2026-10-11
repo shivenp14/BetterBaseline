@@ -24,6 +24,7 @@ from app.schemas import (
     MonteCarloEvaluation,
     StressScenario,
     AnalyticEvaluation,
+    StatisticalDiagnostic,
     ExpectedRetainedCounts,
     PowerCurvePoint,
 )
@@ -97,6 +98,13 @@ def test_error_envelope_fixture(example_fixtures):
 def test_validate_fixtures_against_json_schema(example_fixtures, json_schema):
     """Validate example fixtures directly against the machine-readable api-v1.schema.json."""
     jsonschema.validate(instance=example_fixtures, schema=json_schema)
+
+
+def test_statistical_diagnostic_schema_matches_generated_model(json_schema):
+    assert json_schema["$defs"]["StatisticalDiagnostic"] == StatisticalDiagnostic.model_json_schema()
+    for model in (DesignCalculateResponse, ScenarioEvaluateResponse, ScenarioGridResponse):
+        generated = model.model_json_schema()["properties"]["diagnostics"]
+        assert json_schema["$defs"][model.__name__]["properties"]["diagnostics"] == generated
 
 
 # ── ROLAND REVIEW BOUNDARY TESTS ──

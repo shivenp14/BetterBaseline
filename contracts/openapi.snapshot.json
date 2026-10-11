@@ -202,7 +202,7 @@
           "grid"
         ],
         "summary": "Generate Scenario Grid",
-        "description": "Scaffold endpoint for 2D scenario grid and 1D power curve generation.\n\nHandoff to Issue #66 (@roland-aranas) for full grid calculation and contour extraction.",
+        "description": "Frozen-N grid with exact selected-dropout curve and separate frontier edges.\n\nfrontier_points contains unique interpolated target coordinates for markers;\nuse contour_segments for connectivity, never connect the flat list. Off-grid\nplanned/selected comparisons remain available even if all grid cells are invalid.",
         "operationId": "generate_scenario_grid_api_v1_scenarios_grid_post",
         "requestBody": {
           "content": {
@@ -494,6 +494,13 @@
             "type": "array",
             "title": "Warnings"
           },
+          "diagnostics": {
+            "items": {
+              "$ref": "#/components/schemas/StatisticalDiagnostic"
+            },
+            "type": "array",
+            "title": "Diagnostics"
+          },
           "inputs_hash": {
             "type": "string",
             "title": "Inputs Hash"
@@ -755,6 +762,13 @@
             "type": "array",
             "title": "Warnings"
           },
+          "diagnostics": {
+            "items": {
+              "$ref": "#/components/schemas/StatisticalDiagnostic"
+            },
+            "type": "array",
+            "title": "Diagnostics"
+          },
           "metadata": {
             "$ref": "#/components/schemas/EvaluationMetadata"
           },
@@ -890,6 +904,7 @@
             "title": "Steps"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "min",
@@ -922,11 +937,33 @@
             "default": 10
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "GridDropoutAxisSpec"
       },
       "GridPoint": {
         "properties": {
+          "expected_evaluable_n": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExpectedRetainedCounts"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "invalid_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalid Reason"
+          },
           "p_control": {
             "type": "number",
             "maximum": 1.0,
@@ -1076,6 +1113,13 @@
       },
       "ScenarioGridRequest": {
         "properties": {
+          "provenance": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FieldProvenance"
+            },
+            "type": "object",
+            "title": "Provenance"
+          },
           "planned_design": {
             "$ref": "#/components/schemas/TrialAssumptions"
           },
@@ -1125,6 +1169,7 @@
             "description": "Selected stress scenario providing the selected baseline risk and dropout level for selected_point and power_curve"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "planned_design",
@@ -1135,6 +1180,65 @@
       },
       "ScenarioGridResponse": {
         "properties": {
+          "grid_label": {
+            "type": "string",
+            "const": "expected_count_approximation",
+            "title": "Grid Label",
+            "default": "expected_count_approximation"
+          },
+          "fixed_enrollment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArmCounts"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "below_target": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Below Target"
+          },
+          "analytic_delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analytic Delta",
+            "description": "Selected minus original planned power in fraction units, independent of grid-domain validity; null when either comparison point is unavailable."
+          },
+          "software_versions": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Software Versions"
+          },
+          "provenance": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FieldProvenance"
+            },
+            "type": "object",
+            "title": "Provenance"
+          },
           "model_version": {
             "type": "string",
             "const": "binary-v1",
@@ -1212,14 +1316,16 @@
               "$ref": "#/components/schemas/GridPoint"
             },
             "type": "array",
-            "title": "Frontier Points"
+            "title": "Frontier Points",
+            "description": "Unique interpolated target-frontier coordinates for markers. This list conveys no connectivity; use contour_segments to draw edges, never join frontier_points in list order."
           },
           "contour_segments": {
             "items": {
               "$ref": "#/components/schemas/ContourSegment"
             },
             "type": "array",
-            "title": "Contour Segments"
+            "title": "Contour Segments",
+            "description": "Independent adjacent frontier edges, preserving disconnected paths and avoiding invalid cells."
           },
           "power_curve": {
             "items": {
@@ -1253,6 +1359,13 @@
             "type": "array",
             "title": "Warnings"
           },
+          "diagnostics": {
+            "items": {
+              "$ref": "#/components/schemas/StatisticalDiagnostic"
+            },
+            "type": "array",
+            "title": "Diagnostics"
+          },
           "computed_at": {
             "type": "string",
             "title": "Computed At"
@@ -1275,6 +1388,151 @@
           "inputs_hash"
         ],
         "title": "ScenarioGridResponse"
+      },
+      "StatisticalDiagnostic": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "info",
+              "warning",
+              "error"
+            ],
+            "title": "Severity"
+          },
+          "field": {
+            "type": "string",
+            "title": "Field"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "arm": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "control",
+                  "treatment"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arm"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "events",
+                  "non_events"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "expected_count": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Count"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          },
+          "count_basis": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "evaluable_count",
+                  "expected_random_retention"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Count Basis"
+          },
+          "invalid_test_fraction": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalid Test Fraction"
+          },
+          "replicates": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replicates"
+          },
+          "invalid_test_policy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "nonrejection_over_all_replicates"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalid Test Policy"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "severity",
+          "field",
+          "method",
+          "message"
+        ],
+        "title": "StatisticalDiagnostic",
+        "description": "Stable, machine-readable description of a statistical limit or warning."
       },
       "StressScenario": {
         "properties": {
