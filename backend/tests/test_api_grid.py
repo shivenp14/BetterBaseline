@@ -8,7 +8,8 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.routers import grid
+from app.services import grid
+from app.schemas import ExportPayload
 from app.statistics.analytic import analytic_power
 from app.statistics.inputs import expected_retained_count
 
@@ -103,7 +104,8 @@ class GridApiTests(unittest.TestCase):
         self.assertEqual(result['invalid_cell_count'], 6)
         self.assertEqual(result['invalid_mask'], [[True]*3]*2)
         self.assertIsNone(result['worst_case_power'])
-        self.assertIsNone(result['analytic_delta'])
+        self.assertIsNotNone(result['analytic_delta'])
+        self.assertAlmostEqual(result['analytic_delta'], result['selected_point']['power'] - result['planned_point']['power'])
         self.assertEqual(result['contour_segments'], [])
         self.assertTrue(any('All grid cells' in w for w in result['warnings']))
 
@@ -124,7 +126,9 @@ class GridApiTests(unittest.TestCase):
                     for path in captured[0].frontier_points for a, b in zip(path.points, path.points[1:])]
         self.assertTrue(expected)
         self.assertEqual(result['contour_segments'], expected)
-        self.assertEqual(result['frontier_points'], [])
+        coordinates = {(p['p_control'], p['dropout']) for p in result['frontier_points']}
+        self.assertEqual(coordinates, {(p['p_control'], p['dropout']) for edge in expected for p in edge.values()})
+        self.assertTrue(all(p['power'] == result['target_power'] for p in result['frontier_points']))
         body['planned_design']['target_power'] = .65
         changed = self.success(body)
         self.assertEqual(changed['target_power'], .65)
@@ -198,10 +202,26 @@ class GridApiTests(unittest.TestCase):
         self.assertIn('software_versions', props)
         self.assertIn('422', operation['responses'])
 
-    def test_whole_response_uses_compute_wrapper(self):
-        with patch.object(grid, 'execute_guarded_computation', wraps=grid.execute_guarded_computation) as guard:
-            self.success(payload())
-            self.assertIs(guard.call_args.args[0], grid._compute_grid)
+    def test_all_invalid_arr_domain_keeps_valid_off_grid_comparison(self):
+        body = payload()
+        body['planned_design']['effect'] = {'kind': 'absolute_risk_reduction', 'value': .05}
+        body['x_baseline'] = {'min': .01, 'max': .04, 'steps': 3}
+        result = self.success(body)
+        self.assertEqual(result['invalid_cell_count'], 6)
+        self.assertIsNone(result['worst_case_power'])
+        self.assertIsNotNone(result['planned_point']['power'])
+        self.assertIsNotNone(result['selected_point']['power'])
+        self.assertAlmostEqual(result['analytic_delta'], result['selected_point']['power'] - result['planned_point']['power'])
+        self.assertFalse(any('analytic delta are unavailable' in w for w in result['warnings']))
+
+    def test_canonical_export_preserves_grid_metadata_and_comparison(self):
+        body = payload()
+        result = self.success(body)
+        exported = ExportPayload(
+            planned_design=body['planned_design'], fixed_enrollment=body['fixed_enrollment'],
+            grid_result=result, exported_at=result['computed_at'],
+        ).model_dump(mode='json')
+        self.assertEqual(exported['grid_result'], result)
 
 
 if __name__ == '__main__':
