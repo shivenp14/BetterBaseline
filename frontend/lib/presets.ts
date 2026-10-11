@@ -41,9 +41,9 @@ const commonFields = [
 export const rawPresets: RawPresetData[] = [
   {
     preset_id: "baseline-collapse-v1",
-    name: "Baseline collapse",
-    eyebrow: "Control rate drop",
-    description: "Planned 20% control risk collapses to 10% under fixed enrollment (N=903/arm, 0% dropout). Illustrates dramatic loss of statistical power.",
+    name: "Lower event rate than planned",
+    eyebrow: "Control group outcome changes",
+    description: "Explore a change from a 20% to a 10% control-group event rate while keeping enrollment fixed at 903 people per group. These values are illustrative.",
     inputs_hash: "sha256:d4dfd5525e9b355437d458dd211996674bd3b263509125fdceaf1b3bf8643380",
     planned_design: {
       model_version: "binary-v1",
@@ -106,9 +106,9 @@ export const rawPresets: RawPresetData[] = [
   },
   {
     preset_id: "attrition-shock-v1",
-    name: "Attrition shock",
-    eyebrow: "Severe dropout spike",
-    description: "Planned 5% dropout increases to 25% under fixed enrollment (N=951/arm), shrinking evaluable sample size and eroding power.",
+    name: "More dropout than planned",
+    eyebrow: "More participants leave",
+    description: "Explore a change from 5% to 25% expected dropout while keeping enrollment fixed at 951 people per group. These values are illustrative.",
     inputs_hash: "sha256:5f0dc91f3a976ea707db2016da1fe009949d0df545b736b42b918641b691d575",
     planned_design: {
       model_version: "binary-v1",
@@ -171,9 +171,9 @@ export const rawPresets: RawPresetData[] = [
   },
   {
     preset_id: "stable-design-v1",
-    name: "Stable design",
-    eyebrow: "Robust operating point",
-    description: "Planned 20% control risk shifts slightly to 19% with 6% dropout (N=951/arm), preserving acceptable power.",
+    name: "Small changes to assumptions",
+    eyebrow: "A relatively steady example",
+    description: "Explore a small change in the control-group event rate and expected dropout while enrollment stays fixed at 951 people per group. These values are illustrative.",
     inputs_hash: "sha256:f9ec599b821415139097e882a1df6714a9ecae70377464010a3e813f835b5a7a",
     planned_design: {
       model_version: "binary-v1",

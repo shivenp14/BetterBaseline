@@ -106,10 +106,11 @@ async function runCase({ startFirst, completeFirst, evaluationOutcome, gridOutco
 
   await page.goto(process.env.PAGE_URL);
   await page.getByRole("button", { name: "Calculate & Lock Design", exact: true }).click();
-  await page.getByRole("button", { name: "Evaluate Stress Scenario", exact: true }).waitFor();
+  await page.getByRole("link", { name: "Stress-test", exact: true }).click();
+  await page.getByRole("button", { name: "Update estimate now", exact: true }).waitFor();
 
-  const evaluateButton = page.getByRole("button", { name: "Evaluate Stress Scenario", exact: true });
-  const gridButton = page.getByRole("button", { name: "Load grid response from backend", exact: true });
+  const evaluateButton = page.getByRole("button", { name: "Update estimate now", exact: true });
+  const gridButton = page.getByRole("button", { name: "Load range analysis", exact: true });
   if (startFirst === "evaluation") {
     await evaluateButton.click();
     await gridButton.click();
@@ -118,6 +119,11 @@ async function runCase({ startFirst, completeFirst, evaluationOutcome, gridOutco
     await evaluateButton.click();
   }
   await Promise.all([evaluateStarted.promise, gridStarted.promise]);
+  await waitForStatus(page, "evaluation", "EVALUATING");
+  await waitForStatus(page, "grid", "Status: LOADING");
+  await page.getByRole("link", { name: "Plan", exact: true }).click();
+  assert.equal(await page.getByRole("heading", { name: "Plan a trial", exact: true }).count(), 1);
+  await page.getByRole("link", { name: "Stress-test", exact: true }).click();
   await waitForStatus(page, "evaluation", "EVALUATING");
   await waitForStatus(page, "grid", "Status: LOADING");
 
@@ -161,9 +167,10 @@ async function mountLiveWorkspace(page, onEvaluation) {
   });
   await page.goto(process.env.PAGE_URL);
   await page.getByRole("button", { name: "Calculate & Lock Design", exact: true }).click();
+  await page.getByRole("link", { name: "Stress-test", exact: true }).click();
   await page.waitForFunction(() => {
     const button = Array.from(document.querySelectorAll("button"))
-      .find((candidate) => candidate.textContent?.trim() === "Evaluate Stress Scenario");
+      .find((candidate) => candidate.textContent?.trim() === "Update estimate now");
     return button instanceof HTMLButtonElement && !button.disabled;
   });
 }
@@ -204,6 +211,7 @@ async function runPendingDebounceInvalidation({ label, transition }) {
   await page.waitForFunction(() => document.querySelector("#stress-baseline-num")?.value === "0.16");
   await page.waitForTimeout(80);
 
+  await page.getByRole("link", { name: "Plan", exact: true }).click();
   if (transition === "planned-edit") {
     await page.getByLabel("Relative risk (decimal ratio)").fill("0.8");
     await page.waitForFunction(() => Array.from(document.querySelectorAll("input"))
@@ -212,9 +220,10 @@ async function runPendingDebounceInvalidation({ label, transition }) {
     await page.locator("#preset-select").selectOption("attrition-shock-v1");
     await page.waitForFunction(() => document.querySelector("#preset-select")?.value === "attrition-shock-v1");
   } else {
-    await page.getByRole("button", { name: "Reset to Preset Defaults", exact: true }).click();
+    await page.getByRole("button", { name: "Restore example values", exact: true }).click();
     await page.waitForFunction(() => document.querySelector("#stress-baseline-num")?.value === "0.1");
   }
+  await page.getByRole("link", { name: "Stress-test", exact: true }).click();
 
   await page.evaluate(() => window.stressTimers.forEach((callback) => callback()));
   await page.waitForTimeout(450);
@@ -269,7 +278,9 @@ async function runManualEvaluationDuringDebounce({ delayResponse = false, delive
 
   await page.locator("#stress-baseline-num").fill("0.16");
   await page.waitForTimeout(80);
-  await page.getByRole("button", { name: "Evaluate Stress Scenario", exact: true }).click();
+  await page.getByRole("link", { name: "Plan", exact: true }).click();
+  await page.getByRole("link", { name: "Stress-test", exact: true }).click();
+  await page.getByRole("button", { name: "Update estimate now", exact: true }).click();
   if (deliverCancelledTimer) {
     await page.evaluate(() => {
       if (window.stressTimers.length === 0) throw new Error("No stress debounce callback was captured");
@@ -309,7 +320,7 @@ async function runCancelledDebounceAfterCallbackChange() {
   await page.waitForFunction(() => window.stressTimers.length > 0);
   // Grid ownership changes page state and hence handleEvaluate's identity,
   // without invalidating the stress-input generation or its pending intent.
-  await page.getByRole("button", { name: "Load grid response from backend", exact: true }).click();
+  await page.getByRole("button", { name: "Load range analysis", exact: true }).click();
   await waitForStatus(page, "grid", "Status: SUCCESS");
   await page.waitForFunction(() => window.stressTimers.length > 1);
   await page.evaluate(() => window.stressTimers.slice(0, -1).forEach((callback) => callback()));

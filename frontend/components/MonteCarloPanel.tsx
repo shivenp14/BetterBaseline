@@ -9,6 +9,13 @@ export interface MonteCarloPanelProps {
   unavailableReason?: string;
   /** Only a current successful run reaches parent state/export. */
   onResult?: (result: SimulationResult, request: SimulationRequest) => void;
+  seed?: string;
+  replicates?: string;
+  onOptionsChange?: (options: { seed: string; replicates: string }) => void;
+  sharedResult?: SimulationResult | null;
+  sharedStatus?: "idle" | "running" | "error";
+  sharedError?: string | null;
+  sharedResultIdentity?: string | null;
 }
 const percent = (n: number) => `${(n * 100).toFixed(3)}%`;
 export function MonteCarloResults({ result }: { result: SimulationResult }) {
@@ -43,9 +50,12 @@ export function MonteCarloResults({ result }: { result: SimulationResult }) {
     {result.warnings.length > 0 && <><h3>Simulation warnings</h3><ul className={"auditWarning"}>{result.warnings.map((warning, index) => <li key={`${index}-${warning}`}>{warning}</li>)}</ul></>}
   </div>;
 }
-export function MonteCarloPanel({ selection, runSimulation, unavailableReason, onResult }: MonteCarloPanelProps) {
+export function MonteCarloPanel({ selection, runSimulation, unavailableReason, onResult, seed: seedProp, replicates: replicatesProp,
+  onOptionsChange, sharedResult, sharedStatus, sharedError, sharedResultIdentity }: MonteCarloPanelProps) {
   const id = useId();
-  const [seed, setSeed] = useState("42"), [replicates, setReplicates] = useState("10000");
+  const controlled = seedProp !== undefined && replicatesProp !== undefined;
+  const [localSeed, setLocalSeed] = useState("42"), [localReplicates, setLocalReplicates] = useState("10000");
+  const seed = seedProp ?? localSeed, replicates = replicatesProp ?? localReplicates;
   const [snapshot, setSnapshot] = useState<{ identity: string; result: SimulationResult } | null>(null);
   const [pendingRequest, setPendingRequest] = useState<{ identity: string; signal: AbortSignal } | null>(null);
   const [failure, setFailure] = useState<{ identity: string; message: string } | null>(null);
@@ -58,13 +68,18 @@ export function MonteCarloPanel({ selection, runSimulation, unavailableReason, o
   } catch (error) { invalid = simulationErrorMessage(error); }
   const identity = request ? simulationIdentity(request) : JSON.stringify([selection, seed, replicates]);
   const available = Boolean(selection && runSimulation && !unavailableReason);
-  const pending = pendingRequest?.identity === identity && !pendingRequest.signal.aborted;
-  const error = failure?.identity === identity ? failure.message : null;
-  const stale = snapshot !== null && (snapshot.identity !== identity || pending || Boolean(error) || !available || Boolean(invalid));
-  useEffect(() => () => { generation.current += 1; controller.current?.abort(); inFlight.current = null; }, [identity, runSimulation, available]);
+  const pending = controlled ? sharedStatus === "running" : pendingRequest?.identity === identity && !pendingRequest.signal.aborted;
+  const error = controlled ? (sharedStatus === "error" ? sharedError : null) : failure?.identity === identity ? failure.message : null;
+  const currentResult = controlled ? sharedResult ?? null : snapshot?.result ?? null;
+  const stale = currentResult !== null && ((controlled ? sharedResultIdentity !== identity : snapshot?.identity !== identity) || pending || Boolean(error) || !available || Boolean(invalid));
+  useEffect(() => () => { if (!controlled) { generation.current += 1; controller.current?.abort(); inFlight.current = null; } }, [identity, runSimulation, available, controlled]);
   async function run(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!available || invalid || !request || !runSimulation || pending || inFlight.current === identity) return;
+    if (!available || invalid || !request || !runSimulation || pending || (!controlled && inFlight.current === identity)) return;
+    if (controlled) {
+      try { await runSimulation(request, new AbortController().signal); } catch { /* Shared workspace state presents the current failure. */ }
+      return;
+    }
     controller.current?.abort();
     const active = new AbortController(); controller.current = active;
     const token = ++generation.current, captured = request;
@@ -93,13 +108,13 @@ export function MonteCarloPanel({ selection, runSimulation, unavailableReason, o
     {!available && <p className={"auditWarningStatus"} role="status">Simulation unavailable: {unavailableReason ?? (!selection ? "calculate and select a valid frozen design first." : "the live simulation adapter is not connected.")}</p>}
     <form className={"auditSettings"} onSubmit={run} noValidate>
       <div className={"auditField"}>
-      <label htmlFor={`${id}-seed`}>Simulation seed</label>{" "}<input id={`${id}-seed`} type="text" inputMode="numeric" value={seed} onChange={(event) => setSeed(event.target.value)} aria-describedby={`${id}-bounds`} />
-      </div><div className={"auditField"}><label htmlFor={`${id}-reps`}>Simulation replicates</label>{" "}<input id={`${id}-reps`} type="text" inputMode="numeric" value={replicates} onChange={(event) => setReplicates(event.target.value)} aria-describedby={`${id}-bounds`} />
+      <label htmlFor={`${id}-seed`}>Simulation seed</label>{" "}<input id={`${id}-seed`} type="text" inputMode="numeric" value={seed} onChange={(event) => { const value = event.target.value; if (controlled) onOptionsChange?.({ seed: value, replicates }); else setLocalSeed(value); }} aria-describedby={`${id}-bounds`} />
+      </div><div className={"auditField"}><label htmlFor={`${id}-reps`}>Simulation replicates</label>{" "}<input id={`${id}-reps`} type="text" inputMode="numeric" value={replicates} onChange={(event) => { const value = event.target.value; if (controlled) onOptionsChange?.({ seed, replicates: value }); else setLocalReplicates(value); }} aria-describedby={`${id}-bounds`} />
       </div><p className={"auditBounds"} id={`${id}-bounds`}>Whole numbers: seed 0–{MAX_SEED}; replicates 1–{MAX_REPLICATES}. Each run simulates one selected scenario at frozen enrollment.</p>
       <button type="submit" disabled={!available || Boolean(invalid) || pending}>{pending ? "Running simulation…" : "Run simulation"}</button>
     </form>
     {invalid && <p className={"auditErrorStatus"} role="alert">{invalid}</p>}{error && <p className={"auditErrorStatus"} role="alert">{error}</p>}
     {pending && <p className={"auditCurrentStatus"} role="status">Running the selected seeded simulation.</p>}
-    {snapshot ? <>{!stale && <p className={"auditCurrentStatus"} role="status"><strong>Current simulation.</strong> These values match the selected scenario and displayed execution settings.</p>}{stale && <p className={"auditWarningStatus"} role="status"><strong>Stale simulation.</strong> These values belong to a previous run; run the current selection to refresh.</p>}<MonteCarloResults result={snapshot.result} /></> : <p>No simulation result yet.</p>}
+    {currentResult ? <>{!stale && <p className={"auditCurrentStatus"} role="status"><strong>Current simulation.</strong> These values match the selected scenario and displayed execution settings.</p>}{stale && <p className={"auditWarningStatus"} role="status"><strong>Stale simulation.</strong> These values belong to a previous run; run the current selection to refresh.</p>}<MonteCarloResults result={currentResult} /></> : <p>No simulation result yet.</p>}
   </section>;
 }

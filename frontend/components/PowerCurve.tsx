@@ -145,7 +145,7 @@ export function PowerCurve({ current, result, status, error, onSelectBaseline }:
         Triangle: {plannedLabel}. Circle: selected baseline.
         Null/invalid scenarios have no point marker or connecting segment.</figcaption>
     </figure>
-    <div className={"analytics-tableScroll"} role="region" aria-label="Analytic curve numerical alternative" tabIndex={0}>
+    <div className={"analytics-tableScroll"} role="region" aria-label="Power curve data table" tabIndex={0}>
     <table>
       <caption>Analytic curve at symmetric dropout {percent(current.dropout)}; target {percent(current.targetPower)}</caption>
       <thead><tr><th scope="col">Control baseline risk</th><th scope="col">Approximate conditional power</th>
