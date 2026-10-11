@@ -5,6 +5,7 @@ import jsonschema
 import pytest
 from pydantic import ValidationError
 
+from app.main import create_app
 from app.schemas import (
     DesignCalculateRequest,
     DesignCalculateResponse,
@@ -105,6 +106,11 @@ def test_statistical_diagnostic_schema_matches_generated_model(json_schema):
     for model in (DesignCalculateResponse, ScenarioEvaluateResponse, ScenarioGridResponse):
         generated = model.model_json_schema()["properties"]["diagnostics"]
         assert json_schema["$defs"][model.__name__]["properties"]["diagnostics"] == generated
+
+
+def test_openapi_snapshot_matches_registered_app():
+    snapshot_path = Path(__file__).resolve().parents[2] / "contracts" / "openapi.snapshot.json"
+    assert json.loads(snapshot_path.read_text(encoding="utf-8")) == create_app().openapi()
 
 
 # ── ROLAND REVIEW BOUNDARY TESTS ──
