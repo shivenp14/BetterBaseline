@@ -1,5 +1,5 @@
 {
-  "calculate_request": {
+  "design_calculate_request": {
     "model_version": "binary-v1",
     "control_event_rate": 0.20,
     "effect": {
@@ -14,7 +14,7 @@
       "treatment": 0.10
     }
   },
-  "calculate_response": {
+  "design_calculate_response": {
     "model_version": "binary-v1",
     "method": "cohen_h_normal_v1",
     "p_treatment": 0.15,
@@ -32,7 +32,7 @@
     ],
     "inputs_hash": "sha256:example-calculate-hash"
   },
-  "evaluate_request": {
+  "scenario_evaluate_request": {
     "planned_design": {
       "model_version": "binary-v1",
       "control_event_rate": 0.20,
@@ -65,7 +65,7 @@
       "seed": 42
     }
   },
-  "evaluate_response": {
+  "scenario_evaluate_response": {
     "model_version": "binary-v1",
     "analytic": {
       "method": "cohen_h_normal_v1",
@@ -94,7 +94,7 @@
       "inputs_hash": "sha256:example-evaluate-hash"
     }
   },
-  "grid_request": {
+  "scenario_grid_request": {
     "planned_design": {
       "model_version": "binary-v1",
       "control_event_rate": 0.20,
@@ -126,7 +126,7 @@
     },
     "effect_override": null
   },
-  "grid_response": {
+  "scenario_grid_response": {
     "model_version": "binary-v1",
     "method": "cohen_h_normal_v1",
     "x_baseline": [0.05, 0.175, 0.30],
@@ -163,6 +163,37 @@
         "is_valid": true
       }
     ],
+    "contour_segments": [
+      {
+        "start": {
+          "p_control": 0.20,
+          "dropout": 0.0
+        },
+        "end": {
+          "p_control": 0.25,
+          "dropout": 0.20
+        }
+      }
+    ],
+    "power_curve": [
+      {
+        "p_control": 0.05,
+        "power": 0.25,
+        "is_valid": true
+      },
+      {
+        "p_control": 0.175,
+        "power": 0.75,
+        "is_valid": true
+      },
+      {
+        "p_control": 0.30,
+        "power": 0.92,
+        "is_valid": true
+      }
+    ],
+    "invalid_cell_count": 0,
+    "worst_case_power": 0.21,
     "warnings": [
       "Grid evaluates floor expected evaluable count per cell."
     ],
@@ -232,5 +263,13 @@
       }
     },
     "exported_at": "2026-10-10T23:30:00Z"
+  },
+  "error_envelope": {
+    "error": {
+      "code": "INVALID_MODEL_INPUT",
+      "message": "Treatment event probability would be negative for the selected ARR.",
+      "field": "stress_scenario.control_event_rate",
+      "recoverable": true
+    }
   }
 }

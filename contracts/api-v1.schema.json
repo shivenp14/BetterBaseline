@@ -93,6 +93,44 @@
       "title": "ArmProportions",
       "type": "object"
     },
+    "ContourPoint": {
+      "properties": {
+        "p_control": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "P Control",
+          "type": "number"
+        },
+        "dropout": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Dropout",
+          "type": "number"
+        }
+      },
+      "required": [
+        "p_control",
+        "dropout"
+      ],
+      "title": "ContourPoint",
+      "type": "object"
+    },
+    "ContourSegment": {
+      "properties": {
+        "start": {
+          "$ref": "#/$defs/ContourPoint"
+        },
+        "end": {
+          "$ref": "#/$defs/ContourPoint"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "title": "ContourSegment",
+      "type": "object"
+    },
     "DesignCalculateRequest": {
       "properties": {
         "model_version": {
@@ -435,16 +473,22 @@
     "GridPoint": {
       "properties": {
         "p_control": {
+          "maximum": 1.0,
+          "minimum": 0.0,
           "title": "P Control",
           "type": "number"
         },
         "dropout": {
+          "maximum": 1.0,
+          "minimum": 0.0,
           "title": "Dropout",
           "type": "number"
         },
         "power": {
           "anyOf": [
             {
+              "maximum": 1.0,
+              "minimum": 0.0,
               "type": "number"
             },
             {
@@ -516,6 +560,8 @@
         "seed": {
           "anyOf": [
             {
+              "maximum": 4294967295,
+              "minimum": 0,
               "type": "integer"
             },
             {
@@ -535,6 +581,40 @@
         "replicates"
       ],
       "title": "MonteCarloEvaluation",
+      "type": "object"
+    },
+    "PowerCurvePoint": {
+      "properties": {
+        "p_control": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "P Control",
+          "type": "number"
+        },
+        "power": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Power"
+        },
+        "is_valid": {
+          "default": true,
+          "title": "Is Valid",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "p_control"
+      ],
+      "title": "PowerCurvePoint",
       "type": "object"
     },
     "RelativeRiskEffect": {
@@ -719,6 +799,8 @@
           "type": "array"
         },
         "target_power": {
+          "exclusiveMaximum": 1.0,
+          "exclusiveMinimum": 0.0,
           "title": "Target Power",
           "type": "number"
         },
@@ -743,6 +825,39 @@
           "title": "Frontier Points",
           "type": "array"
         },
+        "contour_segments": {
+          "items": {
+            "$ref": "#/$defs/ContourSegment"
+          },
+          "title": "Contour Segments",
+          "type": "array"
+        },
+        "power_curve": {
+          "items": {
+            "$ref": "#/$defs/PowerCurvePoint"
+          },
+          "title": "Power Curve",
+          "type": "array"
+        },
+        "invalid_cell_count": {
+          "minimum": 0,
+          "title": "Invalid Cell Count",
+          "type": "integer"
+        },
+        "worst_case_power": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Worst Case Power"
+        },
         "warnings": {
           "items": {
             "type": "string"
@@ -766,6 +881,7 @@
         "invalid_mask",
         "target_power",
         "planned_point",
+        "invalid_cell_count",
         "computed_at",
         "inputs_hash"
       ],
@@ -803,6 +919,8 @@
         "seed": {
           "anyOf": [
             {
+              "maximum": 4294967295,
+              "minimum": 0,
               "type": "integer"
             },
             {

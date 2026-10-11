@@ -4,10 +4,11 @@ Provides strongly typed models for:
 - Trial assumptions and effects (RR, ARR)
 - Design calculation request/response
 - Scenario evaluation request/response (with separate MCSEs)
-- Sensitivity grid request/response (with point/frontier structures and invalid masks)
+- Sensitivity grid request/response (with contour segments, power curve, and invalid masks)
 - Standardized error envelopes and provenance tracking
 """
 
+import math
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
@@ -36,10 +37,26 @@ class ArmProportions(BaseModel):
     control: Annotated[float, Field(ge=0.0, lt=1.0, description="Control arm rate")]
     treatment: Annotated[float, Field(ge=0.0, lt=1.0, description="Treatment arm rate")]
 
+    @model_validator(mode="after")
+    def validate_symmetric(self) -> "ArmProportions":
+        if self.control != self.treatment:
+            raise ValueError(
+                f"Symmetric dropout required in P0 MVP: control ({self.control}) != treatment ({self.treatment})"
+            )
+        return self
+
 
 class ArmCounts(BaseModel):
     control: Annotated[int, Field(ge=1, description="Control arm count")]
     treatment: Annotated[int, Field(ge=1, description="Treatment arm count")]
+
+    @model_validator(mode="after")
+    def validate_equal(self) -> "ArmCounts":
+        if self.control != self.treatment:
+            raise ValueError(
+                f"Equal 1:1 enrollment required in P0 MVP: control ({self.control}) != treatment ({self.treatment})"
+            )
+        return self
 
 
 class TrialAssumptions(BaseModel):
@@ -72,7 +89,7 @@ class StressScenario(BaseModel):
 
 class SimulationOptions(BaseModel):
     replicates: Annotated[int, Field(ge=100, le=50_000, default=10_000, description="Replication count")]
-    seed: Optional[int] = Field(default=42, description="Random seed for reproducibility")
+    seed: Optional[int] = Field(default=42, ge=0, le=2**32 - 1, description="Random seed for reproducibility")
 
 
 # ── REQUEST & RESPONSE CONTRACTS ──
@@ -125,7 +142,7 @@ class MonteCarloEvaluation(BaseModel):
     mcse_favorable: float = Field(ge=0.0)
     invalid_test_fraction: float = Field(ge=0.0, le=1.0)
     replicates: int = Field(ge=100)
-    seed: Optional[int] = None
+    seed: Optional[int] = Field(default=None, ge=0, le=2**32 - 1)
 
 
 class ScenarioMetadata(BaseModel):
@@ -179,10 +196,26 @@ class ScenarioGridRequest(BaseModel):
 
 
 class GridPoint(BaseModel):
-    p_control: float
-    dropout: float
-    power: Optional[float] = None
+    p_control: float = Field(ge=0.0, le=1.0)
+    dropout: float = Field(ge=0.0, le=1.0)
+    power: Optional[float] = Field(default=None, ge=0.0, le=1.0)
     is_safe: bool = False
+    is_valid: bool = True
+
+
+class ContourPoint(BaseModel):
+    p_control: float = Field(ge=0.0, le=1.0)
+    dropout: float = Field(ge=0.0, le=1.0)
+
+
+class ContourSegment(BaseModel):
+    start: ContourPoint
+    end: ContourPoint
+
+
+class PowerCurvePoint(BaseModel):
+    p_control: float = Field(ge=0.0, le=1.0)
+    power: Optional[float] = Field(default=None, ge=0.0, le=1.0)
     is_valid: bool = True
 
 
@@ -193,13 +226,68 @@ class ScenarioGridResponse(BaseModel):
     y_dropout: List[float]
     power: List[List[Optional[float]]]  # [dropout_index][baseline_index]
     invalid_mask: List[List[bool]]     # [dropout_index][baseline_index]
-    target_power: float
+    target_power: float = Field(gt=0.0, lt=1.0)
     planned_point: GridPoint
     selected_point: Optional[GridPoint] = None
     frontier_points: List[GridPoint] = Field(default_factory=list)
+    contour_segments: List[ContourSegment] = Field(default_factory=list)
+    power_curve: List[PowerCurvePoint] = Field(default_factory=list)
+    invalid_cell_count: int = Field(ge=0)
+    worst_case_power: Optional[float] = Field(default=None, ge=0.0, le=1.0)
     warnings: List[str] = Field(default_factory=list)
     computed_at: str
     inputs_hash: str
+
+    @model_validator(mode="after")
+    def validate_grid_matrix(self) -> "ScenarioGridResponse":
+        n_dropouts = len(self.y_dropout)
+        n_baselines = len(self.x_baseline)
+
+        if len(self.power) != n_dropouts:
+            raise ValueError(f"power matrix outer dimension ({len(self.power)}) != y_dropout length ({n_dropouts})")
+        if len(self.invalid_mask) != n_dropouts:
+            raise ValueError(f"invalid_mask outer dimension ({len(self.invalid_mask)}) != y_dropout length ({n_dropouts})")
+
+        computed_invalid_count = 0
+        powers: List[float] = []
+
+        for r_idx in range(n_dropouts):
+            row_p = self.power[r_idx]
+            row_m = self.invalid_mask[r_idx]
+            if len(row_p) != n_baselines:
+                raise ValueError(
+                    f"power row {r_idx} length ({len(row_p)}) != x_baseline length ({n_baselines})"
+                )
+            if len(row_m) != n_baselines:
+                raise ValueError(
+                    f"invalid_mask row {r_idx} length ({len(row_m)}) != x_baseline length ({n_baselines})"
+                )
+            for c_idx in range(n_baselines):
+                val = row_p[c_idx]
+                mask = row_m[c_idx]
+                if mask:
+                    computed_invalid_count += 1
+                    if val is not None:
+                        raise ValueError(f"Cell at ({r_idx}, {c_idx}) has mask=True but power is not None ({val})")
+                else:
+                    if val is None or math.isnan(val) or not (0.0 <= val <= 1.0):
+                        raise ValueError(
+                            f"Cell at ({r_idx}, {c_idx}) has mask=False but power is invalid ({val})"
+                        )
+                    powers.append(val)
+
+        if self.invalid_cell_count != computed_invalid_count:
+            raise ValueError(
+                f"invalid_cell_count ({self.invalid_cell_count}) does not match masked cell count ({computed_invalid_count})"
+            )
+
+        if powers:
+            min_power = min(powers)
+            if self.worst_case_power is not None and abs(self.worst_case_power - min_power) > 1e-4:
+                raise ValueError(
+                    f"worst_case_power ({self.worst_case_power}) does not match minimum valid power ({min_power})"
+                )
+        return self
 
 
 # 4. Standard Error Envelope
