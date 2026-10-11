@@ -112,6 +112,12 @@ export interface Provenance {
   follow_up_label: string;
   method_version: "binary-v1";
   generated_by: "local_fixture";
+  field_provenance?: Record<string, {
+    source: "manual_user" | "synthetic_preset" | "protocol_curated" | "clinicaltrials_registry";
+    description?: string | null;
+    retrieved_at?: string | null;
+    source_url?: string | null;
+  }>;
 }
 
 export interface Preset {

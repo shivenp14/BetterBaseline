@@ -143,12 +143,19 @@ export function solveMinimumN(
   targetPower = 0.8,
   alpha = 0.05
 ): number {
+  if (pControl === pTreatment) {
+    throw new Error("UNBOUNDED_OR_INFEASIBLE: Null effect cannot reach target power above alpha at finite N");
+  }
+  const maxN = 1_000_000;
+  if (calculateAnalyticPower(pControl, pTreatment, maxN, alpha) < targetPower) {
+    throw new Error("UNBOUNDED_OR_INFEASIBLE: Target power is not reached at the configured maximum evaluable N");
+  }
+
   let low = 2;
   let high = 4;
-  while (calculateAnalyticPower(pControl, pTreatment, high, alpha) < targetPower) {
+  while (high < maxN && calculateAnalyticPower(pControl, pTreatment, high, alpha) < targetPower) {
     low = high;
-    high *= 2;
-    if (high > 1_000_000) break;
+    high = Math.min(high * 2, maxN);
   }
   while (low < high) {
     const mid = Math.floor((low + high) / 2);
@@ -216,6 +223,7 @@ export function computeLiveDesign(
       follow_up_label: "12 months",
       method_version: "binary-v1",
       generated_by: "local_fixture",
+      field_provenance: provenanceLedger,
     },
     mock: true,
   };
@@ -226,9 +234,11 @@ export function computeLiveEvaluation(
   fixedEnrollment: FixedEnrollment,
   stressBaseline: number,
   stressDropout: number,
-  provenanceLedger?: ProvenanceLedger
+  provenanceLedger?: ProvenanceLedger,
+  effectOverride?: TrialAssumptions["effect"] | null
 ): EvaluateResponse {
-  const pTreatment = resolveTreatmentRisk(stressBaseline, plannedDesign.effect);
+  const effectiveEffect = effectOverride ?? plannedDesign.effect;
+  const pTreatment = resolveTreatmentRisk(stressBaseline, effectiveEffect);
   const enrolledPerArm = fixedEnrollment.control;
   const expectedRetainedFloor = Math.floor(enrolledPerArm * (1 - stressDropout));
 
@@ -246,6 +256,12 @@ export function computeLiveEvaluation(
     "Calculated live at fixed enrollment; analytic retention uses floor(N * (1 - dropout)).",
     "Monte Carlo simulation unavailable for custom inputs without backend execution; simulation metrics nullified.",
   ];
+
+  const hasManualStress =
+    provenanceLedger &&
+    Object.entries(provenanceLedger).some(
+      ([k, v]) => (k.startsWith("/stress_scenario") || k.startsWith("/planned_design")) && v.source === "manual_user"
+    );
 
   return {
     model_version: "binary-v1",
@@ -265,14 +281,15 @@ export function computeLiveEvaluation(
       inputs_hash: `eval:${Date.now()}`,
     },
     provenance: {
-      scenario_id: "live-evaluated",
+      scenario_id: hasManualStress ? "user-customized" : "live-evaluated",
       scenario_kind: "synthetic",
-      label: "Live Evaluated Scenario",
+      label: hasManualStress ? "User Customized Stress Scenario" : "Live Evaluated Scenario",
       source: { type: "synthetic", citation_url: null, source_location: null },
       endpoint_type: "binary_undesirable_event",
       follow_up_label: "12 months",
       method_version: "binary-v1",
       generated_by: "local_fixture",
+      field_provenance: provenanceLedger,
     },
     mock: true,
   };

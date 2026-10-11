@@ -251,7 +251,6 @@ async function testRolandReviewFixes() {
     simulation: { replicates: 10000, seed: 42 },
     preset_id: state.presetId,
   });
-  // Live calculation should produce null monte_carlo and lower power than preset 0.47
   assert.strictEqual(modifiedEffectEval.monte_carlo, null);
   assert.notStrictEqual(modifiedEffectEval.analytic.conditional_power_approx, 0.47);
   assert.strictEqual(
@@ -259,7 +258,63 @@ async function testRolandReviewFixes() {
     true
   );
 
-  console.log("✔ Roland review fixes: null MC disclosure and effect matching verified");
+  // 2. Effect override is honored in live evaluation
+  const overrideEval = await evaluateScenario({
+    planned_design: state.plannedDraft,
+    fixed_enrollment: state.frozenEnrollment!,
+    stress_scenario: {
+      control_event_rate: 0.15,
+      dropout: { control: 0.0, treatment: 0.0 },
+      effect_override: { kind: "relative_risk", value: 0.99 },
+    },
+    simulation: { replicates: 10000, seed: 42 },
+    preset_id: state.presetId,
+  });
+  // Without override, RR 0.75 at baseline 0.15 gives ~0.657 power; with RR 0.99 it should be near alpha (0.05)
+  assert.notStrictEqual(overrideEval.analytic.conditional_power_approx, 0.657);
+  assert.strictEqual(overrideEval.analytic.conditional_power_approx! < 0.1, true);
+
+  // 3. Different simulation settings bypass preset fixture
+  const customSimEval = await evaluateScenario({
+    planned_design: state.plannedDraft,
+    fixed_enrollment: state.frozenEnrollment!,
+    stress_scenario: state.calculatedDesign ? {
+      control_event_rate: 0.1,
+      dropout: { control: 0.0, treatment: 0.0 },
+      effect_override: null,
+    } : {
+      control_event_rate: 0.1,
+      dropout: { control: 0.0, treatment: 0.0 },
+      effect_override: null,
+    },
+    simulation: { replicates: 1234, seed: 123 },
+    preset_id: state.presetId,
+  });
+  assert.strictEqual(customSimEval.monte_carlo, null);
+
+  // 4. Infeasible solveMinimumN throws UNBOUNDED_OR_INFEASIBLE
+  assert.throws(() => {
+    // Weak effect RR 0.99999
+    const { solveMinimumN } = require("../lib/statistical-engine");
+    solveMinimumN(0.2, 0.2 * 0.99999, 0.8, 0.05);
+  }, /UNBOUNDED_OR_INFEASIBLE/);
+
+  // 5. Calculate does not get permanently stuck in calculating when stress edits arrive
+  let stressMidCalcState = workspaceReducer(state, { type: "START_CALCULATE" });
+  assert.strictEqual(stressMidCalcState.designStatus, "calculating");
+  stressMidCalcState = workspaceReducer(stressMidCalcState, {
+    type: "UPDATE_STRESS_BASELINE",
+    baseline: 0.25,
+  });
+  // Outdated calculate response arrives
+  stressMidCalcState = workspaceReducer(stressMidCalcState, {
+    type: "CALCULATE_SUCCESS",
+    response: state.calculatedDesign!,
+    requestRevision: state.requestRevision,
+  });
+  assert.strictEqual(stressMidCalcState.designStatus, "idle");
+
+  console.log("✔ Roland review fixes: null MC disclosure, effect matching, override, feasibility & revision verified");
 }
 
 async function runAll() {

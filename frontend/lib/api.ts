@@ -40,6 +40,10 @@ function matchesPresetInputs(request: ExtendedEvaluateRequest): boolean {
   const effectOverrideMatches =
     s.effect_override === null && request.stress_scenario.effect_override === null;
 
+  const simulationMatches =
+    preset.simulation.replicates === request.simulation.replicates &&
+    preset.simulation.seed === request.simulation.seed;
+
   return (
     p.control_event_rate === request.planned_design.control_event_rate &&
     effectMatches &&
@@ -49,7 +53,8 @@ function matchesPresetInputs(request: ExtendedEvaluateRequest): boolean {
     f.control === request.fixed_enrollment.control &&
     s.control_event_rate === request.stress_scenario.control_event_rate &&
     s.dropout.control === request.stress_scenario.dropout.control &&
-    effectOverrideMatches
+    effectOverrideMatches &&
+    simulationMatches
   );
 }
 
@@ -95,7 +100,7 @@ export async function calculateDesign(
   if (matchesPresetDesign(request)) {
     return getPresetById(request.preset_id).design_response;
   }
-  return computeLiveDesign(request);
+  return computeLiveDesign(request, request.provenance_ledger);
 }
 
 /**
@@ -123,7 +128,8 @@ export async function evaluateScenario(
     request.fixed_enrollment,
     request.stress_scenario.control_event_rate,
     request.stress_scenario.dropout.control,
-    request.provenance_ledger
+    request.provenance_ledger,
+    request.stress_scenario.effect_override
   );
 }
 

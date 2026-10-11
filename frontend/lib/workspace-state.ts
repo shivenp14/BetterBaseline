@@ -107,7 +107,10 @@ export function workspaceReducer(
     case "CALCULATE_SUCCESS": {
       // Reject stale late responses
       if (action.requestRevision < state.requestRevision) {
-        return state;
+        return {
+          ...state,
+          designStatus: "idle",
+        };
       }
       return {
         ...state,
@@ -123,7 +126,10 @@ export function workspaceReducer(
 
     case "CALCULATE_ERROR": {
       if (action.requestRevision < state.requestRevision) {
-        return state;
+        return {
+          ...state,
+          designStatus: "idle",
+        };
       }
       return {
         ...state,
