@@ -5,7 +5,7 @@
   "project": "Better Baseline",
   "title": "Stable Design",
   "scenario_origin": "synthetic_preset",
-  "contract_status": "draft_pending_B1",
+  "contract_status": "canonical_backend_v1",
   "inputs_file": "inputs.json",
   "mock_response_file": "mock-response.json",
   "inputs_hash": "sha256:c63d70d3603bd1db5a8c3942246e253d65507c7526f366cb753ea2f7b3b3bc4a",
@@ -179,16 +179,17 @@
     }
   ],
   "warnings": [
-    "Synthetic example; not a clinical recommendation.",
-    "Hand-authored illustrative mock; not measured engine output or clinical evidence."
+    "All input assumptions are synthetic and are not clinical evidence.",
+    "mock-response.json remains illustrative; final-response.json is generated backend output."
   ],
   "snapshot_requirements": {
-    "status": "pending",
+    "status": "generated_and_reproducible",
     "actual_engine_functions_required": true,
     "fixed_seed": 42,
     "replicates": 10000,
     "record_software_versions": true,
     "record_engine_commit": true,
-    "schema_alignment_gate": "B1; update only D-owned fixtures, not contracts/"
-  }
+    "schema_alignment_gate": "B1 complete; canonical backend v1 response models"
+  },
+  "final_response_file": "final-response.json"
 }
