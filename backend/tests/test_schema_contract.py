@@ -239,3 +239,94 @@ def test_grid_axes_nonfinite_rejected():
             computed_at="2026-10-10T00:00:00Z",
             inputs_hash="hash",
         )
+
+
+def test_grid_request_conflicting_effect_rejected():
+    from app.schemas import (
+        AbsoluteRiskReductionEffect,
+        RelativeRiskEffect,
+        ScenarioGridRequest,
+        StressScenario,
+        TrialAssumptions,
+    )
+
+    base_design = TrialAssumptions(
+        control_event_rate=0.20,
+        effect=RelativeRiskEffect(value=0.75),
+    )
+    enrollment = ArmCounts(control=903, treatment=903)
+
+    # Conflicting effect override between top-level and selected_scenario
+    with pytest.raises(ValidationError, match="Conflicting effect_override"):
+        ScenarioGridRequest(
+            planned_design=base_design,
+            fixed_enrollment=enrollment,
+            effect_override=RelativeRiskEffect(value=0.75),
+            selected_scenario=StressScenario(
+                control_event_rate=0.20,
+                effect_override=AbsoluteRiskReductionEffect(value=0.05),
+            ),
+        )
+
+    # Consistent effect override succeeds
+    req = ScenarioGridRequest(
+        planned_design=base_design,
+        fixed_enrollment=enrollment,
+        effect_override=RelativeRiskEffect(value=0.75),
+        selected_scenario=StressScenario(
+            control_event_rate=0.20,
+            effect_override=RelativeRiskEffect(value=0.75),
+        ),
+    )
+    assert req.effective_grid_effect.value == 0.75
+
+
+def test_export_payload_preserves_results_and_software_versions():
+    from app.schemas import (
+        DesignCalculateResponse,
+        ExportPayload,
+        RelativeRiskEffect,
+        TrialAssumptions,
+    )
+
+    design = TrialAssumptions(
+        control_event_rate=0.20,
+        effect=RelativeRiskEffect(value=0.75),
+    )
+    enrollment = ArmCounts(control=903, treatment=903)
+
+    design_res = DesignCalculateResponse(
+        model_version="binary-v1",
+        method="cohen_h_normal_v1",
+        p_treatment=0.15,
+        evaluable_n=enrollment,
+        enrolled_n=enrollment,
+        nominal_power_evaluable=0.80,
+        warnings=[],
+        inputs_hash="test-hash",
+    )
+
+    versions = {
+        "python": "3.12.3",
+        "numpy": "1.26.4",
+        "betterbaseline": "0.1.0",
+    }
+
+    payload = ExportPayload(
+        planned_design=design,
+        fixed_enrollment=enrollment,
+        design_result=design_res,
+        software_versions=versions,
+        exported_at="2026-10-10T00:00:00Z",
+    )
+
+    dumped = payload.model_dump(mode="json")
+    assert dumped["design_result"] is not None
+    assert dumped["design_result"]["p_treatment"] == 0.15
+    assert dumped["software_versions"] == versions
+
+    # Round-trip validate
+    loaded = ExportPayload.model_validate(dumped)
+    assert loaded.design_result is not None
+    assert loaded.design_result.p_treatment == 0.15
+    assert loaded.software_versions == versions

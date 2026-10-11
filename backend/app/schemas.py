@@ -205,6 +205,28 @@ class ScenarioGridRequest(BaseModel):
         description="Selected stress scenario providing the selected baseline risk and dropout level for selected_point and power_curve",
     )
 
+    @model_validator(mode="after")
+    def validate_effect_consistency(self) -> "ScenarioGridRequest":
+        if self.effect_override and self.selected_scenario and self.selected_scenario.effect_override:
+            if (
+                self.effect_override.kind != self.selected_scenario.effect_override.kind
+                or self.effect_override.value != self.selected_scenario.effect_override.value
+            ):
+                raise ValueError(
+                    "Conflicting effect_override: top-level effect_override and "
+                    "selected_scenario.effect_override must not conflict."
+                )
+        return self
+
+    @property
+    def effective_grid_effect(self) -> Effect:
+        """Effective effect for computing the 2D grid matrix and 1D power curve."""
+        return (
+            self.effect_override
+            or (self.selected_scenario.effect_override if self.selected_scenario else None)
+            or self.planned_design.effect
+        )
+
 
 class GridPoint(BaseModel):
     p_control: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
@@ -344,6 +366,12 @@ class ExportPayload(BaseModel):
     planned_design: TrialAssumptions
     fixed_enrollment: ArmCounts
     stress_scenario: Optional[StressScenario] = None
+    design_result: Optional[DesignCalculateResponse] = None
     evaluation_result: Optional[ScenarioEvaluateResponse] = None
+    grid_result: Optional[ScenarioGridResponse] = None
+    software_versions: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Software and package versions for reproducible calculation",
+    )
     provenance: Dict[str, FieldProvenance] = Field(default_factory=dict)
     exported_at: str

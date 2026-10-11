@@ -264,6 +264,12 @@
         "inputs_hash": "sha256:example-evaluate-hash"
       }
     },
+    "design_result": null,
+    "grid_result": null,
+    "software_versions": {
+      "python": "3.12",
+      "betterbaseline": "0.1.0"
+    },
     "provenance": {
       "control_event_rate": {
         "source": "synthetic_preset",
