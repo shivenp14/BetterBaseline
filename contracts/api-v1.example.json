@@ -1,0 +1,289 @@
+{
+  "design_calculate_request": {
+    "model_version": "binary-v1",
+    "control_event_rate": 0.20,
+    "effect": {
+      "kind": "relative_risk",
+      "value": 0.75
+    },
+    "alpha": 0.05,
+    "target_power": 0.80,
+    "allocation_ratio": 1.0,
+    "dropout": {
+      "control": 0.10,
+      "treatment": 0.10
+    }
+  },
+  "design_calculate_response": {
+    "model_version": "binary-v1",
+    "method": "cohen_h_normal_v1",
+    "p_treatment": 0.15,
+    "evaluable_n": {
+      "control": 903,
+      "treatment": 903
+    },
+    "enrolled_n": {
+      "control": 1004,
+      "treatment": 1004
+    },
+    "nominal_power_evaluable": 0.8005,
+    "warnings": [
+      "Dropout inflation represents expected retention, not guaranteed evaluable counts."
+    ],
+    "inputs_hash": "sha256:example-calculate-hash"
+  },
+  "scenario_evaluate_request": {
+    "planned_design": {
+      "model_version": "binary-v1",
+      "control_event_rate": 0.20,
+      "effect": {
+        "kind": "relative_risk",
+        "value": 0.75
+      },
+      "alpha": 0.05,
+      "target_power": 0.80,
+      "allocation_ratio": 1.0,
+      "dropout": {
+        "control": 0.10,
+        "treatment": 0.10
+      }
+    },
+    "fixed_enrollment": {
+      "control": 1004,
+      "treatment": 1004
+    },
+    "stress_scenario": {
+      "control_event_rate": 0.10,
+      "dropout": {
+        "control": 0.10,
+        "treatment": 0.10
+      },
+      "effect_override": null
+    },
+    "simulation": {
+      "replicates": 10000,
+      "seed": 42
+    }
+  },
+  "scenario_evaluate_response": {
+    "model_version": "binary-v1",
+    "analytic": {
+      "method": "cohen_h_normal_v1",
+      "conditional_power_approx": 0.470,
+      "assumed_evaluable_n": {
+        "control": 903,
+        "treatment": 903
+      }
+    },
+    "monte_carlo": {
+      "method": "pooled_two_proportion_z_v1",
+      "significant_two_sided_fraction": 0.472,
+      "significant_favorable_fraction": 0.472,
+      "mcse_two_sided": 0.005,
+      "mcse_favorable": 0.005,
+      "invalid_test_fraction": 0.0,
+      "replicates": 10000,
+      "seed": 42
+    },
+    "warnings": [
+      "Illustrative independent dropout",
+      "Analytic and Monte Carlo tests use distinct approximations"
+    ],
+    "metadata": {
+      "computed_at": "2026-10-10T23:30:00Z",
+      "inputs_hash": "sha256:example-evaluate-hash"
+    }
+  },
+  "scenario_grid_request": {
+    "planned_design": {
+      "model_version": "binary-v1",
+      "control_event_rate": 0.20,
+      "effect": {
+        "kind": "relative_risk",
+        "value": 0.75
+      },
+      "alpha": 0.05,
+      "target_power": 0.80,
+      "allocation_ratio": 1.0,
+      "dropout": {
+        "control": 0.0,
+        "treatment": 0.0
+      }
+    },
+    "fixed_enrollment": {
+      "control": 903,
+      "treatment": 903
+    },
+    "x_baseline": {
+      "min": 0.05,
+      "max": 0.30,
+      "steps": 3
+    },
+    "y_dropout": {
+      "min": 0.0,
+      "max": 0.20,
+      "steps": 2
+    },
+    "effect_override": null,
+    "selected_scenario": {
+      "control_event_rate": 0.10,
+      "dropout": {
+        "control": 0.0,
+        "treatment": 0.0
+      },
+      "effect_override": null
+    }
+  },
+  "scenario_grid_response": {
+    "model_version": "binary-v1",
+    "method": "cohen_h_normal_v1",
+    "x_baseline": [0.05, 0.175, 0.30],
+    "y_dropout": [0.0, 0.20],
+    "power": [
+      [0.25, 0.75, 0.92],
+      [0.21, 0.68, 0.88]
+    ],
+    "invalid_mask": [
+      [false, false, false],
+      [false, false, false]
+    ],
+    "target_power": 0.80,
+    "planned_point": {
+      "p_control": 0.20,
+      "dropout": 0.0,
+      "power": 0.8005,
+      "is_safe": true,
+      "is_valid": true
+    },
+    "selected_point": {
+      "p_control": 0.10,
+      "dropout": 0.0,
+      "power": 0.470,
+      "is_safe": false,
+      "is_valid": true
+    },
+    "frontier_points": [
+      {
+        "p_control": 0.20,
+        "dropout": 0.0,
+        "power": 0.8005,
+        "is_safe": true,
+        "is_valid": true
+      }
+    ],
+    "contour_segments": [
+      {
+        "start": {
+          "p_control": 0.20,
+          "dropout": 0.0
+        },
+        "end": {
+          "p_control": 0.25,
+          "dropout": 0.20
+        }
+      }
+    ],
+    "power_curve": [
+      {
+        "p_control": 0.05,
+        "power": 0.25,
+        "is_valid": true
+      },
+      {
+        "p_control": 0.175,
+        "power": 0.75,
+        "is_valid": true
+      },
+      {
+        "p_control": 0.30,
+        "power": 0.92,
+        "is_valid": true
+      }
+    ],
+    "invalid_cell_count": 0,
+    "worst_case_power": 0.21,
+    "warnings": [
+      "Grid evaluates floor expected evaluable count per cell."
+    ],
+    "computed_at": "2026-10-10T23:30:00Z",
+    "inputs_hash": "sha256:example-grid-hash"
+  },
+  "export_payload": {
+    "export_schema_version": 1,
+    "model_version": "binary-v1",
+    "planned_design": {
+      "model_version": "binary-v1",
+      "control_event_rate": 0.20,
+      "effect": {
+        "kind": "relative_risk",
+        "value": 0.75
+      },
+      "alpha": 0.05,
+      "target_power": 0.80,
+      "allocation_ratio": 1.0,
+      "dropout": {
+        "control": 0.0,
+        "treatment": 0.0
+      }
+    },
+    "fixed_enrollment": {
+      "control": 903,
+      "treatment": 903
+    },
+    "stress_scenario": {
+      "control_event_rate": 0.10,
+      "dropout": {
+        "control": 0.0,
+        "treatment": 0.0
+      },
+      "effect_override": null
+    },
+    "evaluation_result": {
+      "model_version": "binary-v1",
+      "analytic": {
+        "method": "cohen_h_normal_v1",
+        "conditional_power_approx": 0.470,
+        "assumed_evaluable_n": {
+          "control": 903,
+          "treatment": 903
+        }
+      },
+      "monte_carlo": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.472,
+        "significant_favorable_fraction": 0.472,
+        "mcse_two_sided": 0.005,
+        "mcse_favorable": 0.005,
+        "invalid_test_fraction": 0.0,
+        "replicates": 10000,
+        "seed": 42
+      },
+      "warnings": [],
+      "metadata": {
+        "computed_at": "2026-10-10T23:30:00Z",
+        "inputs_hash": "sha256:example-evaluate-hash"
+      }
+    },
+    "design_result": null,
+    "grid_result": null,
+    "software_versions": {
+      "python": "3.12",
+      "betterbaseline": "0.1.0"
+    },
+    "provenance": {
+      "control_event_rate": {
+        "source": "synthetic_preset",
+        "description": "Baseline collapse preset scenario"
+      }
+    },
+    "exported_at": "2026-10-10T23:30:00Z"
+  },
+  "error_envelope": {
+    "error": {
+      "code": "INVALID_MODEL_INPUT",
+      "message": "Treatment event probability would be negative for the selected ARR.",
+      "field": "stress_scenario.control_event_rate",
+      "recoverable": true
+    }
+  }
+}

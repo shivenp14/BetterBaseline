@@ -3,7 +3,7 @@ FROM python:3.12-slim-bookworm
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /srv/backend
 # #64 owns this manifest and the registered app; absent prerequisites fail COPY.
-COPY backend/pyproject.toml ./
+COPY backend/pyproject.toml backend/README.md ./
 COPY backend/app ./app
 RUN --mount=type=secret,id=proxy_ca \
     if [ -f /run/secrets/proxy_ca ]; then export PIP_CERT=/run/secrets/proxy_ca; fi; \

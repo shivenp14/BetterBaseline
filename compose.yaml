@@ -7,7 +7,7 @@ services:
       - "127.0.0.1:8000:8000"
     environment:
       APP_ENV: production
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
     restart: unless-stopped
   frontend:
     build:
