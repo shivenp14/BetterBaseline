@@ -71,7 +71,7 @@ class HttpEvidenceTests(unittest.TestCase):
         with patch('http_uncached.Path.read_bytes', return_value=b'completed cache implementation'):
             with self.assertRaisesRegex(ValueError, '#116'):
                 ensure_uncached_service()
-        
+
 
 if __name__ == '__main__':
     unittest.main()
