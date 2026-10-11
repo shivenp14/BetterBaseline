@@ -37,6 +37,20 @@ def _point(point: StatisticalPoint) -> GridPoint:
         invalid_reason=point.invalid_reason)
 
 
+def _diagnostics_for_point(point: StatisticalPoint, effect: Effect, alpha: float) -> list[dict]:
+    if point.invalid_reason == 'INVALID_EFFECT_AT_BASELINE':
+        # Retain the raw transformed risk so analytic_diagnostics can describe
+        # the unsupported probability. Do not clip it or calculate a power.
+        treatment = (point.baseline * effect.value if effect.kind == 'relative_risk'
+                     else point.baseline - effect.value)
+    else:
+        treatment = resolve_treatment_risk(point.baseline, effect)
+    return analytic_diagnostics(
+        point.baseline, treatment, point.expected_evaluable_per_arm,
+        point.expected_evaluable_per_arm, alpha,
+    )['diagnostics']
+
+
 def compute_grid(request: ScenarioGridRequest) -> ScenarioGridResponse:
     # Bounds precede axis allocation and numerical work. These derive from the
     # published axis contract and the scenario API's per-arm enrollment cap.
@@ -81,11 +95,9 @@ def compute_grid(request: ScenarioGridRequest) -> ScenarioGridResponse:
         if planned.invalid_reason:
             warnings.append(f'Planned point is unavailable: {planned.invalid_reason}.')
     for point, point_effect in ((planned, Effect(design.effect.kind, design.effect.value)), (result.selected_point, effect)):
+        point_diagnostics = _diagnostics_for_point(point, point_effect, design.alpha)
+        diagnostic_records.extend(point_diagnostics)
         if point.power is not None:
-            treatment = resolve_treatment_risk(point.baseline, point_effect)
-            point_diagnostics = analytic_diagnostics(point.baseline, treatment,
-                point.expected_evaluable_per_arm, point.expected_evaluable_per_arm, design.alpha)['diagnostics']
-            diagnostic_records.extend(point_diagnostics)
             warnings.extend(entry['message'] for entry in point_diagnostics)
     contours = [ContourSegment(start=ContourPoint(p_control=a.baseline, dropout=a.dropout),
                               end=ContourPoint(p_control=b.baseline, dropout=b.dropout))
