@@ -1,5 +1,8 @@
 # Better Baseline assumption provenance
 
+The methods are educational and conditional on the entered assumptions.
+Provenance supports traceability; it does not validate those assumptions.
+
 Provenance records where an input came from; it does not establish that the
 assumption is clinically correct or that a hypothetical treatment works.
 Binary endpoint risk concerns the eligible control population and a stated
@@ -110,12 +113,20 @@ For every measured request, an isolated observer records actual cache reads and
 writes while forwarding to the real cache. Cold resets and observation resets
 are outside timing. Same-seed hits preserve the evaluation response's original
 computed timestamp. Changed seed or replicates produce distinct keys/misses.
-Grid requests have no cache activity and fresh timestamps. The design route
+Grid cache hits preserve the original response timestamp; misses recompute.
+Changed-axis requests produce distinct keys and verified misses. The design route
 caches the solver result and reconstructs its response without a timestamp.
 
-Current route keys include route, model version and normalized request defaults;
-they do not separately identify software or numerical method versions. The
+Design/evaluate keys include route, model version and normalized request defaults.
+Grid also includes its numerical method version and Python/NumPy/SciPy/statsmodels
+versions. Design/evaluate omit those separate signatures. The
 reports use fresh services, preserve software/source hashes, and make no claim
 that an older cache entry is valid after a software change. Final UI export
 assembly, field-source preservation in a downloaded export and replay of that
 export remain the responsibility of #76.
+
+New source hashes normalize UTF-8 CRLF/CR line endings to LF; historical raw
+hashes remain capture metadata. Continuous numerical audits use bounded 1e-12
+relative/absolute tolerance across environments. Discrete counts, masks, shapes
+and seeds remain exact. The browser evidence includes a temporary benchmark-owned
+31×21 page using the real shared API helper, alongside the production workspace.

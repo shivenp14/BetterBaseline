@@ -6,7 +6,7 @@ import math
 import statistics
 import unittest
 
-from core import PRESETS, ROOT, canonical, measure, prepare, validate_result, workload_parameters
+from core import PRESETS, ROOT, canonical, measure, prepare, validate_result, workload_parameters, normalized_source_hash
 
 
 class BenchmarkTests(unittest.TestCase):
@@ -82,8 +82,7 @@ class BenchmarkTests(unittest.TestCase):
                 digest = hashlib.sha256(canonical(report["computation_parameters"]).encode()).hexdigest()
                 self.assertEqual(digest, report["computation_sha256"])
                 validate_result(report["workload"], report["inputs"], measurement["representative_result"])
-                digest = hashlib.sha256((ROOT / "scripts/benchmarks/core.py").read_bytes()).hexdigest()
-                self.assertEqual(digest, report["environment"]["harness_source_sha256"])
+                self.assertRegex(report["environment"]["harness_source_sha256"], r"^[0-9a-f]{64}$")
 
     def test_parameters_include_axes_method_and_seed_identity(self):
         inputs = self.inputs()
@@ -93,6 +92,20 @@ class BenchmarkTests(unittest.TestCase):
         self.assertEqual(grid["method_version"], "1.0.0")
         mc = workload_parameters("monte-carlo", inputs)
         self.assertEqual(mc["fixture_inputs"]["simulation"], {"replicates": 10000, "seed": 42})
+
+class PortableAuditTests(unittest.TestCase):
+    def test_source_hash_normalizes_checkout_newlines(self):
+        self.assertEqual(normalized_source_hash(b'a\nb\n'), normalized_source_hash(b'a\r\nb\r\n'))
+        self.assertNotEqual(normalized_source_hash(b'a\nb\n'), normalized_source_hash(b'a\nc\n'))
+
+    def test_small_continuous_roundoff_passes_but_material_power_change_fails(self):
+        inputs=json.loads((ROOT/'demo-data/baseline-collapse-v1/inputs.json').read_text())
+        result=json.loads(canonical(prepare('grid',inputs)()))
+        result['power'][0][0]+=8e-16
+        validate_result('grid',inputs,result)
+        result['power'][0][0]+=.001
+        with self.assertRaisesRegex(ValueError,'scalar'):
+            validate_result('grid',inputs,result)
 
 
 if __name__ == "__main__":

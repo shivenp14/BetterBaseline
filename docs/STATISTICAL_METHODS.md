@@ -1,5 +1,8 @@
 # Better Baseline statistical methods
 
+These methods are educational and conditional on the entered assumptions. They
+do not establish treatment efficacy, clinical utility or regulatory validation.
+
 ## Task #56: binary inputs and effect transformation
 
 The statistical core is independent of FastAPI. Import `Effect`, `Dropout`, `FixedEnrollment`,
@@ -215,17 +218,19 @@ Each condition below contains 30 measured serial actions after one excluded
 priming action and three excluded warmups. Cold means a verified backend-cache
 miss after clearing outside timing; warm means a verified hit. Both run in a warm
 application. These labels do not describe process startup or browser navigation.
-Grid remains uncached because the route currently supplies no cache key.
+Grid now uses the route cache: cold actions recompute and warm actions reuse the
+complete response, including its original computation timestamp.
 
 ### Real loopback HTTP
 
 | Workload | Condition | Median (ms) | p95 (ms) |
 |---|---|---:|---:|
-| Design | cache-cold | 0.853 | 1.019 |
-| Design | cache-warm | 0.783 | 1.177 |
-| 31×21 grid | uncached-grid | 9.232 | 9.543 |
-| Seed 42 / 10,000 replicates | cache-cold | 4.582 | 4.732 |
-| Seed 42 / 10,000 replicates | cache-warm | 0.739 | 0.846 |
+| Design | cache-cold | 0.839 | 1.341 |
+| Design | cache-warm | 0.805 | 0.981 |
+| 31×21 grid | cache-cold | 10.837 | 11.389 |
+| 31×21 grid | cache-warm | 3.211 | 3.387 |
+| Seed 42 / 10,000 replicates | cache-cold | 4.684 | 4.931 |
+| Seed 42 / 10,000 replicates | cache-warm | 0.729 | 0.810 |
 
 [Raw timings, results and cache witnesses](../scripts/benchmarks/reports/live/http.json).
 
@@ -233,21 +238,25 @@ Grid remains uncached because the route currently supplies no cache key.
 
 | Workload | Condition | Median (ms) | p95 (ms) |
 |---|---|---:|---:|
-| Design | cache-cold | 2.300 | 3.100 |
-| Design | cache-warm | 2.000 | 2.900 |
-| 6×4 production grid | uncached-grid | 4.900 | 5.500 |
-| Seed 42 / 10,000 replicates | cache-cold | 6.500 | 7.100 |
-| Seed 42 / 10,000 replicates | cache-warm | 1.900 | 2.600 |
+| Design | cache-cold | 2.100 | 3.100 |
+| Design | cache-warm | 2.100 | 2.900 |
+| 6×4 production grid | cache-cold | 7.300 | 7.800 |
+| 6×4 production grid | cache-warm | 4.550 | 5.000 |
+| Seed 42 / 10,000 replicates | cache-cold | 6.300 | 7.200 |
+| Seed 42 / 10,000 replicates | cache-warm | 1.800 | 2.100 |
+| 31×21 benchmark page | cache-cold | 13.250 | 14.700 |
+| 31×21 benchmark page | cache-warm | 4.850 | 5.900 |
 
 [Raw timings, results and cache witnesses](../scripts/benchmarks/reports/live/browser.json).
 
 HTTP timing covers request send through full response receipt. Browser timing
-covers the native production action through React result/status DOM commit;
+covers the native action through React result/status DOM commit;
 paint is excluded. Browser navigation, fixture setup, cache reset/inspection,
 result validation and report generation are outside timing. Browser durations
-use performance.now and may be quantized. The browser uses the unchanged
-production page and shared helper, not fixture responses or a temporary page.
-The 6×4 browser grid is distinct from the required 31×21 HTTP workload.
+use performance.now and may be quantized. The browser measures the unchanged
+production workspace (including its 6×4 grid) and an isolated, temporary
+benchmark-owned 31×21 page. Both use the real shared API helper and backend.
+The temporary page is removed after measurement and is not a product change.
 
 Each new report records the actual hardware/software, frontend build ID,
 Chromium and Node versions, complete request/result, source hashes, raw durations
@@ -257,12 +266,21 @@ observations under uncontrolled background load. No general speedup or controlle
 before/after comparison with the historical reports is claimed.
 
 Simulation hits preserve the original computed_at timestamp; changed seed or
-replicate count causes an observed miss. Grid timestamps change on recomputation.
+replicate count causes an observed miss. Grid hits likewise preserve the original
+timestamp; cold recomputations receive new timestamps. Changed grid axes
+produce observed misses followed by hits on the repeated request.
 Design caches its solver value and builds a new response, without a computation
-timestamp. Current cache keys include route, binary model version and normalized
-request; they do not separately embed software or numerical method versions.
+timestamp. Design/evaluate keys include route, binary model version and normalized
+request. Grid keys additionally include GRID_METHOD_VERSION and Python, NumPy,
+SciPy and statsmodels versions. Design/evaluate omit these separate signatures.
 Measured services start fresh, so these reports make no cross-upgrade cache claim.
 
 D6's core, merged HTTP/cache and current frontend measurement work is complete.
 Final product screen and downloaded-export acceptance remain with #76; these
 runtime measurements do not establish clinical utility or regulatory validation.
+
+New report source hashes normalize UTF-8 CRLF/CR line endings to LF. Historical
+raw hashes remain capture metadata rather than equality checks against a later
+checkout. Continuous numerical audit comparisons use relative and absolute
+tolerances of 1e-12; counts, masks, shapes and seeds remain exact, as does
+same-environment seeded replay.

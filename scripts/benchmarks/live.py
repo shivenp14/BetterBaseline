@@ -15,7 +15,7 @@ import subprocess
 import sys
 import os
 
-from core import ROOT, canonical, environment
+from core import ROOT, canonical, environment, close_float, normalized_source_hash
 from http_uncached import request_payload, ROUTES, validate_response, replay_identity
 
 
@@ -73,13 +73,13 @@ def check_cache(condition, snapshot):
     events = snapshot['events']
     reads = [e for e in events if e['operation']=='get']
     writes = [e for e in events if e['operation']=='set']
-    if condition == 'uncached-grid':
-        assert not events, 'Grid unexpectedly acquired cache behavior; revisit measurement labels'
-    elif condition == 'cache-cold':
+    if condition == 'cache-cold':
         assert len(reads)==1 and not reads[0]['hit'] and len(writes)==1, snapshot
         assert reads[0]['key']==writes[0]['key']
-    else:
+    elif condition == 'cache-warm':
         assert len(reads)==1 and reads[0]['hit'] and not writes, snapshot
+    else:
+        raise ValueError('Unknown cache condition: '+condition)
 
 
 def summarize(samples):
@@ -116,10 +116,8 @@ def http_measure(workload, condition, inputs, port, observed):
             if index>=4:
                 samples.append(elapsed); snapshots.append(snapshot)
                 timestamps.append(result.get('computed_at',result.get('metadata',{}).get('computed_at')))
-        if workload=='monte-carlo':
-            assert (len(set(timestamps))==1) if condition=='cache-warm' else (len(set(timestamps))==30)
-        if workload=='grid':
-            assert len(set(timestamps))==30
+        if workload in ('monte-carlo','grid'):
+            assert len(set(timestamps))==(1 if condition=='cache-warm' else 30)
         return {**summarize(samples), 'excluded_priming_requests':1,
                 'cache_observations':snapshots, 'computed_at_samples':timestamps,
                 'representative_result':reference, 'request':json.loads(body),
@@ -148,6 +146,51 @@ def verify_seed_identity(port, observed, inputs):
         assert observations[2]['events'][0]['key']!=observations[4]['events'][0]['key']
         from app.cache import make_cache_key
         assert make_cache_key('/test','v1',inputs)!=make_cache_key('/test','v2',inputs)
+        return observations
+    finally:
+        connection.close()
+
+
+
+def validate_captured_grid(captured, result):
+    from app.schemas import ScenarioGridResponse
+    from app.statistics.analytic import analytic_power
+    from app.statistics.effect import resolve_treatment_risk
+    from app.statistics.inputs import Effect, expected_retained_count
+    ScenarioGridResponse.model_validate(result)
+    assert result['fixed_enrollment']==captured['fixed_enrollment']
+    assert len(result['x_baseline'])==captured['x_baseline']['steps']
+    assert len(result['y_dropout'])==captured['y_dropout']['steps']
+    effect = Effect(**captured['planned_design']['effect'])
+    for row, dropout in enumerate(result['y_dropout']):
+        n=expected_retained_count(captured['fixed_enrollment']['control'],dropout)
+        for column, baseline in enumerate(result['x_baseline']):
+            expected=analytic_power(baseline,resolve_treatment_risk(baseline,effect),n,n,captured['planned_design']['alpha']).power
+            assert close_float(result['power'][row][column],expected)
+            assert not result['invalid_mask'][row][column]
+
+def verify_grid_identity(port, observed, inputs):
+    """Observe actual grid hits and a changed-axis miss outside measured actions."""
+    from copy import deepcopy
+    connection = http.client.HTTPConnection('127.0.0.1', port, timeout=30)
+    payload = request_payload('grid', inputs)
+    changed = deepcopy(payload)
+    changed['x_baseline']['min'] = .06
+    observations = []
+    try:
+        observed.reset_observations(clear=True)
+        for body, condition in ((payload, 'cache-cold'), (payload, 'cache-warm'),
+                                (changed, 'cache-cold'), (changed, 'cache-warm')):
+            observed.reset_observations()
+            connection.request('POST', ROUTES['grid'], canonical(body), {'Content-Type': 'application/json'})
+            response = connection.getresponse()
+            result = json.loads(response.read())
+            assert response.status == 200, result
+            validate_captured_grid(body,result)
+            snapshot = observed.snapshot()
+            check_cache(condition, snapshot)
+            observations.append({'request': body, 'expected_condition': condition, **snapshot})
+        assert observations[0]['events'][0]['key'] != observations[2]['events'][0]['key']
         return observations
     finally:
         connection.close()
@@ -184,11 +227,12 @@ def metadata():
             'frontend_runtime':{'node':subprocess.check_output(['node','--version'],text=True).strip(),
                 'build_id':(ROOT/'frontend/.next/BUILD_ID').read_text().strip() if (ROOT/'frontend/.next/BUILD_ID').exists() else None,
                 'packages':{name:json.loads((ROOT/'frontend/node_modules'/name/'package.json').read_text())['version'] for name in ('next','react','react-dom')}},
-            'source_sha256':{str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest()
+            'source_hash_policy':'UTF-8 text, CRLF/CR normalized to LF',
+            'source_sha256':{str(p.relative_to(ROOT)):normalized_source_hash(p.read_bytes())
                 for folder in ('backend/app','frontend/app','frontend/lib','frontend/components','scripts/benchmarks')
                 for p in sorted((ROOT/folder).rglob('*')) if p.suffix in ('.py','.ts','.tsx','.mjs')},
             'instrumentation':'Benchmark-only delegating cache observer; real get/set/clear/len methods. Single serial request. Clear and inspection outside timing; no HTTP control endpoint or product-source edits.',
-            'cache_key_policy':'Current design/evaluate routes use route + model_version + normalized request (effective defaults included). No separate software signature or numerical method version is embedded; fresh processes are used for each report. Grid supplies no key.',
+            'cache_key_policy':'Design/evaluate keys include route, binary model version and normalized request. Grid additionally includes GRID_METHOD_VERSION and Python/NumPy/SciPy/statsmodels versions. Services start fresh; no cross-upgrade validity is inferred for design/evaluate.',
             'timing_notice':'Local hardware/load-dependent observations; no general speedup or clinical validation claim.'}
 
 
@@ -213,40 +257,25 @@ def main():
                 else:
                     witness = captured
                 if measurement['workload']=='grid':
-                    from app.schemas import ScenarioGridResponse
-                    from app.statistics.analytic import analytic_power
-                    from app.statistics.effect import resolve_treatment_risk
-                    from app.statistics.inputs import Effect, expected_retained_count
-                    ScenarioGridResponse.model_validate(result)
-                    assert result['fixed_enrollment']==captured['fixed_enrollment']
-                    assert len(result['x_baseline'])==captured['x_baseline']['steps']
-                    assert len(result['y_dropout'])==captured['y_dropout']['steps']
-                    effect = Effect(**captured['planned_design']['effect'])
-                    for row, dropout in enumerate(result['y_dropout']):
-                        n=expected_retained_count(captured['fixed_enrollment']['control'],dropout)
-                        for column, baseline in enumerate(result['x_baseline']):
-                            expected=analytic_power(baseline,resolve_treatment_risk(baseline,effect),n,n,captured['planned_design']['alpha']).power
-                            assert result['power'][row][column]==expected
-                            assert not result['invalid_mask'][row][column]
+                    validate_captured_grid(captured,result)
                 else:
                     validate_response(measurement['workload'],witness,result)
                 timestamps=measurement['computed_at_samples']
-                if measurement['workload']=='monte-carlo':
+                if measurement['workload'] in ('monte-carlo','grid'):
                     assert len(set(timestamps))==(1 if measurement['condition']=='cache-warm' else 30)
-                if measurement['workload']=='grid':
-                    assert len(set(timestamps))==30
         else:
             measurements = []
             for workload in ROUTES:
-                for condition in (('uncached-grid',) if workload=='grid' else ('cache-cold','cache-warm')):
+                for condition in ('cache-cold','cache-warm'):
                     data=http_measure(workload,condition,inputs,port,observed)
                     measurements.append({'workload':workload,'condition':condition,**data})
                     print(workload,condition,round(data['median_ms'],3),round(data['p95_ms'],3),flush=True)
         identity_checks=verify_seed_identity(port,observed,inputs)
+        grid_identity_checks=verify_grid_identity(port,observed,inputs)
     for measurement in measurements:
         measurement['semantic_result_sha256']=hashlib.sha256(replay_identity(measurement['representative_result']).encode()).hexdigest()
-    report = {'cache_identity_checks':identity_checks, 'benchmark_schema_version':2, **metadata(), 'frontend':args.browser,
-              'scope': ('Production workspace native action through DOM result commit; excludes navigation, setup, cache reset/inspection and result validation. Includes client helper, HTTP and React DOM commit; excludes paint.' if args.browser else 'Persistent loopback HTTP POST send through complete response body receipt; excludes startup, resets/inspection, JSON parsing and validation.'),
+    report = {'grid_cache_identity_checks':grid_identity_checks, 'cache_identity_checks':identity_checks, 'benchmark_schema_version':2, **metadata(), 'frontend':args.browser,
+              'scope': ('Native action through DOM result commit: production workspace plus isolated shared-helper 31x21 benchmark page; excludes navigation, setup, cache reset/inspection and result validation. Includes client helper, HTTP and React DOM commit; excludes paint.' if args.browser else 'Persistent loopback HTTP POST send through complete response body receipt; excludes startup, resets/inspection, JSON parsing and validation.'),
               'measurements':measurements}
     args.output.write_text(json.dumps(report,indent=2,allow_nan=False)+'\n')
 

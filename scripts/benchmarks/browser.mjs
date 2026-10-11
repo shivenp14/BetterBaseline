@@ -14,8 +14,8 @@ try {
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto('http://localhost:3000');
   assert.match(await page.locator('header').textContent(),/LIVE/);
-  const actions={design:'Calculate & Lock Design',grid:'Load grid response from backend','monte-carlo':'Evaluate Stress Scenario'};
-  const routes={design:'/api/v1/design/calculate',grid:'/api/v1/scenarios/grid','monte-carlo':'/api/v1/scenarios/evaluate'};
+  const actions={design:'Calculate & Lock Design',grid:'Load grid response from backend','monte-carlo':'Evaluate Stress Scenario','grid-31x21':'Run 31×21 grid'};
+  const routes={design:'/api/v1/design/calculate',grid:'/api/v1/scenarios/grid','monte-carlo':'/api/v1/scenarios/evaluate','grid-31x21':'/api/v1/scenarios/grid'};
   const measurements=[];
   const semantic=value=>{
     const copy=structuredClone(value);delete copy.computed_at;if(copy.metadata)delete copy.metadata.computed_at;
@@ -23,7 +23,8 @@ try {
     return JSON.stringify(ordered(copy));
   };
   for(const workload of Object.keys(actions)) {
-    for(const condition of workload==='grid'?['uncached-grid']:['cache-cold','cache-warm']) {
+    if(workload==='grid-31x21')await page.goto('http://localhost:3000/d6-grid');
+    for(const condition of ['cache-cold','cache-warm']) {
       const durations=[],snapshots=[],timestamps=[];let reference,request;
       for(let i=0;i<34;i++) {
         await control('prepare',condition==='cache-cold'||i===0);
@@ -56,7 +57,7 @@ try {
           const section=page.locator('[aria-labelledby="planned-heading"]');
           assert.match(await section.textContent(),/Calculated by the local backend service/);
           assert.match(await section.textContent(),/903 control and903 treatment|903 control and 903 treatment/);
-        } else if(workload==='grid') {
+        } else if(workload.startsWith('grid')) {
           assert.equal(await page.locator('[aria-labelledby="grid-heading"] tbody tr').count(),result.y_dropout.length);
           assert.equal(await page.locator('[aria-labelledby="grid-heading"] tbody td').count(),result.x_baseline.length*result.y_dropout.length);
           assert.match(await page.locator('[aria-labelledby="grid-heading"]').textContent(),/SUCCESS/);
@@ -76,11 +77,11 @@ try {
         }
       }
       const sorted=[...durations].sort((a,b)=>a-b);
-      measurements.push({workload,condition,measured_runs:30,excluded_warmups:3,excluded_priming_requests:1,
+      measurements.push({workload:workload==='grid-31x21'?'grid':workload,variant:workload,condition,measured_runs:30,excluded_warmups:3,excluded_priming_requests:1,
         raw_elapsed_ns:durations,median_ms:(sorted[14]+sorted[15])/2e6,p95_ms:sorted[28]/1e6,
         p95_definition:'nearest rank, ceil(0.95*runs), one-based',cache_observations:snapshots,
         computed_at_samples:timestamps,representative_result:reference,request,
-        identical_semantic_results:true,browser:await browser.version(),frontend_mode:'next start production; live API; existing production workspace'});
+        identical_semantic_results:true,browser:await browser.version(),frontend_mode:workload==='grid-31x21'?'next start; live shared API; isolated benchmark-owned 31x21 page':'next start production; live API; existing production workspace'});
     }
   }
   assert.deepEqual(errors,[]);
