@@ -1,4 +1,4 @@
-# Statistical methods
+# Better Baseline statistical methods
 
 ## Task #56: binary inputs and effect transformation
 
@@ -50,3 +50,132 @@ Run the task's acceptance checks from the repo root:
 ```sh
 PYTHONPATH=backend python3 -m pytest backend/tests/test_effect.py -q
 ```
+
+## Analytical planning and reference fixture
+
+The landed A2 core uses the two-sided Cohen's-h normal approximation. With
+`h = 2 asin(sqrt(pT)) - 2 asin(sqrt(pC))`, equal evaluable N per arm gives
+`delta = abs(h) * sqrt(N/2)`. Power is the sum of both normal rejection tails
+at two-sided alpha. The implementation evaluates the tails without subtracting
+small probabilities from one and handles very small alpha explicitly.
+
+`minimum_sample_size` brackets and searches integers starting at 2, testing the
+inclusive configured ceiling (default 1,000,000 evaluable per arm). Planning
+requires `0 < alpha < target_power < 1`. A null effect or a ceiling below target
+returns `UNBOUNDED_OR_INFEASIBLE`.
+
+The canonical entered assumptions `.20/.15`, alpha `.05`, target `.80` require
+**903 evaluable participants per arm**: 902 misses target and 903 meets it.
+With symmetric 10% planned dropout, `ceil(903/.9) = 1004` **enrolled per arm**.
+At fixed 903 enrolled per arm and zero stress dropout, `.10/.075` yields
+approximately `.470` conditional analytical power. These are model-dependent
+reference values, not observed clinical outcomes. Return computed nominal power
+at the chosen N rather than replacing it with the rounded target `.80`.
+
+The local core reports method `cohen_h_normal`, version `1.0.0`; the landed B1 API schema
+uses `cohen_h_normal_v1`. Preserve the version and use an explicit API adapter,
+not an undocumented method substitution.
+
+## Synthetic Monte Carlo
+
+The landed A3 primitive uses `pooled_two_proportion_z_v1` with explicit NumPy
+PCG64 state. Its draw order is retained control count, retained treatment count,
+control events, then treatment events. Dropout and outcomes are independent
+under the illustrative model. Enrollment remains frozen.
+
+Two-sided significance rejects for either direction. Favorable significance
+also requires fewer observed adverse events in treatment. Under a sufficiently
+large null scenario, expected rates are approximately alpha and alpha/2,
+respectively. Report `mcse_two_sided` and `mcse_favorable` separately, each as
+`sqrt(fraction * (1-fraction) / replicates)`. MCSE is simulation error, not
+uncertainty about real treatment efficacy.
+
+Undefined tests (empty retained arm, zero variance, or nonfinite statistic)
+count as nonrejections over all replicates and contribute to
+`invalid_test_fraction`. Retained/event means are simulated aggregates, distinct
+from deterministic floored expected counts. Rare expected event/non-event
+counts produce warnings; this does not validate the pooled-z approximation in
+that regime.
+
+The Cohen's-h planning approximation and discrete pooled-z simulation are
+different methods; small numerical differences are expected. Reproducibility
+requires identical inputs, seed, RNG draw order, and recorded software versions.
+Simulation is synthetic and conditional; it is not evidence that treatment works.
+
+## Fixed-enrollment analytical grid
+
+The landed A4 core returns a dropout-major matrix `[dropout][baseline]` and
+keeps the declared equal enrollment frozen. Each valid cell uses floored
+expected retained counts. Impossible ARR cells and fewer than two expected
+retained participants per arm are null, with an agreeing invalid mask and
+null target status. These are unavailable scenarios, not zero-power results.
+
+The power curve evaluates every baseline at the exact selected dropout.
+Planned/selected points can be off-axis and are evaluated directly. Every
+point reports `below_target` against the requested target. Analytical delta is
+selected minus planned power as a fraction. All-invalid domains return null
+worst-case power and delta, and an empty frontier with a warning; independent
+valid off-grid points still retain their own power.
+
+Frontiers use linear interpolation on valid grid edges, restricted to cells
+with four valid corners. Separate connected paths are canonically oriented
+and sorted by coordinates. Exact-target vertices belong to the above-target
+side; isolated vertices and flat plateaus emit no zero-length paths. Saddle
+connectivity uses the mean corner power, with ties above. Branches terminate
+rather than joining arbitrarily. These interpolated contours are approximate,
+not exact roots of the analytical function. Axis size limits and API metadata
+belong to the route adapter, not the numerical grid.
+
+## D6 local core measurements
+
+The commands and retained raw reports are in
+[scripts/benchmarks](../scripts/benchmarks/README.md). These measurements were
+captured on 11 October 2026 against numerical-core commit `98719af`, using the
+synthetic D1 `baseline-collapse-v1` fixture. Each workload had three excluded
+warmups and 30 measured calls; p95 is nearest rank `ceil(.95 * 30)`, the 29th
+sorted observation. Timing uses `perf_counter_ns`, with replay and numerical
+invariant checks outside the timed interval. Timing includes local dataclass
+conversion for design/grid and core-provided metadata for Monte Carlo; it
+excludes HTTP, rendering, fixture/setup work and report serialization.
+
+Recorded environment: macOS 27.0, arm64, eight logical CPUs, Python 3.12.4,
+NumPy 2.5.4, SciPy 1.18.1 and statsmodels 0.15.0. Exact source/harness hashes,
+method identifiers, axes, seed, provenance, inputs and individual nanosecond
+observations are retained in each JSON report. The recorded commit identifies
+the numerical core; the harness was local work identified by its source hash.
+No API cache is involved. These are warm-process, uncached direct calls on
+local hardware under uncontrolled background load.
+
+| Workload | Median (ms) | p95 (ms) | Raw evidence |
+|---|---:|---:|---|
+| Design solver + enrollment inflation | 0.072 | 0.158 | [JSON](../scripts/benchmarks/reports/baseline-collapse-design.json) |
+| 31-baseline × 21-dropout grid | 5.994 | 6.527 | [JSON](../scripts/benchmarks/reports/baseline-collapse-grid.json) |
+| Selected 10,000-replicate Monte Carlo | 1.549 | 1.728 | [JSON](../scripts/benchmarks/reports/baseline-collapse-monte-carlo.json) |
+
+Grid axes are explicit synthetic benchmark inputs: baseline `.05` through
+`.35`, dropout `.00` through `.20`, both in `.01` steps. These axes are not D1
+source assumptions or clinical evidence. The report hashes the axes and method
+alongside the fixture input identity. The canonical fixture has 903 enrolled
+per arm and zero planned dropout; the separate 10% inflation example above
+uses 1004 enrolled per arm and is checked independently.
+
+All three D1 presets pass real design/grid/simulation checks and seed replay.
+The published runtime table reports only the named baseline-collapse condition;
+other presets' checks do not establish their runtime distributions. Seed-42
+engine results are actual draws from the synthetic model, kept distinct from
+D1's hand-authored mock response values.
+
+| Remaining measurement | Status |
+|---|---|
+| API cold/warm compute cache | Not yet measured; requires registered routes and B6 #68 controls |
+| Fresh frontend round trip | Not yet measured; requires live frontend/API integration and B6 cache identity |
+
+D6 remains incomplete at the B6 dependency boundary. Cold/warm API conditions
+must use B6's supported reset and inspection controls, with cache clearing
+outside timing. A browser cache reset does not clear the backend cache. Frontend
+measurements must cover a fresh request through rendered real output, retain
+scenario identity, and include at least 30 observations per condition. No
+fixture-only shell or cached result can establish that acceptance.
+
+This documentation describes tested computational behavior and its limits;
+it makes no speedup, clinical, regulatory, or rare-event validation claim.
