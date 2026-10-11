@@ -20,6 +20,8 @@ export type WorkspaceAction =
   | { type: "CALCULATE_ERROR"; error: string; requestRevision: number }
   | { type: "UPDATE_STRESS_BASELINE"; baseline: number }
   | { type: "UPDATE_STRESS_DROPOUT"; dropout: number }
+  | { type: "SELECT_STRESS_POINT"; baseline: number; dropout: number }
+  | { type: "UPDATE_SIMULATION_PROVENANCE"; pointers: string[] }
   | { type: "START_EVALUATE"; requestRevision?: number; expectedInputGeneration: number }
   | { type: "EVALUATE_SUCCESS"; response: EvaluateResponse; requestRevision: number }
   | { type: "EVALUATE_ERROR"; error: string; requestRevision: number }
@@ -195,6 +197,14 @@ export function workspaceReducer(
         displayedInputsHash: action.response.inputs_hash,
         evaluateStatus: "stale",
         gridStatus: "stale",
+        provenanceLedger: {
+          ...state.provenanceLedger,
+          ...Object.fromEntries(["control", "treatment"].map(arm => [`/fixed_enrollment/${arm}`, {
+            source: Object.entries(state.provenanceLedger).some(([key, value]) => key.startsWith("/planned_design/") && value.source === "manual_user") ? "manual_user" as const : "synthetic_preset" as const,
+            description: `Enrollment derived from calculated design ${action.response.inputs_hash}`,
+            retrieved_at: new Date().toISOString(), source_url: null,
+          }])),
+        },
       };
     }
 
@@ -213,6 +223,17 @@ export function workspaceReducer(
       };
     }
 
+    case "SELECT_STRESS_POINT": {
+      const baseline = workspaceReducer(state, { type: "UPDATE_STRESS_BASELINE", baseline: action.baseline });
+      const both = workspaceReducer(baseline, { type: "UPDATE_STRESS_DROPOUT", dropout: action.dropout });
+      return { ...both, requestRevision: state.requestRevision + 1, inputGeneration: state.inputGeneration + 1 };
+    }
+    case "UPDATE_SIMULATION_PROVENANCE": {
+      return { ...state, provenanceLedger: action.pointers.reduce((ledger, pointer) => markFieldManual(ledger, pointer, "Selected simulation configuration edited"), state.provenanceLedger),
+        activeCalculateRevision: null, designStatus: state.designStatus === "calculating" ? "idle" : state.designStatus,
+        activeEvaluateRevision: null, activeGridRevision: null, evaluateStatus: "stale", gridStatus: "stale", displayedInputsHash: null,
+        requestRevision: state.requestRevision + 1, inputGeneration: state.inputGeneration + 1 };
+    }
     case "UPDATE_STRESS_BASELINE": {
       const nextProv = markFieldManual(
         state.provenanceLedger,
