@@ -4,6 +4,8 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import subprocess
+import sys
 import unittest
 
 
@@ -51,6 +53,7 @@ class DemoPresetTests(unittest.TestCase):
             cls.presets[entry["preset_id"]] = (
                 manifest, read_json(folder / manifest["inputs_file"]),
                 read_json(folder / manifest["mock_response_file"]),
+                read_json(folder / manifest["final_response_file"]),
             )
 
     def test_json_and_versioned_discovery(self):
@@ -61,16 +64,19 @@ class DemoPresetTests(unittest.TestCase):
         for path in DATA.rglob("*.json"):
             with self.subTest(path=path):
                 read_json(path)
-        for key, (manifest, _, mock) in self.presets.items():
+        for entry in self.index["presets"]:
+            key = entry["preset_id"]
+            manifest, _, mock, _ = self.presets[key]
             self.assertEqual(manifest["preset_id"], key)
             self.assertEqual(manifest["preset_version"], 1)
             self.assertEqual(manifest["schema_version"], 1)
             self.assertEqual(mock["schema_version"], 1)
             self.assertEqual(mock["preset_id"], key)
             self.assertEqual(manifest["project"], "Better Baseline")
+            self.assertEqual(entry["final_response"], f"{key}/final-response.json")
 
     def test_exact_playbook_inputs_and_fixed_enrollment(self):
-        for key, (_, inputs, mock) in self.presets.items():
+        for key, (_, inputs, mock, _) in self.presets.items():
             with self.subTest(preset=key):
                 planned_d, stress_p, stress_d, enrolled, _ = CASES[key]
                 self.assertEqual(inputs["planned_design"], {
@@ -90,7 +96,7 @@ class DemoPresetTests(unittest.TestCase):
                 self.assertEqual(inputs["simulation"], {"replicates": 10000, "seed": 42})
 
     def test_count_semantics_and_documented_reference(self):
-        for key, (manifest, inputs, mock) in self.presets.items():
+        for key, (manifest, inputs, mock, _) in self.presets.items():
             with self.subTest(preset=key):
                 d, _, stress_d, enrolled, retained = CASES[key]
                 self.assertEqual(enrolled, math.ceil(903 / (1 - d)))
@@ -105,15 +111,15 @@ class DemoPresetTests(unittest.TestCase):
                                  {"control": retained, "treatment": retained})
                 self.assertEqual(analytic["retention_semantics"], "floor_of_expected_retained_count")
                 self.assertEqual(mock["design"]["evaluable_n"], {"control": 903, "treatment": 903})
-        manifest, _, mock = self.presets["baseline-collapse-v1"]
+        manifest, _, mock, _ = self.presets["baseline-collapse-v1"]
         self.assertEqual(manifest["reference_expectations"]["stress_analytic_power_approx"], .470)
         self.assertAlmostEqual(mock["point"]["analytic"]["conditional_power_approx"], .470)
         self.assertEqual(math.ceil(903 / .90), 1004)
-        _, _, attrition = self.presets["attrition-shock-v1"]
+        _, _, attrition, _ = self.presets["attrition-shock-v1"]
         self.assertNotEqual(attrition["point"]["monte_carlo"]["mean_retained_control"], 713)
 
     def test_every_input_leaf_has_synthetic_provenance(self):
-        for key, (manifest, inputs, _) in self.presets.items():
+        for key, (manifest, inputs, _, _) in self.presets.items():
             with self.subTest(preset=key):
                 expected = dict(leaves(inputs))
                 records = manifest["provenance"]
@@ -129,7 +135,7 @@ class DemoPresetTests(unittest.TestCase):
                 self.assertEqual(manifest["scenario_origin"], "synthetic_preset")
 
     def test_hash_traces_identical_inputs_in_manifest_and_mock(self):
-        for key, (manifest, inputs, mock) in self.presets.items():
+        for key, (manifest, inputs, mock, _) in self.presets.items():
             with self.subTest(preset=key):
                 serialized = json.dumps(inputs, sort_keys=True, separators=(",", ":"))
                 digest = "sha256:" + hashlib.sha256(serialized.encode()).hexdigest()
@@ -137,8 +143,8 @@ class DemoPresetTests(unittest.TestCase):
                 self.assertEqual(mock["metadata"]["inputs_hash"], digest)
 
     def test_mock_results_cannot_be_mistaken_for_measured_snapshots(self):
-        for manifest, _, mock in self.presets.values():
-            self.assertEqual(manifest["contract_status"], "draft_pending_B1")
+        for manifest, _, mock, final in self.presets.values():
+            self.assertEqual(manifest["final_response_file"], "final-response.json")
             self.assertEqual(mock["contract_status"], "draft_pending_B1")
             self.assertEqual(mock["result_status"], "illustrative_hand_authored")
             self.assertIn("illustrative", " ".join(mock["warnings"]))
@@ -146,14 +152,23 @@ class DemoPresetTests(unittest.TestCase):
             for field in ("computed_at", "software_versions", "engine_commit"):
                 self.assertIsNone(mock["metadata"][field])
             handoff = manifest["snapshot_requirements"]
-            self.assertEqual(handoff["status"], "pending")
+            self.assertEqual(handoff["status"], "generated_and_reproducible")
             self.assertTrue(handoff["actual_engine_functions_required"])
             self.assertTrue(handoff["record_software_versions"])
             self.assertTrue(handoff["record_engine_commit"])
             self.assertEqual(handoff["fixed_seed"], 42)
+            self.assertEqual(manifest["contract_status"], "canonical_backend_v1")
+            self.assertEqual(final["result_status"], "measured_generated_backend_output")
+            self.assertEqual(final["engine_commit"], final["generation"]["engine_commit"])
+            self.assertEqual(final["generation"]["seed"], 42)
+            self.assertEqual(final["generation"]["replicates"], 10000)
+            self.assertEqual(final["inputs_hash"], manifest["inputs_hash"])
+            self.assertTrue(final["engine_commit"])
+            self.assertEqual(final["generation"]["software_versions"]["python"].split(".")[:2], ["3", "12"])
+            self.assertIn("computed_at", final["generation"]["omitted_operational_fields"][1])
 
     def test_mc_split_error_and_random_aggregate_fields(self):
-        for _, inputs, mock in self.presets.values():
+        for _, inputs, mock, _ in self.presets.values():
             mc = mock["point"]["monte_carlo"]
             self.assertEqual(mc["result_status"], "illustrative_hand_authored")
             self.assertNotIn("mcse", mc)
@@ -169,7 +184,7 @@ class DemoPresetTests(unittest.TestCase):
                 self.assertTrue(0 <= mc[events] <= mc[f"mean_retained_{arm}"] <= inputs["fixed_enrollment"][arm])
 
     def test_grid_axes_shape_mask_and_selected_point(self):
-        for _, inputs, mock in self.presets.values():
+        for _, inputs, mock, _ in self.presets.values():
             grid = mock["grid"]
             x, y = grid["x_baseline"], grid["y_dropout"]
             self.assertNotEqual(len(x), len(y))  # a transpose must be detectable
@@ -196,6 +211,57 @@ class DemoPresetTests(unittest.TestCase):
             self.assertEqual(selected, mock["point"]["analytic"]["conditional_power_approx"])
             self.assertEqual(grid["frontier_points"], [])
             self.assertEqual(grid["frontier_status"], "not_computed_in_mock")
+
+    def test_final_snapshots_have_backend_response_sections_and_correct_counts(self):
+        for preset_id, (manifest, inputs, _, final) in self.presets.items():
+            with self.subTest(preset=preset_id):
+                self.assertEqual(final["schema_version"], 1)
+                self.assertEqual(final["preset_id"], preset_id)
+                self.assertEqual(final["requests"]["point"]["simulation"], inputs["simulation"])
+                self.assertEqual(final["point"]["monte_carlo"]["seed"], 42)
+                self.assertEqual(final["point"]["monte_carlo"]["replicates"], 10000)
+                self.assertEqual(final["point"]["metadata"]["fixed_enrollment"], inputs["fixed_enrollment"])
+                self.assertNotIn("computed_at", final["point"]["metadata"])
+                self.assertNotIn("computed_at", final["grid"])
+                self.assertEqual(final["grid"]["software_versions"], {
+                    key: final["generation"]["software_versions"][key]
+                    for key in ("python", "numpy", "scipy", "statsmodels")
+                })
+                canonical_grid = json.dumps(final["requests"]["grid"], sort_keys=True, separators=(",", ":"))
+                self.assertEqual(final["grid"]["inputs_hash"], "sha256:" + hashlib.sha256(canonical_grid.encode()).hexdigest())
+                self.assertEqual(len(final["grid"]["power"][0]), len(final["grid"]["x_baseline"]))
+                self.assertEqual(len(final["grid"]["power"]), len(final["grid"]["y_dropout"]))
+                self.assertEqual(final["design"]["method"], "cohen_h_normal_v1")
+                self.assertEqual(final["point"]["analytic"]["method"], "cohen_h_normal_v1")
+                self.assertEqual(final["grid"]["method"], "cohen_h_normal_v1")
+                self.assertEqual(final["point"]["analytic"]["assumed_evaluable_n"], {
+                    "control": math.floor(inputs["fixed_enrollment"]["control"] * (1 - inputs["stress_scenario"]["dropout"]["control"])),
+                    "treatment": math.floor(inputs["fixed_enrollment"]["treatment"] * (1 - inputs["stress_scenario"]["dropout"]["treatment"])),
+                })
+                self.assertEqual(manifest["final_response_file"], "final-response.json")
+
+    def test_generated_engine_counts_power_and_simulation_semantics(self):
+        for preset_id, (_, inputs, _, final) in self.presets.items():
+            with self.subTest(preset=preset_id):
+                self.assertEqual(final["design"]["evaluable_n"], {"control": 903, "treatment": 903})
+                self.assertEqual(final["design"]["enrolled_n"], inputs["fixed_enrollment"])
+                self.assertGreaterEqual(final["design"]["nominal_power_evaluable"], .80)
+                self.assertEqual(final["point"]["monte_carlo"]["invalid_test_policy"], "nonrejection_over_all_replicates")
+                mc = final["point"]["monte_carlo"]
+                for side in ("two_sided", "favorable"):
+                    rate = mc[f"significant_{side}_fraction"]
+                    self.assertAlmostEqual(mc[f"mcse_{side}"], math.sqrt(rate * (1 - rate) / 10000))
+        baseline = self.presets["baseline-collapse-v1"][3]
+        self.assertAlmostEqual(baseline["point"]["analytic"]["conditional_power_approx"], .470, delta=.005)
+        attrition = self.presets["attrition-shock-v1"][3]
+        self.assertNotEqual(attrition["point"]["monte_carlo"]["mean_retained_control"], 713)
+    def test_generator_check_mode_confirms_deterministic_content(self):
+        script = DATA / "generate_snapshots.py"
+        result = subprocess.run(
+            [sys.executable, str(script), "--check"], cwd=DATA.parent.parent,
+            capture_output=True, text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 
 if __name__ == "__main__":
