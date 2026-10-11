@@ -115,6 +115,6 @@ This PR therefore remains a draft. Once #108 delivers its case or explicitly
 approved evidence-gap conclusion, adapt the worksheet to that ledger, execute
 real sensitivity/candidate-enrollment comparisons, download a matching UI export,
 and publish the side-by-side table/chart with conditional sponsor language.
-Final acceptance also needs #118/#78's assembled E2E run and predecessor reviews.
+The assembled E2E handoff #118/#78 has now merged into main (f07092f) and is incorporated in this stack. Predecessor reviews/merges and #108's approved source ledger remain required.
 Closing #76 resolves the assembly/export blocker; it does not supply historical
 clinical evidence or authorize inventing source assumptions.
