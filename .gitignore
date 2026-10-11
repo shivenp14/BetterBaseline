@@ -2,6 +2,10 @@
 .workflow-sync-state.json
 __pycache__/
 *.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
 # agent-workflow:end
 /regeneron-info/
 
