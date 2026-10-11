@@ -16,13 +16,14 @@ from typing import Literal
 from fastapi import APIRouter
 from pydantic import ConfigDict, Field
 
+from ..cache import make_cache_key
 from ..data.provenance import normalize_provenance
 from ..schemas import (
     AnalyticEvaluation, ArmCounts, ErrorEnvelope, ExpectedRetainedCounts,
     FieldProvenance, MonteCarloEvaluation, ScenarioEvaluateRequest,
     ScenarioEvaluateResponse, ScenarioMetadata, SimulationOptions,
 )
-from ..services.compute import execute_guarded_computation
+from ..services.compute import execute_guarded_computation, get_compute_guard
 from ..statistics.analytic import analytic_power
 from ..statistics.diagnostics import analytic_diagnostics
 from ..statistics.effect import resolve_treatment_risk
@@ -73,13 +74,18 @@ router = APIRouter(
 
 
 def _evaluate(request: EvaluationRequest) -> EvaluationResponse:
+    guard = get_compute_guard()
     enrollment = request.fixed_enrollment
+    guard.check_enrollment(enrollment.control, enrollment.treatment)
     for arm in ('control', 'treatment'):
         if getattr(enrollment, arm) > MAX_ENROLLED_PER_ARM:
             raise StatisticalInputError(
                 f'Enrollment exceeds {MAX_ENROLLED_PER_ARM} per arm',
                 field=f'fixed_enrollment.{arm}', code='RESOURCE_LIMIT',
             )
+    if request.simulation is not None:
+        guard.check_simulation_options(request.simulation.replicates, request.simulation.seed)
+
     stress = request.stress_scenario
     effect = stress.effect_override or request.planned_design.effect
     p_control = stress.control_event_rate
@@ -127,4 +133,9 @@ def _evaluate(request: EvaluationRequest) -> EvaluationResponse:
 @router.post('/evaluate', response_model=EvaluationResponse)
 def evaluate_scenario(request: EvaluationRequest) -> EvaluationResponse:
     """Evaluate stressed reality without solving or modifying planned enrollment."""
-    return execute_guarded_computation(_evaluate, request)
+    cache_key = make_cache_key(
+        route='/api/v1/scenarios/evaluate',
+        model_version='binary-v1',
+        params=request,
+    )
+    return execute_guarded_computation(_evaluate, request, cache_key=cache_key)

@@ -157,10 +157,10 @@ def test_payload_body_size_limit_returns_413():
 
 
 def test_design_calculate_uses_cache():
-    guard = get_compute_guard()
+    app = create_app()
+    guard = app.state.compute_guard
     guard.cache.clear()
 
-    app = create_app()
     client = TestClient(app)
     payload = {
         "control_event_rate": 0.20,
@@ -178,3 +178,112 @@ def test_design_calculate_uses_cache():
     assert resp2.status_code == 200
     assert resp1.json() == resp2.json()
     assert len(guard.cache) == 1
+
+
+# ── REGRESSION TESTS (ROLAND'S REVIEW COMMENT FIXES) ──
+
+def test_streamed_chunked_body_exceeding_limit_returns_413():
+    """Streamed requests without Content-Length cannot bypass max_body_bytes."""
+    cfg = Settings(max_body_bytes=256)
+    app = create_app(cfg)
+    client = TestClient(app)
+
+    valid_payload = {
+        "model_version": "binary-v1",
+        "control_event_rate": 0.20,
+        "effect": {"kind": "relative_risk", "value": 0.75},
+        "alpha": 0.05,
+        "target_power": 0.80,
+        "allocation_ratio": 1.0,
+        "dropout": {"control": 0.10, "treatment": 0.10},
+        "description": "x" * 1000,
+    }
+    data = json.dumps(valid_payload).encode()
+    assert len(data) > 256
+
+    def chunk_generator():
+        chunk_size = 50
+        for i in range(0, len(data), chunk_size):
+            yield data[i : i + chunk_size]
+
+    response = client.post(
+        "/api/v1/design/calculate",
+        content=chunk_generator(),
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 413
+    body = response.json()
+    assert body["error"]["code"] == "PAYLOAD_TOO_LARGE"
+    assert body["error"]["recoverable"] is False
+
+
+def test_configured_compute_limits_enforced_on_scenario_evaluation():
+    """Evaluation endpoint respects custom limits configured in Settings/create_app."""
+    cfg = Settings(max_mc_reps=10, max_enrolled_per_arm=100)
+    app = create_app(cfg)
+    client = TestClient(app)
+
+    # 1. Reject enrollment exceeding configured limit (903 > 100)
+    eval_payload = {
+        "planned_design": {
+            "model_version": "binary-v1",
+            "control_event_rate": 0.20,
+            "effect": {"kind": "relative_risk", "value": 0.75},
+            "alpha": 0.05,
+            "target_power": 0.80,
+            "allocation_ratio": 1.0,
+            "dropout": {"control": 0.0, "treatment": 0.0},
+        },
+        "fixed_enrollment": {"control": 903, "treatment": 903},
+        "stress_scenario": {
+            "control_event_rate": 0.20,
+            "dropout": {"control": 0.0, "treatment": 0.0},
+        },
+        "simulation": {"replicates": 10, "seed": 42},
+    }
+    resp_enrolled = client.post("/api/v1/scenarios/evaluate", json=eval_payload)
+    assert resp_enrolled.status_code == 422
+    assert "Enrollment exceeds maximum limit" in resp_enrolled.json()["error"]["message"]
+
+    # 2. Reject replicates exceeding configured limit (11 > 10)
+    eval_payload["fixed_enrollment"] = {"control": 50, "treatment": 50}
+    eval_payload["simulation"]["replicates"] = 11
+    resp_reps = client.post("/api/v1/scenarios/evaluate", json=eval_payload)
+    assert resp_reps.status_code == 422
+    assert "Replicates exceeds maximum limit" in resp_reps.json()["error"]["message"]
+
+
+def test_identical_seeded_evaluations_reuse_cache():
+    """Identical seeded evaluations reuse the LRU cache."""
+    app = create_app()
+    guard = get_compute_guard()
+    guard.cache.clear()
+
+    client = TestClient(app)
+    eval_payload = {
+        "planned_design": {
+            "model_version": "binary-v1",
+            "control_event_rate": 0.20,
+            "effect": {"kind": "relative_risk", "value": 0.75},
+            "alpha": 0.05,
+            "target_power": 0.80,
+            "allocation_ratio": 1.0,
+            "dropout": {"control": 0.0, "treatment": 0.0},
+        },
+        "fixed_enrollment": {"control": 500, "treatment": 500},
+        "stress_scenario": {
+            "control_event_rate": 0.20,
+            "dropout": {"control": 0.0, "treatment": 0.0},
+        },
+        "simulation": {"replicates": 1000, "seed": 42},
+    }
+
+    resp1 = client.post("/api/v1/scenarios/evaluate", json=eval_payload)
+    assert resp1.status_code == 200
+    assert len(guard.cache) == 1
+
+    resp2 = client.post("/api/v1/scenarios/evaluate", json=eval_payload)
+    assert resp2.status_code == 200
+    assert len(guard.cache) == 1
+    # Response content identical
+    assert resp1.json() == resp2.json()

@@ -105,16 +105,25 @@ class ComputeResourceGuard:
 _global_guard: Optional[ComputeResourceGuard] = None
 
 
-def get_compute_guard() -> ComputeResourceGuard:
+def set_compute_guard(guard: Optional[ComputeResourceGuard]) -> None:
+    """Explicitly set or reset the active compute guard."""
     global _global_guard
-    if _global_guard is None:
-        _global_guard = ComputeResourceGuard(
-            max_mc_reps=settings.max_mc_reps,
-            max_grid_cells=settings.max_grid_cells,
-            max_enrolled_per_arm=settings.max_enrolled_per_arm,
-            max_concurrent_compute=settings.max_concurrent_compute,
-            cache_capacity=settings.cache_size,
-        )
+    _global_guard = guard
+
+
+def get_compute_guard(cfg: Optional[Any] = None) -> ComputeResourceGuard:
+    """Get active compute guard, or create from provided settings or global settings."""
+    global _global_guard
+    if _global_guard is not None:
+        return _global_guard
+    s = cfg if cfg is not None else settings
+    _global_guard = ComputeResourceGuard(
+        max_mc_reps=s.max_mc_reps,
+        max_grid_cells=s.max_grid_cells,
+        max_enrolled_per_arm=s.max_enrolled_per_arm,
+        max_concurrent_compute=s.max_concurrent_compute,
+        cache_capacity=s.cache_size,
+    )
     return _global_guard
 
 
@@ -122,22 +131,23 @@ def execute_guarded_computation(
     func: Callable[..., T],
     *args: Any,
     cache_key: Optional[str] = None,
+    guard: Optional[ComputeResourceGuard] = None,
     **kwargs: Any,
 ) -> T:
     """Execute computation guarded by CPU concurrency semaphore and optional LRU cache."""
-    guard = get_compute_guard()
+    active_guard = guard if guard is not None else get_compute_guard()
 
     # Check cache first if a key was provided
     if cache_key:
-        cached_result = guard.cache.get(cache_key)
+        cached_result = active_guard.cache.get(cache_key)
         if cached_result is not None:
             return cached_result
 
     # Acquire CPU concurrency permit
-    with guard.acquire_compute_permit():
+    with active_guard.acquire_compute_permit():
         result = func(*args, **kwargs)
 
     if cache_key:
-        guard.cache.set(cache_key, result)
+        active_guard.cache.set(cache_key, result)
 
     return result

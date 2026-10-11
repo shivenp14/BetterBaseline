@@ -37,6 +37,23 @@ class ComputeGuardMiddleware(BaseHTTPMiddleware):
             except ValueError:
                 pass
 
+        # Also enforce cap on actual received bytes for chunked/streamed bodies
+        if request.method in ("POST", "PUT", "PATCH"):
+            body_chunks = []
+            received = 0
+            async for chunk in request.stream():
+                received += len(chunk)
+                if received > self.cfg.max_body_bytes:
+                    return make_error_response(
+                        status_code=413,
+                        code="PAYLOAD_TOO_LARGE",
+                        message=f"Request body exceeds maximum allowed size of {self.cfg.max_body_bytes} bytes",
+                        recoverable=False,
+                    )
+                body_chunks.append(chunk)
+            # Reconstruct request body so downstream route handlers can read it
+            request._body = b"".join(body_chunks)
+
         start_time = time.perf_counter()
         try:
             response = await call_next(request)

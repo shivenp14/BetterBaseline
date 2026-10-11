@@ -16,7 +16,11 @@ from .errors import (
 from .middleware.compute import ComputeGuardMiddleware
 from .routers import design_router, grid_router, health_router, scenarios_router
 from .schemas import ErrorEnvelope
-from .services.compute import ResourceSaturatedError
+from .services.compute import (
+    ComputeResourceGuard,
+    ResourceSaturatedError,
+    set_compute_guard,
+)
 from .settings import Settings, settings
 from .statistics.errors import StatisticalInputError
 
@@ -43,6 +47,15 @@ def create_app(app_settings: Optional[Settings] = None) -> FastAPI:
         openapi_url="/openapi.json",
     )
     application.state.settings = cfg
+    guard = ComputeResourceGuard(
+        max_mc_reps=cfg.max_mc_reps,
+        max_grid_cells=cfg.max_grid_cells,
+        max_enrolled_per_arm=cfg.max_enrolled_per_arm,
+        max_concurrent_compute=cfg.max_concurrent_compute,
+        cache_capacity=cfg.cache_size,
+    )
+    application.state.compute_guard = guard
+    set_compute_guard(guard)
 
     # Compute guard middleware (payload size, concurrency, telemetry)
     application.add_middleware(ComputeGuardMiddleware, cfg=cfg)
