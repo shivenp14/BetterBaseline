@@ -85,18 +85,12 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
     });
     await calculateBtn.click();
 
-    // 903 evaluable per arm must appear somewhere in the planned design section
-    const planSection = page.locator(
-      '[aria-labelledby="planned-heading"], section'
-    );
-    await expect(planSection.first()).toContainText(
-      String(REFERENCE_EVALUABLE_N)
-    );
+    // 903 evaluable per arm must appear in the planned design section
+    const planSection = page.locator('section[aria-labelledby="planned-heading"]');
+    await expect(planSection).toContainText(String(REFERENCE_EVALUABLE_N));
 
     // Enrolled N also 903 for baseline-collapse (0% dropout)
-    await expect(planSection.first()).toContainText(
-      String(REFERENCE_ENROLLED_N)
-    );
+    await expect(planSection).toContainText(String(REFERENCE_ENROLLED_N));
   });
 
   test("frozen enrollment does not change when stress baseline slider moves", async ({
@@ -113,17 +107,15 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
     await page.getByRole("button", { name: /calculate/i }).click();
 
     // Capture the enrolled N text before stress
-    const planSection = page.locator(
-      '[aria-labelledby="planned-heading"], section'
-    );
-    const enrolledTextBefore = await planSection.first().innerText();
+    const planSection = page.locator('section[aria-labelledby="planned-heading"]');
+    const enrolledTextBefore = await planSection.innerText();
 
     // Move the stress baseline slider to a different value
     const baselineSlider = page.locator('input[type="range"]#baseline, input[type="range"]').first();
     await baselineSlider.fill("15"); // 15%
 
     // Enrolled N must still read 903 — stress never resizes planned enrollment
-    const enrolledTextAfter = await planSection.first().innerText();
+    const enrolledTextAfter = await planSection.innerText();
     expect(enrolledTextAfter).toContain(String(REFERENCE_ENROLLED_N));
 
     // The before/after planned-section text should be identical (enrollment frozen)
