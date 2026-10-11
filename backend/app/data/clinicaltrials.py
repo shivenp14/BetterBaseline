@@ -8,6 +8,7 @@ No module-level request occurs and no planning assumption is extracted.
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timezone
+from http.client import HTTPException
 import json
 import re
 from threading import Lock
@@ -91,7 +92,7 @@ class ClinicalTrialsClient:
                 if error.code >= 500 and attempt == 0:
                     continue
                 raise TrialLookupError('UPSTREAM_ERROR', 'Registry service returned an error.') from None
-            except (TimeoutError, URLError, OSError):
+            except (TimeoutError, URLError, OSError, HTTPException):
                 if attempt == 0:
                     continue
                 raise TrialLookupError('UPSTREAM_UNAVAILABLE', 'Registry service timed out or is unavailable.') from None
