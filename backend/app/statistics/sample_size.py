@@ -1,6 +1,7 @@
 """Minimal equal-arm evaluable sample size and dropout enrollment inflation."""
 
 from dataclasses import dataclass
+from decimal import Decimal
 import math
 
 from .analytic import (
@@ -122,7 +123,9 @@ def minimum_sample_size(
         achieved = power_at(n).power
         previous_power = power_at(n - 1).power
 
-    enrolled = math.ceil(n / (1.0 - dropout.control))
+    num, den = Decimal(str(dropout.control)).as_integer_ratio()
+    ret_num = den - num
+    enrolled = (n * den + ret_num - 1) // ret_num
     return SampleSizeResult(
         evaluable_per_arm=n,
         enrolled_per_arm=enrolled,
