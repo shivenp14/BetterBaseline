@@ -13,7 +13,7 @@ import { getPresetById } from "./presets";
 export type WorkspaceAction =
   | { type: "LOAD_PRESET"; presetId: string }
   | { type: "UPDATE_PLANNED_FIELD"; fieldPointer: string; update: Partial<TrialAssumptions> }
-  | { type: "START_CALCULATE" }
+  | { type: "START_CALCULATE"; requestRevision: number }
   | { type: "CALCULATE_SUCCESS"; response: CalculateResponse; requestRevision: number }
   | { type: "CALCULATE_ERROR"; error: string; requestRevision: number }
   | { type: "UPDATE_STRESS_BASELINE"; baseline: number }
@@ -35,6 +35,7 @@ export function initializeWorkspaceState(presetId = "baseline-collapse-v1"): Wor
     frozenEnrollment: JSON.parse(JSON.stringify(preset.fixed_enrollment)),
     designStatus: "idle",
     designError: null,
+    activeCalculateRevision: null,
     stressBaseline: preset.stress_scenario.control_event_rate,
     stressDropout: preset.stress_scenario.dropout.control,
     provenanceLedger: JSON.parse(JSON.stringify(preset.provenance)),
@@ -89,6 +90,7 @@ export function workspaceReducer(
         plannedDraft: nextPlanned,
         provenanceLedger: nextProvenance,
         designStatus: "idle",
+        activeCalculateRevision: null,
         evaluateStatus: "stale",
         gridStatus: "stale",
         displayedInputsHash: null,
@@ -101,16 +103,17 @@ export function workspaceReducer(
         ...state,
         designStatus: "calculating",
         designError: null,
+        activeCalculateRevision: action.requestRevision,
       };
     }
 
     case "CALCULATE_SUCCESS": {
       // Reject stale late responses
-      if (action.requestRevision < state.requestRevision) {
-        return {
-          ...state,
-          designStatus: "idle",
-        };
+      if (
+        action.requestRevision !== state.requestRevision ||
+        action.requestRevision !== state.activeCalculateRevision
+      ) {
+        return state;
       }
       return {
         ...state,
@@ -118,6 +121,7 @@ export function workspaceReducer(
         frozenEnrollment: action.response.enrolled_n,
         designStatus: "success",
         designError: null,
+        activeCalculateRevision: null,
         displayedInputsHash: action.response.inputs_hash,
         evaluateStatus: "stale",
         gridStatus: "stale",
@@ -125,16 +129,17 @@ export function workspaceReducer(
     }
 
     case "CALCULATE_ERROR": {
-      if (action.requestRevision < state.requestRevision) {
-        return {
-          ...state,
-          designStatus: "idle",
-        };
+      if (
+        action.requestRevision !== state.requestRevision ||
+        action.requestRevision !== state.activeCalculateRevision
+      ) {
+        return state;
       }
       return {
         ...state,
         designStatus: "error",
         designError: action.error,
+        activeCalculateRevision: null,
       };
     }
 
@@ -148,6 +153,8 @@ export function workspaceReducer(
         ...state,
         stressBaseline: action.baseline,
         provenanceLedger: nextProv,
+        designStatus: state.designStatus === "calculating" ? "idle" : state.designStatus,
+        activeCalculateRevision: null,
         evaluateStatus: "stale",
         gridStatus: "stale",
         displayedInputsHash: null,
@@ -170,6 +177,8 @@ export function workspaceReducer(
         ...state,
         stressDropout: action.dropout,
         provenanceLedger: nextProv,
+        designStatus: state.designStatus === "calculating" ? "idle" : state.designStatus,
+        activeCalculateRevision: null,
         evaluateStatus: "stale",
         gridStatus: "stale",
         displayedInputsHash: null,

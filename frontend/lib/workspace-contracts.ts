@@ -46,6 +46,8 @@ export interface WorkspaceState {
   frozenEnrollment: FixedEnrollment | null;
   designStatus: "idle" | "calculating" | "success" | "error";
   designError: string | null;
+  /** Input revision owned by the currently active calculate request, if any. */
+  activeCalculateRevision: number | null;
   stressBaseline: number;
   stressDropout: number;
   /** Single authoritative ledger tracking field provenance across all planned and stress inputs */

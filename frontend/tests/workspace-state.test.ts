@@ -1,11 +1,14 @@
 import assert from "node:assert";
 import {
   initializeWorkspaceState,
+  markFieldManual,
   workspaceReducer,
 } from "../lib/workspace-state";
 import {
   evaluateScenario,
+  calculateDesign,
 } from "../lib/api";
+import { solveMinimumN } from "../lib/statistical-engine";
 import type { CalculateResponse } from "../lib/contracts";
 
 function testPresetLoading() {
@@ -87,10 +90,12 @@ function testRecalculateLocksNewEnrollment() {
     mock: true,
   };
 
+  const requestRevision = state.requestRevision;
+  state = workspaceReducer(state, { type: "START_CALCULATE", requestRevision });
   state = workspaceReducer(state, {
     type: "CALCULATE_SUCCESS",
     response: mockNewDesign,
-    requestRevision: state.requestRevision,
+    requestRevision,
   });
 
   assert.strictEqual(state.frozenEnrollment?.control, 560);
@@ -132,7 +137,10 @@ function testRejectOutdatedLateResponses() {
   const initialRevision = state.requestRevision;
 
   // Dispatch an async calculate start at initialRevision
-  state = workspaceReducer(state, { type: "START_CALCULATE" });
+  state = workspaceReducer(state, {
+    type: "START_CALCULATE",
+    requestRevision: state.requestRevision,
+  });
 
   // User subsequently modifies stress baseline before calculation finishes
   state = workspaceReducer(state, {
@@ -278,11 +286,7 @@ async function testRolandReviewFixes() {
   const customSimEval = await evaluateScenario({
     planned_design: state.plannedDraft,
     fixed_enrollment: state.frozenEnrollment!,
-    stress_scenario: state.calculatedDesign ? {
-      control_event_rate: 0.1,
-      dropout: { control: 0.0, treatment: 0.0 },
-      effect_override: null,
-    } : {
+    stress_scenario: {
       control_event_rate: 0.1,
       dropout: { control: 0.0, treatment: 0.0 },
       effect_override: null,
@@ -292,15 +296,44 @@ async function testRolandReviewFixes() {
   });
   assert.strictEqual(customSimEval.monte_carlo, null);
 
+  const customReplicatesEval = await evaluateScenario({
+    planned_design: state.plannedDraft,
+    fixed_enrollment: state.frozenEnrollment!,
+    stress_scenario: {
+      control_event_rate: 0.1,
+      dropout: { control: 0.0, treatment: 0.0 },
+      effect_override: null,
+    },
+    simulation: { replicates: 1234, seed: 42 },
+    preset_id: state.presetId,
+  });
+  assert.strictEqual(customReplicatesEval.monte_carlo, null);
+
+  const customSeedEval = await evaluateScenario({
+    planned_design: state.plannedDraft,
+    fixed_enrollment: state.frozenEnrollment!,
+    stress_scenario: {
+      control_event_rate: 0.1,
+      dropout: { control: 0.0, treatment: 0.0 },
+      effect_override: null,
+    },
+    simulation: { replicates: 10000, seed: 123 },
+    preset_id: state.presetId,
+  });
+  assert.strictEqual(customSeedEval.monte_carlo, null);
+
   // 4. Infeasible solveMinimumN throws UNBOUNDED_OR_INFEASIBLE
   assert.throws(() => {
     // Weak effect RR 0.99999
-    const { solveMinimumN } = require("../lib/statistical-engine");
     solveMinimumN(0.2, 0.2 * 0.99999, 0.8, 0.05);
   }, /UNBOUNDED_OR_INFEASIBLE/);
+  assert.throws(() => solveMinimumN(0.2, 0.2, 0.8, 0.05), /UNBOUNDED_OR_INFEASIBLE/);
 
   // 5. Calculate does not get permanently stuck in calculating when stress edits arrive
-  let stressMidCalcState = workspaceReducer(state, { type: "START_CALCULATE" });
+  let stressMidCalcState = workspaceReducer(state, {
+    type: "START_CALCULATE",
+    requestRevision: state.requestRevision,
+  });
   assert.strictEqual(stressMidCalcState.designStatus, "calculating");
   stressMidCalcState = workspaceReducer(stressMidCalcState, {
     type: "UPDATE_STRESS_BASELINE",
@@ -317,6 +350,91 @@ async function testRolandReviewFixes() {
   console.log("✔ Roland review fixes: null MC disclosure, effect matching, override, feasibility & revision verified");
 }
 
+async function testFieldProvenanceRoundTripsThroughLiveAndFixtureResults() {
+  const state = initializeWorkspaceState("baseline-collapse-v1");
+  const ledger = markFieldManual(
+    state.provenanceLedger,
+    "/planned_design/control_event_rate"
+  );
+
+  const fixtureCalculate = await calculateDesign({
+    ...state.plannedDraft,
+    preset_id: state.presetId,
+    provenance_ledger: ledger,
+  });
+  assert.deepStrictEqual(fixtureCalculate.provenance.field_provenance, ledger);
+
+  const liveCalculate = await calculateDesign({
+    ...state.plannedDraft,
+    control_event_rate: 0.21,
+    preset_id: state.presetId,
+    provenance_ledger: ledger,
+  });
+  assert.deepStrictEqual(liveCalculate.provenance.field_provenance, ledger);
+
+  const fixtureEvaluate = await evaluateScenario({
+    planned_design: state.plannedDraft,
+    fixed_enrollment: state.frozenEnrollment!,
+    stress_scenario: {
+      control_event_rate: state.stressBaseline,
+      dropout: { control: state.stressDropout, treatment: state.stressDropout },
+      effect_override: null,
+    },
+    simulation: { replicates: 10000, seed: 42 },
+    preset_id: state.presetId,
+    provenance_ledger: ledger,
+  });
+  assert.deepStrictEqual(fixtureEvaluate.provenance.field_provenance, ledger);
+
+  const liveEvaluate = await evaluateScenario({
+    planned_design: state.plannedDraft,
+    fixed_enrollment: state.frozenEnrollment!,
+    stress_scenario: {
+      control_event_rate: 0.15,
+      dropout: { control: 0.0, treatment: 0.0 },
+      effect_override: null,
+    },
+    simulation: { replicates: 10000, seed: 42 },
+    preset_id: state.presetId,
+    provenance_ledger: ledger,
+  });
+  assert.deepStrictEqual(liveEvaluate.provenance.field_provenance, ledger);
+  console.log("✔ Field provenance round-trips through live and preset fixture results");
+}
+
+function testCalculateInvalidationDoesNotClearNewerRequest() {
+  let state = initializeWorkspaceState("baseline-collapse-v1");
+  const oldRevision = state.requestRevision;
+  state = workspaceReducer(state, {
+    type: "START_CALCULATE",
+    requestRevision: oldRevision,
+  });
+  assert.strictEqual(state.designStatus, "calculating");
+
+  state = workspaceReducer(state, {
+    type: "UPDATE_STRESS_BASELINE",
+    baseline: 0.25,
+  });
+  assert.strictEqual(state.designStatus, "idle");
+  assert.strictEqual(state.activeCalculateRevision, null);
+
+  const currentRevision = state.requestRevision;
+  state = workspaceReducer(state, {
+    type: "START_CALCULATE",
+    requestRevision: currentRevision,
+  });
+  const newerActiveState = state;
+  state = workspaceReducer(state, {
+    type: "CALCULATE_SUCCESS",
+    response: initializeWorkspaceState().calculatedDesign!,
+    requestRevision: oldRevision,
+  });
+  assert.strictEqual(state, newerActiveState);
+  assert.strictEqual(state.designStatus, "calculating");
+  assert.strictEqual(state.activeCalculateRevision, currentRevision);
+  console.log("✔ Stress edits clear pending calculation and old completions preserve newer requests");
+}
+
 async function runAll() {
   testPresetLoading();
   testStressAdjustmentPreservesFrozenEnrollment();
@@ -326,6 +444,8 @@ async function runAll() {
   await testLiveEvaluationCalculatesDifferentAssumptions();
   testSingleAuthoritativeLedgerPreservesManualOrigin();
   await testRolandReviewFixes();
+  await testFieldProvenanceRoundTripsThroughLiveAndFixtureResults();
+  testCalculateInvalidationDoesNotClearNewerRequest();
   console.log("\nALL WORKSPACE STATE INVARIANT TESTS PASSED!");
 }
 

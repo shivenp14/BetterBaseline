@@ -37,22 +37,33 @@ function matchesPresetInputs(request: ExtendedEvaluateRequest): boolean {
     p.effect.kind === request.planned_design.effect.kind &&
     p.effect.value === request.planned_design.effect.value;
 
+  const expectedOverride = s.effect_override;
+  const requestedOverride = request.stress_scenario.effect_override;
   const effectOverrideMatches =
-    s.effect_override === null && request.stress_scenario.effect_override === null;
+    expectedOverride === null
+      ? requestedOverride === null
+      : requestedOverride !== null &&
+        expectedOverride.kind === requestedOverride.kind &&
+        expectedOverride.value === requestedOverride.value;
 
   const simulationMatches =
     preset.simulation.replicates === request.simulation.replicates &&
     preset.simulation.seed === request.simulation.seed;
 
   return (
+    p.model_version === request.planned_design.model_version &&
     p.control_event_rate === request.planned_design.control_event_rate &&
     effectMatches &&
     p.alpha === request.planned_design.alpha &&
     p.target_power === request.planned_design.target_power &&
+    p.allocation_ratio === request.planned_design.allocation_ratio &&
     p.dropout.control === request.planned_design.dropout.control &&
+    p.dropout.treatment === request.planned_design.dropout.treatment &&
     f.control === request.fixed_enrollment.control &&
+    f.treatment === request.fixed_enrollment.treatment &&
     s.control_event_rate === request.stress_scenario.control_event_rate &&
     s.dropout.control === request.stress_scenario.dropout.control &&
+    s.dropout.treatment === request.stress_scenario.dropout.treatment &&
     effectOverrideMatches &&
     simulationMatches
   );
@@ -63,13 +74,27 @@ function matchesPresetDesign(request: ExtendedCalculateRequest): boolean {
   if (!preset) return false;
   const p = preset.planned_design;
   return (
+    p.model_version === request.model_version &&
     p.control_event_rate === request.control_event_rate &&
     p.effect.kind === request.effect.kind &&
     p.effect.value === request.effect.value &&
     p.alpha === request.alpha &&
     p.target_power === request.target_power &&
-    p.dropout.control === request.dropout.control
+    p.allocation_ratio === request.allocation_ratio &&
+    p.dropout.control === request.dropout.control &&
+    p.dropout.treatment === request.dropout.treatment
   );
+}
+
+function attachFieldProvenance<T extends { provenance: { field_provenance?: unknown } }>(
+  response: T,
+  provenanceLedger?: ProvenanceLedger
+): T {
+  if (!provenanceLedger) return response;
+  return {
+    ...response,
+    provenance: { ...response.provenance, field_provenance: provenanceLedger },
+  };
 }
 
 function arraysEqual(a: number[], b: number[]): boolean {
@@ -98,7 +123,10 @@ export async function calculateDesign(
   }
 
   if (matchesPresetDesign(request)) {
-    return getPresetById(request.preset_id).design_response;
+    return attachFieldProvenance(
+      getPresetById(request.preset_id).design_response,
+      request.provenance_ledger
+    );
   }
   return computeLiveDesign(request, request.provenance_ledger);
 }
@@ -121,7 +149,10 @@ export async function evaluateScenario(
   }
 
   if (matchesPresetInputs(request)) {
-    return getPresetById(request.preset_id).evaluate_response;
+    return attachFieldProvenance(
+      getPresetById(request.preset_id).evaluate_response,
+      request.provenance_ledger
+    );
   }
   return computeLiveEvaluation(
     request.planned_design,

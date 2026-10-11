@@ -61,15 +61,12 @@ export default function Home() {
   }
 
   function handleStressBaselineChange(val: number) {
-    // Abort pending evaluations on edit
-    evaluateAbortRef.current?.abort();
-    gridAbortRef.current?.abort();
+    abortAllPending();
     dispatch({ type: "UPDATE_STRESS_BASELINE", baseline: val });
   }
 
   function handleStressDropoutChange(val: number) {
-    evaluateAbortRef.current?.abort();
-    gridAbortRef.current?.abort();
+    abortAllPending();
     dispatch({ type: "UPDATE_STRESS_DROPOUT", dropout: val });
   }
 
@@ -79,7 +76,7 @@ export default function Home() {
     calculateAbortRef.current = controller;
     const revision = requestRevision;
 
-    dispatch({ type: "START_CALCULATE" });
+    dispatch({ type: "START_CALCULATE", requestRevision: revision });
     try {
       const response = await calculateDesign(
         {
