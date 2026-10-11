@@ -1,0 +1,2218 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="theme-color" content="#080d1a"/><meta name="description" content="An interactive engineering and research map for Baseline Breaker, the clinical-trial assumption stress-testing project."/>
+<title>Baseline Breaker — Research to Build</title>
+<style>
+:root{--bg:#080d1a;--rail:#0c1425;--card:#101c2f;--card2:#132238;--line:#253650;--text:#eaf2ff;--muted:#96aac7;--faint:#617996;--accent:#71e7d6;--purple:#b5a1ff;--amber:#ffc480;--bad:#fa918b;--good:#67e7b6;--shadow:0 22px 60px #0004;--round:18px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse 76% 26% at 68% -3%,#203155 0%,transparent 70%),var(--bg);color:var(--text);font:14px/1.6 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-weight:400}body:before{content:"";pointer-events:none;position:fixed;inset:0;opacity:.12;background-image:linear-gradient(#7eb0ef0a 1px,transparent 1px),linear-gradient(90deg,#7eb0ef0a 1px,transparent 1px);background-size:38px 38px;z-index:-1}::selection{background:#3e877a}a{color:inherit}button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}main{min-width:0}.app{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh}.rail{position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid #2a39519e;background:#0b1425e8;backdrop-filter:blur(16px);padding:28px 18px;z-index:7}.brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:-.03em;font-size:16px;margin-bottom:10px}.logo{background:linear-gradient(135deg,var(--accent),#6e91ff);display:grid;place-items:center;color:#0c1e30;width:35px;height:35px;border-radius:10px;font-size:20px;font-weight:950;box-shadow:0 0 24px #71e7d622}.tag{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#8ea3c5;margin:22px 10px 8px;font-weight:800}.nav{display:block;padding:10px 12px;text-decoration:none;color:#8fa4c2;font-weight:650;border:1px solid transparent;border-radius:9px;margin:3px 0;transition:.15s}.nav:hover,.nav.active{color:#f2f8ff;background:#22354d9a;border-color:#3e5264}.nav span{font-variant-numeric:tabular-nums;font-size:11px;color:#62879d;margin-right:10px}.rail-note{padding:15px;margin-top:24px;border:1px solid #314459;background:#102137;border-radius:14px;color:#98b5c5;font-size:11px;line-height:1.6}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);margin-right:7px}.content{width:100%;max-width:1590px;margin:auto;padding:36px clamp(19px,4vw,76px) 110px}.topline{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:36px}.eyebrow{display:flex;align-items:center;gap:9px;color:var(--accent);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:850}.meta{font-size:11px;color:#8d9bb8}.hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(270px,.75fr);gap:24px;align-items:stretch;margin-bottom:24px}.hero h1{font-size:clamp(46px,5.8vw,86px);line-height:.99;font-weight:850;letter-spacing:-.075em;margin:13px 0 20px}.hero h1 em{font-style:normal;background:linear-gradient(110deg,#8ce9d7,#a3b8ff);-webkit-background-clip:text;background-clip:text;color:transparent}.hero p{font-size:16px;color:#adc2db;max-width:680px;line-height:1.75}.hero-card{background:linear-gradient(154deg,#143146b8,#171f3d),var(--card);border:1px solid #304861;box-shadow:var(--shadow);padding:25px;border-radius:24px;position:relative;overflow:hidden}.hero-card:after{content:"";position:absolute;width:160px;height:160px;border-radius:50%;background:#82e8db;filter:blur(120px);right:-30px;top:-30px;opacity:.2}.smallcaps{font-size:10px;letter-spacing:.15em;text-transform:uppercase;font-weight:800;color:#8ca4c2}.heroquote{font-size:24px;font-weight:750;line-height:1.4;letter-spacing:-.035em;margin:30px 0 20px;position:relative;z-index:1}.heroquote strong{color:#93f2df}.btn{border:1px solid #466074;background:#152b3d;color:#d8f6f1;border-radius:10px;padding:10px 15px;font-weight:750;text-decoration:none;display:inline-flex;gap:7px;align-items:center;transition:.16s}.btn:hover{background:#1e4251;border-color:var(--accent)}.btn.primary{background:var(--accent);color:#0d2832;border-color:var(--accent)}.btn.primary:hover{background:#b2ffed}.btn.ghost{background:#101d31}.pills{display:flex;gap:9px;flex-wrap:wrap;margin:18px 0}.pill{font-size:11px;color:#a4c2d0;background:#12263a;border:1px solid #2e4458;padding:4px 9px;border-radius:30px;font-weight:700}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:32px 0 44px}.metric{background:#101c2dd1;border:1px solid var(--line);border-radius:14px;padding:18px 21px;min-width:0}.metric .big{font-size:32px;font-weight:850;letter-spacing:-.055em;line-height:1.3}.metric p{color:#9bb1cc;font-size:11px;margin:3px 0 0}.section{padding-top:25px;margin-top:50px;scroll-margin-top:20px}.section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:20px}.section h2{font-size:clamp(26px,3.1vw,39px);letter-spacing:-.055em;line-height:1.2;margin:4px 0 8px}.section-sub{margin:0;color:#99acc9;max-width:800px;font-size:14px}.kicker{color:var(--accent);text-transform:uppercase;font-size:10px;letter-spacing:.16em;font-weight:800}.panel{background:linear-gradient(145deg,#132036,#0e1929);border:1px solid var(--line);border-radius:var(--round);box-shadow:0 8px 28px #0002;padding:22px;min-width:0}.panel h3{margin:0 0 8px;font-size:17px;letter-spacing:-.025em;line-height:1.35}.panel p{color:#a8bad2}.panel small{color:#90a5c0}.panel .mini{font-size:12px}.p-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.p-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.p-grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}.overview-step{position:relative;padding-top:42px}.number{position:absolute;top:16px;left:19px;color:#728faf;font-size:11px;font-weight:900;letter-spacing:.08em}.overview-step h3{font-size:17px}.overview-step p{font-size:13px;line-height:1.7}.card-highlight{border-color:#529c9b;background:linear-gradient(140deg,#17394a,#102038)}.dim{color:var(--muted)}.note{color:#a5b7cf;font-size:12px}.code{font:12px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;color:#aadad3;background:#091525;border:1px solid #244358;padding:13px 15px;border-radius:11px;overflow:auto}.formula{display:block;font:16px/1.6 Georgia,serif;letter-spacing:.01em;color:#c3f4e4;margin:14px 0}.lab-grid{display:grid;grid-template-columns:290px minmax(0,1fr);gap:14px;align-items:start}.controls{position:relative}.group{border-bottom:1px solid #24364d;padding:0 0 14px;margin-bottom:17px}.group:last-child{border-bottom:0;margin-bottom:0;padding-bottom:0}.input-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.input-top label{font-weight:700;color:#c7d8ed;font-size:12px}.val{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:#9ef7df;font-weight:850}.desc{font-size:11px;color:#7f9ab5;margin:3px 0 8px}.range{appearance:none;-webkit-appearance:none;width:100%;height:5px;background:linear-gradient(90deg,#58c3b5,#4c5d7c);border-radius:20px;outline:0;margin:13px 0 5px}.range::-webkit-slider-thumb{appearance:none;width:16px;height:16px;border:3px solid #dafbf4;background:#328d86;border-radius:50%;box-shadow:0 0 0 4px #2c837633}.range::-moz-range-thumb{width:12px;height:12px;border:3px solid #dafbf4;background:#328d86;border-radius:50%}.toggle{display:flex;background:#0a1729;border:1px solid #2d415a;padding:4px;border-radius:9px;gap:5px}.toggle button{flex:1;border:0;background:transparent;padding:7px 6px;border-radius:6px;color:#8eaac2;font-size:11px;font-weight:800}.toggle button.selected{background:#1f4e5a;color:#bff9e7}.presets{display:flex;gap:7px;flex-wrap:wrap;margin-top:15px}.presets button{border:1px solid #304b62;background:#13283b;color:#a5c7d5;padding:6px 10px;border-radius:8px;font-size:11px}.presets button:hover{border-color:var(--accent)}.lab-right{display:grid;grid-template-columns:1fr 1fr;gap:14px;min-width:0}.lab-right .wide{grid-column:1/-1}.impact{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;align-items:stretch}.impact>div{background:#0d1c2e;border:1px solid #243d54;border-radius:12px;padding:15px}.impact strong{font-size:30px;display:block;letter-spacing:-.055em;font-variant-numeric:tabular-nums;line-height:1.35}.impact label{color:#849cba;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:850}.impact strong.red{color:var(--bad)}.impact strong.green{color:var(--good)}.impact strong.blue{color:#a0b6ff}.chart-wrap{position:relative;min-height:240px}.chart-wrap svg{width:100%;display:block;overflow:visible}.caption{font-size:11px;color:#869db8;line-height:1.55}.legend{display:flex;gap:15px;align-items:center;flex-wrap:wrap;font-size:11px;color:#a2b3c9;margin-top:9px}.legend i{display:inline-block;width:14px;height:3px;background:var(--accent);vertical-align:middle;margin-right:5px}.legend .purple{background:var(--purple)}.legend .dash{border-top:2px dashed var(--amber);background:transparent;height:0}.heatmap-area{display:grid;grid-template-columns:35px 1fr;gap:8px}.heatmap{display:grid;grid-template-columns:repeat(19,minmax(0,1fr));grid-template-rows:repeat(13,16px);gap:3px;min-width:0}.heatcell{border:1px solid #ffffff17;border-radius:2px;cursor:crosshair;transition:transform .12s,border-color .12s}.heatcell:hover{transform:scale(1.18);border:1px solid #fff;z-index:2}.hm-axis{color:#889bb7;font-size:10px}.scale{height:7px;border-radius:7px;background:linear-gradient(90deg,#c1687e,#e4b37e,#83d6c8);margin:13px 0 3px}.scale-labels{display:flex;justify-content:space-between;font-size:10px;color:#899cb4}.grid-tooltip{font:12px/1.5 ui-monospace,Consolas,monospace;color:#c7e8e3;min-height:36px;margin-top:11px}.highlight-block{background:#122e3d;border:1px solid #33706e;border-radius:12px;padding:15px;color:#c4f3ed}.highlight-block strong{color:var(--accent)}.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}.stat-grid .mini-stat{border:1px solid #30465b;background:#0b1a2b;border-radius:10px;padding:12px}.mini-stat .num{font-size:22px;font-weight:850;letter-spacing:-.04em}.mini-stat label{display:block;color:#91a4be;font-size:10px}.flow-diagram{display:grid;grid-template-columns:1fr 44px 1fr 44px 1fr;gap:8px;align-items:center;text-align:center;margin:10px 0 20px}.node{border:1px solid #39516a;border-radius:12px;background:#13283c;padding:17px 10px;min-height:84px;display:flex;flex-direction:column;justify-content:center;gap:6px}.node .glyph{color:var(--accent);font-size:19px;font-weight:900}.node strong{font-size:12px;line-height:1.35}.node small{font-size:10px;color:#8fa8c1}.arrow{font-size:28px;color:#668daa}.architecture{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;align-items:stretch}.arch-card{padding:16px 13px;position:relative;border:1px solid #385066;background:#14273c;border-radius:12px}.arch-card:after{content:"→";position:absolute;right:-15px;top:50%;transform:translateY(-50%);color:var(--accent);z-index:2;background:var(--bg);width:18px;text-align:center;font-size:18px}.arch-card:last-child:after{display:none}.arch-card h4{font-size:13px;margin:8px 0 6px}.arch-card p{font-size:11px;margin:0;color:#a5b7d0}.arch-card code{font-size:11px;color:var(--accent)}.layername{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:#8ca4c8}.stack{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stack-item{border:1px solid #2b405a;border-radius:11px;padding:13px 15px;background:#0b1b2e}.stack-item b{display:block;font-size:12px}.stack-item span{color:#8eacbf;font-size:11px}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}.sublabel{font-size:11px;color:#8fa7bf;letter-spacing:.1em;text-transform:uppercase;font-weight:800}.api-row{display:grid;grid-template-columns:170px 1fr;align-items:start;gap:9px;border-bottom:1px solid #243850;padding:13px 0}.api-row:last-child{border:0}.api-method{color:#adf5e6;font:11px ui-monospace,Consolas,monospace;font-weight:900}.api-row p{font-size:12px;margin:0;color:#a6b9d0}.data-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}.data-steps .panel{padding:17px}.step-digit{font-size:10px;color:var(--accent);font-weight:900}.data-steps h3{font-size:14px;margin:10px 0}.data-steps p{font-size:11px}.ribbon{display:flex;flex-wrap:wrap;gap:9px;margin:18px 0}.ribbon span{background:#193449;border:1px solid #2f5360;padding:7px 11px;border-radius:9px;font-size:11px;color:#b5dfd9;font-weight:750}.gantt{overflow:auto;border:1px solid #2d4159;border-radius:13px;background:#0a192a;padding:15px 14px 12px}.gantt-inner{min-width:690px}.gantt-axis{display:grid;grid-template-columns:116px repeat(12,1fr);margin-bottom:11px;color:#7f9ab6;font-size:10px;text-align:center}.gantt-track{display:grid;grid-template-columns:116px 1fr;gap:12px;align-items:center;margin:9px 0}.gantt-track b{font-size:11px;color:#bbcee5}.track{position:relative;height:35px;border-radius:6px;background:repeating-linear-gradient(90deg,#17273a 0,#17273a calc(100% / 12 - 1px),#314359 calc(100% / 12 - 1px),#314359 calc(100% / 12));overflow:hidden}.bar{position:absolute;top:4px;bottom:4px;border-radius:5px;display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;font-weight:800;font-size:10px;color:#081c2a;padding:0 6px;box-shadow:0 2px 6px #0004}.milestones{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}.mstone{padding:16px;background:#101e30;border:1px solid #2d4059;border-radius:12px}.mstone b{font-size:16px;color:var(--accent)}.mstone p{color:#9faec8;font-size:11px;margin:7px 0}.mstone strong{font-size:12px}.checklist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.checkrow{display:flex;align-items:flex-start;gap:10px;border:1px solid #2b4159;background:#102035;border-radius:10px;padding:11px 13px;font-size:12px;color:#cad9eb;cursor:pointer}.checkrow input{accent-color:#66d5c5;margin-top:3px}.checkrow.done{opacity:.62}.p0{color:#83f3dd}.p1{color:#a0bdff}.p2{color:#ebc090}.p3{color:#ed958d}.badge-sm{font:10px/1.3 ui-monospace,Consolas,monospace;font-weight:850;border:1px solid #3d526a;border-radius:5px;padding:3px 6px;white-space:nowrap}.risk-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px}.risk-tabs button{background:#14243a;color:#9eb3cc;border:1px solid #2c4056;border-radius:8px;padding:8px 12px;font-size:11px;font-weight:800}.risk-tabs button.on{border-color:var(--accent);background:#1d454a;color:#d2f9f1}.risklist{display:grid;gap:9px}.risk{border:1px solid #293e54;background:#0f2033;border-radius:11px;padding:13px 16px;display:grid;grid-template-columns:92px 1fr minmax(180px,38%);align-items:start;gap:13px}.risk strong{font-size:12px}.risk span{font-size:11px;color:#94aac4}.severity{font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:900}.severity.critical{color:#ff958c}.severity.high{color:#ffbf86}.severity.medium{color:#bbc1ff}.risk .resolution{color:#b3d9d1}.demo-acts{counter-reset:demo;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.demo-act{background:#101d2d;border:1px solid #2d425a;border-radius:12px;padding:19px 17px}.demo-act:before{counter-increment:demo;content:"0"counter(demo);display:block;color:var(--accent);font-size:12px;font-weight:900;margin-bottom:15px}.demo-act h3{font-size:14px}.demo-act p{font-size:12px}.not-say{color:#ffafa7}.say{color:#b1f0dc}.source-links{display:grid;grid-template-columns:1fr 1fr;gap:10px}.source-links a{background:#122238;border:1px solid #29415c;padding:14px 16px;border-radius:11px;text-decoration:none;font-size:12px;color:#c7dff1;font-weight:750}.source-links a:hover{border-color:var(--accent)}.source-links small{display:block;color:#7a9bb7;font-size:10px;font-weight:500}.footer{margin-top:80px;padding:18px 0;border-top:1px solid #273950;color:#7085a1;font-size:11px}.archive{margin-top:16px}.archive summary{cursor:pointer;list-style:none;font-weight:850;color:#bdeee4;font-size:14px}.archive summary:before{content:"+";margin-right:8px}.archive[open] summary:before{content:"−"}.full-report{font-size:12px;line-height:1.8;overflow:auto;max-height:600px;margin-top:20px;background:#081525;border:1px solid #273e56;padding:20px 24px;border-radius:12px}.full-report h1,.full-report h2,.full-report h3,.full-report h4{letter-spacing:-.03em;line-height:1.3}.full-report h1{font-size:22px}.full-report h2{font-size:19px;color:#c9f9e9;border-top:1px solid #2c4253;padding-top:14px}.full-report h3{font-size:15px;color:#b8d3f0}.full-report p,.full-report li{color:#b0c1d9}.full-report pre{overflow:auto;border:1px solid #28445a;border-radius:9px;padding:14px;background:#06101e}.full-report code{font:11px ui-monospace,Consolas,monospace}.full-report table{border-collapse:collapse;display:block;overflow:auto}.full-report td,.full-report th{border:1px solid #32485e;padding:8px}.full-report blockquote{border-left:3px solid #5cbfaf;padding-left:13px;color:#d2efea}.mobile-nav{display:none}.meter{height:9px;overflow:hidden;border-radius:10px;background:#29425a;margin-top:13px}.meter div{height:100%;background:linear-gradient(90deg,#69e2cb,#aba5f9);transition:.25s;width:0}.highlight-block code{overflow-wrap:anywhere;word-break:break-word}.warning-text{font-size:11px;color:#ffca99}.simple-ul{margin:9px 0;padding-left:19px;color:#a5bdd0;font-size:12px}.simple-ul li{margin:6px 0}.live-status{display:inline-flex;align-items:center;gap:7px;border:1px solid #35625a;background:#16352f;color:#aef1d9;padding:4px 9px;border-radius:8px;font-size:10px;font-weight:800;white-space:nowrap}
+@media(max-width:1120px){.app{grid-template-columns:190px minmax(0,1fr)}.content{padding:30px 25px 90px}.hero{grid-template-columns:1fr}.hero-card{min-height:210px}.lab-grid{grid-template-columns:260px 1fr}.lab-right{grid-template-columns:1fr}.lab-right .wide{grid-column:auto}.architecture{grid-template-columns:repeat(3,1fr)}.arch-card:nth-child(3):after{display:none}}
+@media(max-width:790px){.app{display:block}.rail{display:none}.mobile-nav{display:flex;overflow:auto;gap:7px;padding:12px 16px;position:sticky;top:0;background:#0b1428ee;backdrop-filter:blur(12px);z-index:10;border-bottom:1px solid #2d415c}.mobile-nav a{white-space:nowrap;padding:7px 12px;border:1px solid #284056;border-radius:8px;text-decoration:none;font-size:11px;color:#bdd5e6}.content{padding:20px 16px 70px}.metrics{grid-template-columns:repeat(2,1fr)}.hero h1{font-size:57px}.lab-grid,.p-grid,.p-grid.two,.p-grid.four,.two-col,.data-steps{grid-template-columns:1fr}.lab-right{grid-template-columns:1fr}.architecture{grid-template-columns:1fr 1fr}.arch-card:after{display:none}.flow-diagram{grid-template-columns:1fr;gap:5px}.flow-diagram .arrow{transform:rotate(90deg)}.demo-acts{grid-template-columns:1fr 1fr}.risk{grid-template-columns:78px 1fr}.risk .resolution{grid-column:2}.milestones{grid-template-columns:1fr 1fr}.source-links{grid-template-columns:1fr}}
+@media(max-width:430px){.hero h1{font-size:47px}.metric .big{font-size:25px}.impact{gap:5px}.impact>div{padding:11px 8px}.impact strong{font-size:23px}.impact label{font-size:9px}.stat-grid{grid-template-columns:1fr 1fr}.demo-acts,.milestones,.checklist{grid-template-columns:1fr}.risk{grid-template-columns:1fr}.risk .resolution{grid-column:1}.source-links{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+</style></head><body>
+<div class="mobile-nav"><a href="#overview">Overview</a><a href="#lab">Live lab</a><a href="#math">Statistics</a><a href="#arch">Architecture</a><a href="#execution">Roadmap</a><a href="#risks">Risks</a><a href="#report">Full report</a></div>
+<div class="app"><aside class="rail"><div class="brand"><div class="logo">B<span style="font-size:12px">/</span></div><div>BASELINE<br>BREAKER</div></div><div class="smallcaps" style="margin:10px 0 0 48px">Research → Build</div><div class="tag">Navigate</div>
+<a class="nav active" href="#overview"><span>01</span>Executive map</a><a class="nav" href="#lab"><span>02</span>Live power lab</a><a class="nav" href="#math"><span>03</span>Statistical engine</a><a class="nav" href="#arch"><span>04</span>Architecture & API</a><a class="nav" href="#data"><span>05</span>Data & evidence</a><a class="nav" href="#execution"><span>06</span>24-hour roadmap</a><a class="nav" href="#validation"><span>07</span>Testing & science</a><a class="nav" href="#risks"><span>08</span>Risk register</a><a class="nav" href="#demo"><span>09</span>Judging demo</a><a class="nav" href="#report"><span>10</span>Sources & report</a>
+<div class="rail-note"><span class="dot"></span>HackRU implementation guide<br><br><strong style="color:#d5eee9">One precise promise:</strong> reveal when a trial's planned statistical power is fragile to uncertain assumptions.<br><br><span style="color:#6e91aa">Standalone · works offline · illustrative simulator</span></div></aside>
+<main class="content"><div class="topline"><div class="eyebrow"><span class="dot"></span>TrialSync → Baseline Breaker / implementation intelligence</div><span class="meta">Based on the completed Deep Research technical blueprint</span></div>
+<section id="overview"><div class="hero"><div><div class="kicker">Clinical trial design · Statistical robustness</div><h1>What if the<br><em>baseline is wrong?</em></h1><p>Turn a fragile planning assumption into a visual, testable engineering system. The application does not predict whether a drug works or decide whether a trial should proceed. It reveals how power and enrollment requirements shift when the assumptions behind a two-arm trial change.</p><div class="pills"><span class="pill">Prospective binary endpoints</span><span class="pill">Frequentist power + simulation</span><span class="pill">No LLM required</span></div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:26px"><a class="btn primary" href="#lab">Explore the live lab ↗</a><a class="btn ghost" href="#execution">See the build roadmap →</a></div></div><div class="hero-card"><div class="smallcaps">The central insight</div><div class="heroquote">A trial planned for <strong>80% power</strong> can fall to <strong>≈47%</strong> under a plausible baseline shock.</div><p style="font-size:12px;color:#9dbdd0">Illustrative scenario: control event rate falls from 20% to 10%, while a 25% relative risk reduction is held constant. Same planned analyzable sample size; large-sample normal approximation.</p><div class="live-status"><span class="dot"></span>Interactive calculations below</div></div></div>
+<div class="metrics"><div class="metric"><div class="smallcaps">Constrained MVP</div><div class="big">2 arms</div><p>Randomized · binary endpoint · superiority</p></div><div class="metric"><div class="smallcaps">Core visualizations</div><div class="big">4</div><p>Power · heatmap · enrollment · simulation</p></div><div class="metric"><div class="smallcaps">Build team</div><div class="big">4</div><p>Clear vertical engineering ownership</p></div><div class="metric"><div class="smallcaps">Feature freeze</div><div class="big">24h</div><p>Then validate, rehearse, and polish</p></div></div>
+<div class="section-head"><div><div class="kicker">The value proposition</div><h2>Three moves. One credible product.</h2></div></div><div class="p-grid"><div class="panel overview-step"><span class="number">01 / FORMALIZE</span><h3>Capture trial assumptions</h3><p>Control event probability, treatment effect definition, target power, significance level, allocation and attrition. Every input is inspectable and attributable to a source.</p></div><div class="panel overview-step card-highlight"><span class="number">02 / BREAK THEM</span><h3>Stress-test the planning model</h3><p>Recompute power across alternative baselines, effect sizes, and dropout rates. Find failure regions, not just a single reassuring sample-size number.</p></div><div class="panel overview-step"><span class="number">03 / EXPLAIN</span><h3>Make consequences legible</h3><p>Expose baseline sensitivity, confidence in Monte Carlo estimates, enrollment trade-offs and clearly labeled limitations for trial teams.</p></div></div></section>
+<section id="lab" class="section"><div class="section-head"><div><div class="kicker">02 / Interactive prototype</div><h2>Assumption stress lab</h2><p class="section-sub">A self-contained educational preview of the core feature. All charts recalculate locally; the production system should use the independently validated Python statistical engine.</p></div><span class="live-status"><span class="dot"></span>Live analytic model</span></div>
+<div class="lab-grid"><div class="panel controls"><h3>Trial specification</h3><p class="mini" style="margin-top:0">Synthetic trial · 1:1 randomization · two-sided α = 0.05.</p>
+<div class="group"><div class="input-top"><label for="pplan">Assumed control event rate</label><span class="val" id="pplanVal">20%</span></div><div class="desc">Original power calculation's baseline</div><input class="range" id="pplan" type="range" min="8" max="40" step="1" value="20"/>
+<div class="input-top"><label>Effect assumption</label></div><div class="toggle" style="margin:8px 0 10px"><button type="button" id="rrBtn" class="selected">Constant relative risk</button><button type="button" id="ardBtn">Constant absolute reduction</button></div><div class="input-top"><label for="effect" id="effectLabel">Relative risk (RR)</label><span class="val" id="effectVal">0.75</span></div><input class="range" id="effect" type="range" min="0.5" max="0.95" step="0.01" value="0.75"/></div>
+<div class="group"><div class="input-top"><label for="pshock">Stress-test baseline</label><span class="val" id="pshockVal">10%</span></div><div class="desc">A plausible alternative scenario, not observed truth</div><input class="range" id="pshock" type="range" min="5" max="40" step="1" value="10"/><div class="input-top"><label for="dshock">Stress-test dropout</label><span class="val" id="dshockVal">10%</span></div><div class="desc">Independent in each arm for this preview</div><input class="range" id="dshock" type="range" min="0" max="35" step="1" value="10"/></div>
+<div class="group"><div class="input-top"><label for="dplan">Planned dropout</label><span class="val" id="dplanVal">10%</span></div><input class="range" id="dplan" type="range" min="0" max="30" step="1" value="10"/><div class="input-top"><label for="target">Target planned power</label><span class="val" id="targetVal">80%</span></div><input class="range" id="target" type="range" min="80" max="90" step="5" value="80"/></div>
+<div class="smallcaps">Quick scenarios</div><div class="presets"><button data-preset="collapse">Baseline collapse</button><button data-preset="stable">Stable trial</button><button data-preset="attrition">Attrition shock</button></div><p class="caption" style="margin-top:17px">If RR is fixed, absolute benefit shrinks as the baseline decreases. If absolute reduction is fixed, this conclusion can change. The effect model is not interchangeable.</p></div>
+<div class="lab-right"><div class="panel wide"><div class="section-head" style="margin-bottom:10px"><h3>What changes when assumptions break?</h3><span class="badge-sm">Binary / 2-sided</span></div><div class="impact"><div><label>Planned power</label><strong class="green" id="nominalPower">80.0%</strong></div><div><label>Stress scenario</label><strong class="red" id="stressPower">47.0%</strong></div><div><label>Power change</label><strong class="red" id="powerGap">−33.0pp</strong></div></div><div class="stat-grid"><div class="mini-stat"><div class="num" id="evalN">906</div><label>Evaluable participants / arm</label></div><div class="mini-stat"><div class="num" id="totalN">2,014</div><label>Total planned enrollment</label></div><div class="mini-stat"><div class="num" id="currentEvents">10% / 7.5%</div><label>Stress control / treatment rate</label></div></div><p id="labInterpret" class="caption" style="margin-bottom:0">Lower-than-assumed control risk means fewer expected events and weaker power when relative risk is held constant.</p></div>
+<div class="panel wide"><h3>Power across plausible baselines</h3><div class="chart-wrap" id="powerChart" role="img" aria-label="Calculated power as baseline control risk changes"></div><div class="legend"><span><i></i>Stress dropout</span><span><i class="purple"></i>Planned dropout</span><span><i class="dash"></i>Power target</span></div><p class="caption">The two lines hold planned enrollment fixed while varying control risk; markers show original planning assumptions and the current stress scenario. Invalid absolute-effect scenarios are omitted.</p></div>
+<div class="panel"><h3>Baseline × dropout sensitivity</h3><p class="caption" style="margin:0 0 9px">Power across 247 alternative planning realities; hover or tap cells.</p><div class="heatmap-area"><div style="font-size:10px;color:#8ba3bb;writing-mode:vertical-rl;transform:rotate(180deg);text-align:center">Dropout 0–30%</div><div><div class="heatmap" id="heatmap"></div><div class="scale-labels"><span>5% baseline</span><span>40% baseline</span></div></div></div><div class="scale"></div><div class="scale-labels"><span>Underpowered</span><span>Near target</span><span>Above target</span></div><div id="hmHover" class="grid-tooltip">Explore a cell to inspect exact values.</div></div>
+<div class="panel"><h3>Can enrollment rescue this scenario?</h3><p class="caption" style="margin:0 0 8px">Power versus planned enrollment multiplier, evaluated at both the original and stressed baseline.</p><div class="chart-wrap" id="enrollChart"></div><div class="legend"><span><i></i>Planning assumptions</span><span><i class="purple"></i>Stress scenario</span></div><p class="caption">More participants may recover power, but feasibility, validity, and ethics require a real trial design review.</p></div>
+<div class="panel wide"><div class="section-head" style="margin-bottom:10px"><div><h3>Monte Carlo sanity check</h3><p class="caption" style="margin:3px 0 0">Simulated trial outcomes using a fixed seeded random generator.</p></div><button class="btn primary" id="simulateBtn" type="button">Run 2,000 trials ↗</button></div><div class="stat-grid"><div class="mini-stat"><div class="num" id="simResult">—</div><label>Simulated rejection rate</label></div><div class="mini-stat"><div class="num" id="simSE">—</div><label>Monte Carlo standard error</label></div><div class="mini-stat"><div class="num" id="simAnalytic">—</div><label>Analytical approximation</label></div></div><div class="meter"><div id="simMeter"></div></div><p class="caption" id="simNote" style="margin:8px 0 0">Preview-only. Uses Bernoulli outcomes, independent dropout, and a pooled z test; seed 42. Real backend must be tested against statsmodels and appropriate exact tests.</p></div></div></div></section>
+<section id="math" class="section"><div class="section-head"><div><div class="kicker">03 / Algorithmic core</div><h2>Where the technical depth lives</h2><p class="section-sub">The project is a statistical engine with transparent math—not a generative chatbot giving untraceable clinical advice.</p></div></div>
+<div class="flow-diagram"><div class="node"><span class="glyph">ƒ</span><strong>Analytical power</strong><small>Two-proportion normal approximation</small></div><div class="arrow">→</div><div class="node"><span class="glyph">n</span><strong>Integer sample-size solver</strong><small>Binary search + dropout inflation</small></div><div class="arrow">→</div><div class="node"><span class="glyph">∑</span><strong>Monte Carlo + grid</strong><small>Trial outcomes → significance rates</small></div></div>
+<div class="p-grid"><div class="panel"><div class="smallcaps">Model A</div><h3>Trial outcomes</h3><div class="formula">X<sub>C</sub> ~ Binomial(n<sub>C</sub>, p<sub>C</sub>)<br>X<sub>T</sub> ~ Binomial(n<sub>T</sub>, p<sub>T</sub>)</div><p class="mini">Individual randomized participants with binary endpoints and independent arms. Conditional statistical power depends on the assumed effect and data-generating model.</p></div><div class="panel"><div class="smallcaps">Model B</div><h3>Effect assumptions</h3><div class="formula">RR fixed: p<sub>T</sub> = RR × p<sub>C</sub><br>ARR fixed: p<sub>T</sub> = p<sub>C</sub> − Δ</div><p class="mini">A baseline shock changes the expected number of events. A fixed relative effect does not imply a fixed absolute effect.</p></div><div class="panel"><div class="smallcaps">Model C</div><h3>Sample-size pressure</h3><div class="formula">n ≈ [z<sub>α</sub>√(2p̄(1−p̄)) + z<sub>β</sub>√(p<sub>C</sub>(1−p<sub>C</sub>)+p<sub>T</sub>(1−p<sub>T</sub>))]² / (p<sub>C</sub>−p<sub>T</sub>)²</div><p class="mini">Smaller absolute risk differences lead to sharply higher required enrollment; calculate and round arm sizes explicitly.</p></div></div>
+<div class="p-grid two" style="margin-top:14px"><div class="panel"><div class="kicker">Analytical workflow</div><h3>Deterministic calculation</h3><ol class="simple-ul"><li>Validate p<sub>C</sub>, effect definition, α, power, allocation, and dropout.</li><li>Resolve p<sub>T</sub> from RR or absolute reduction without silently clipping.</li><li>Calculate conditional power for candidate analyzable arm sizes.</li><li>Double the upper bound, then binary-search for the smallest passing integer N.</li><li>Inflate planned enrollment for dropout, and report method + assumptions.</li></ol></div><div class="panel"><div class="kicker">Stochastic workflow</div><h3>Vectorized simulation</h3><ol class="simple-ul"><li>Use <code>numpy.random.default_rng(seed)</code> for a reproducible stream.</li><li>Generate arm-level retention/outcome samples across many hypothetical trials.</li><li>Apply the predeclared pooled two-proportion z test (or exact branch).</li><li>Fraction significant estimates conditional power; show MC SE.</li><li>Sweep baseline × dropout or effect size; cache identical requests.</li></ol></div></div>
+<div class="panel" style="margin-top:14px"><div class="kicker">Analytic ≠ probabilistic success prediction</div><div class="p-grid" style="margin-top:10px"><div><h3>Conditional power</h3><p class="mini">Probability of a significant result under a specific assumed treatment effect and model. This does <strong>not</strong> assert the drug has that effect.</p></div><div><h3>Uncertainty integrated power</h3><p class="mini">Optional weighted average over declared baseline/effect distributions. It is only meaningful if the distributions and their dependencies are justified.</p></div><div><h3>Trial success probability</h3><p class="mini">Requires beliefs about true efficacy, design success criteria, and other uncertainty—not automatically given by the first two.</p></div></div></div></section>
+<section id="arch" class="section"><div class="section-head"><div><div class="kicker">04 / Deployable architecture</div><h2>Keep infrastructure boring.<br>Make the simulator excellent.</h2><p class="section-sub">One React frontend, one FastAPI service, and a deterministic numerical engine. Database, queues, and distributed compute are unnecessary for the first demo.</p></div></div>
+<div class="panel"><div class="architecture"><div class="arch-card"><span class="layername">01 / Interaction</span><h4>Next.js / React</h4><p>Inputs, scenario presets, Plotly power charts and heatmaps.</p><code>TypeScript</code></div><div class="arch-card"><span class="layername">02 / Service</span><h4>FastAPI</h4><p>Pydantic validation, typed request/response schemas, API routing.</p><code>Python</code></div><div class="arch-card"><span class="layername">03 / Core</span><h4>NumPy / SciPy</h4><p>Power, sample size, vectorized simulation, parameter sweeps.</p><code>pytest + statsmodels</code></div><div class="arch-card"><span class="layername">04 / Evidence</span><h4>Trial importer</h4><p>ClinicalTrials.gov v2; normalize metadata but keep assumptions separate.</p><code>NCT ID</code></div><div class="arch-card"><span class="layername">05 / Delivery</span><h4>Docker backend</h4><p>Hosted frontend + single CPU service; cache fixture demos.</p><code>HTTPS / JSON</code></div></div><p class="caption" style="margin-bottom:0">CPU-bound simulations should be vectorized; don't block an asynchronous web event loop with millions of Python-level trial loops. Add a process worker only after profiling.</p></div>
+<div class="p-grid two" style="margin-top:14px"><div class="panel"><h3>API surface</h3><div class="api-row"><div class="api-method">POST /api/v1/power</div><p>Given assumptions, return treatment risk, analyzable/enrolled sample sizes, analytical power and method.</p></div><div class="api-row"><div class="api-method">POST /api/v1/simulate</div><p>Return seeded Monte Carlo rejection rate, repetitions, MC standard error and summaries.</p></div><div class="api-row"><div class="api-method">POST /api/v1/stress-grid</div><p>Baseline × dropout power matrix with valid axes, thresholds and lightweight response.</p></div><div class="api-row"><div class="api-method">GET /api/v1/trials/{id}</div><p>Normalized NCT metadata and source links. Do not invent original design assumptions.</p></div></div><div class="panel"><h3>One contract to freeze immediately</h3><div class="code">{<br>  "p_control": 0.20,<br>  "effect_type": "relative_risk",<br>  "effect_value": 0.75,<br>  "alpha": 0.05,<br>  "target_power": 0.80,<br>  "allocation_ratio": 1,<br>  "dropout_control": 0.10,<br>  "dropout_treatment": 0.10,<br>  "seed": 42<br>}</div><p class="caption">Return units as fractions in JSON (0.20 = 20%). UI formats them as percentages. Version the model and reject impossible parameter combinations.</p></div></div>
+<div class="panel" style="margin-top:14px"><div class="kicker">Dependency-light choices</div><div class="stack"><div class="stack-item"><b>Numeric engine</b><span>Python · NumPy · SciPy · statsmodels</span></div><div class="stack-item"><b>Backend contracts</b><span>FastAPI · Pydantic · pytest</span></div><div class="stack-item"><b>Dashboard & charts</b><span>Next.js · TypeScript · Plotly</span></div><div class="stack-item"><b>Infrastructure</b><span>Docker · simple HTTPS hosting</span></div><div class="stack-item"><b>Data format</b><span>JSON demo fixtures; Parquet optional</span></div><div class="stack-item"><b>Omit for MVP</b><span>Redis · Kubernetes · Kafka · Celery · database</span></div></div></div></section>
+<section id="data" class="section"><div class="section-head"><div><div class="kicker">05 / Data realism</div><h2>Trial metadata is not the baseline.</h2><p class="section-sub">The biggest scientific data mistake is substituting a population disease-prevalence figure for a trial-specific endpoint event probability under a particular protocol.</p></div></div>
+<div class="data-steps"><div class="panel"><span class="step-digit">SOURCE 01 · REQUIRED</span><h3>Manual parameters</h3><p>Always works. Required for novel design scenarios; user owns assumption selection and sources.</p></div><div class="panel"><span class="step-digit">SOURCE 02 · INTEGRATE</span><h3>ClinicalTrials.gov v2</h3><p>NCT identifier, phase, arms, outcomes, allocation, enrollment and reported results. The original assumed event rate may not be in structured fields.</p></div><div class="panel"><span class="step-digit">SOURCE 03 · CURATE</span><h3>Protocols / SAPs</h3><p>Manually verify the published sample-size justification and planned effect assumptions for one real example.</p></div><div class="panel"><span class="step-digit">SOURCE 04 · FALLBACK</span><h3>Synthetic fixtures</h3><p>Deterministic baseline-collapse, attrition-shock, and stable-trial demos survive broken network calls.</p></div></div>
+<div class="p-grid two" style="margin-top:14px"><div class="panel"><div class="kicker">Valid baseline</div><div class="formula" style="font-size:15px">P(primary endpoint by follow-up | protocol-eligible patient, control arm)</div><p class="mini">Endpoint definition, follow-up time, inclusion/exclusion criteria, control intervention, and care context all matter.</p></div><div class="panel"><div class="kicker" style="color:#ffb18c">Not interchangeable</div><div class="formula" style="font-size:15px">P(disease in the general population)</div><p class="mini">CDC PLACES or other area-level prevalence can provide context, but must not automatically populate the control-arm event rate.</p></div></div><div class="highlight-block" style="margin-top:14px"><strong>Data provenance rule:</strong> store trial metadata separately from planning assumptions. Label every assumption as <strong>manual</strong>, <strong>protocol-verified</strong>, <strong>hypothetical</strong> or <strong>derived</strong>. Never present an inferred rate as an observed clinical fact.</div></section>
+<section id="execution" class="section"><div class="section-head"><div><div class="kicker">06 / HackRU delivery plan</div><h2>Four engineers. One 24-hour critical path.</h2><p class="section-sub">Parallel vertical ownership with integration gates. The original report includes additional rehearsal and contingency work beyond hour 24; this view treats hour 24 as the feature freeze.</p></div><div class="live-status">Click checklist items to track progress</div></div>
+<div class="panel"><h3>Workstream timeline <span class="caption">· elapsed project hours</span></h3><div class="gantt"><div class="gantt-inner"><div class="gantt-axis"><div></div><div>0</div><div>2</div><div>4</div><div>6</div><div>8</div><div>10</div><div>12</div><div>14</div><div>16</div><div>18</div><div>20</div><div>24h</div></div>
+<div class="gantt-track"><b>All / contracts</b><div class="track"><span class="bar" style="left:0%;width:8.33%;background:#83e7d5">Freeze</span></div></div>
+<div class="gantt-track"><b>A / Statistical</b><div class="track"><span class="bar" style="left:8.33%;width:17%;background:#8ee5cf">Power solver</span><span class="bar" style="left:25.5%;width:21%;background:#62b8d5">Monte Carlo</span><span class="bar" style="left:46.7%;width:22%;background:#a5c6ed">Stress grid + tests</span><span class="bar" style="left:69%;width:24%;background:#7faaa4">Validate</span></div></div>
+<div class="gantt-track"><b>B / API & data</b><div class="track"><span class="bar" style="left:8.33%;width:18%;background:#a4a0f6">Schemas + routes</span><span class="bar" style="left:26%;width:18%;background:#8a8bdd">NCT adapter</span><span class="bar" style="left:44.5%;width:20%;background:#b7b5f4">Grid API</span><span class="bar" style="left:65%;width:26%;background:#777fc0">Docker + cache</span></div></div>
+<div class="gantt-track"><b>C / Frontend</b><div class="track"><span class="bar" style="left:8.33%;width:18%;background:#d7b28e">UI shell</span><span class="bar" style="left:26%;width:18%;background:#efc49a">Live controls</span><span class="bar" style="left:44.5%;width:25%;background:#e8bb83">Visualizations</span><span class="bar" style="left:69.5%;width:23%;background:#c09a74">Polish</span></div></div>
+<div class="gantt-track"><b>D / Integration</b><div class="track"><span class="bar" style="left:8.33%;width:15%;background:#eb9c9a">Fixtures</span><span class="bar" style="left:24%;width:22%;background:#d795c7">Curated trial</span><span class="bar" style="left:46.5%;width:25%;background:#f2a2ab">Integration E2E</span><span class="bar" style="left:72%;width:22%;background:#d78f9c">Pitch + fallback</span></div></div></div></div>
+<div class="milestones"><div class="mstone"><b>H + 02</b><br><strong>Data contract frozen</strong><p>Input schema, method choice and API response shapes agreed by all four engineers.</p></div><div class="mstone"><b>H + 06</b><br><strong>Power calculation works</strong><p>Validated analytic solver, React shell and POST /power connected.</p></div><div class="mstone"><b>H + 12</b><br><strong>Demo viable</strong><p>Simulation, controls, power curve and synthetic scenario work end to end.</p></div><div class="mstone"><b>H + 18 → 24</b><br><strong>Stress grid → freeze</strong><p>Heatmap, curated data, Docker, tests, rehearsed backup; no new core scope at 24.</p></div></div></div>
+<div class="p-grid two" style="margin-top:14px"><div class="panel"><div class="section-head" style="margin:0 0 10px"><h3>Acceptance checklist</h3><span id="checkProgress" class="badge-sm">0 / 12</span></div><div class="checklist" id="checklist"></div><div class="meter"><div id="checkMeter"></div></div><p class="caption" style="margin-bottom:0">Progress is saved only in this browser; it does not update GitHub.</p></div><div class="panel"><h3>Scope firewall</h3><div class="ribbon"><span><b class="p0">P0</b> Power + sample-size solver</span><span><b class="p0">P0</b> Monte Carlo</span><span><b class="p0">P0</b> Curves + heatmap</span><span><b class="p0">P0</b> Synthetic demo</span><span><b class="p1">P1</b> NCT importer</span><span><b class="p1">P1</b> Reproducibility + Docker</span><span><b class="p2">P2</b> Beta prior</span><span><b class="p2">P2</b> Robust safety envelope</span><span><b class="p3">LATER</b> Survival / cluster trials</span><span><b class="p3">LATER</b> LLM protocol parsing</span></div><p class="caption">If behind schedule: ship a rigorous manual-input synthetic demo instead of an unreliable automatic importer or another statistical endpoint class.</p></div></div></section>
+<section id="validation" class="section"><div class="section-head"><div><div class="kicker">07 / Scientific quality</div><h2>Prove the answers deserve trust.</h2><p class="section-sub">A health-research statistics tool lives or dies by its assumptions, numerical correctness, and reproducibility.</p></div></div><div class="p-grid two"><div class="panel"><h3>Validation ladder</h3><div class="data-steps" style="grid-template-columns:1fr 1fr;gap:9px"><div class="node" style="min-height:75px"><strong>1 · Unit / invariants</strong><small>RR conversion; invalid rates; n → power monotonicity</small></div><div class="node" style="min-height:75px"><strong>2 · Reference comparison</strong><small>statsmodels on a scenario matrix</small></div><div class="node" style="min-height:75px"><strong>3 · Monte Carlo agreement</strong><small>Difference within MC error + method tolerance</small></div><div class="node" style="min-height:75px"><strong>4 · End-to-end</strong><small>Real and synthetic preset; offline fallback; deploy smoke test</small></div></div></div><div class="panel"><h3>Known statistical boundaries</h3><ul class="simple-ul"><li>Near-zero or near-one probabilities can break normal approximations.</li><li>Low expected cell counts require warnings and/or a Fisher-exact path.</li><li>Independent dropout is not realistic for every missing-data mechanism.</li><li>Two-sided, single primary comparison only; no interim looks or multiplicity.</li><li>No observed post hoc power; do not reconstruct design quality from significance alone.</li><li>Estimands, endpoint ascertainment and protocol deviations affect interpretation.</li></ul></div></div><div class="highlight-block" style="margin-top:14px"><strong>Reference implementation comparison:</strong> use <code>statsmodels.stats.proportion.proportion_effectsize</code> and <code>statsmodels.stats.power.NormalIndPower</code> for an independently defined benchmark. The dashboard's preview uses a pooled-null two-proportion normal approximation, so results can differ slightly from arcsine-effect-size formulations; document method and tolerance rather than promising identity.</div></section>
+<section id="risks" class="section"><div class="section-head"><div><div class="kicker">08 / Prioritized risk register</div><h2>What must not go wrong.</h2><p class="section-sub">Filter by severity. A successful prototype must disclose scientific model limitations as explicitly as engineering ones.</p></div></div><div class="risk-tabs"><button class="on" data-severity="all">All risks</button><button data-severity="critical">Critical</button><button data-severity="high">High</button><button data-severity="medium">Medium</button></div><div id="risklist" class="risklist"></div></section>
+<section id="demo" class="section"><div class="section-head"><div><div class="kicker">09 / The judge story</div><h2>Show failure → explain → stress-test → recover.</h2><p class="section-sub">A live demonstration works best as one defensible causal chain, not a tour of unrelated features.</p></div></div><div class="demo-acts"><div class="demo-act"><h3>Start with the plan</h3><p>“We expect 20% events in control and a 25% relative reduction. The chosen N gives about 80% power.”</p></div><div class="demo-act"><h3>Break one number</h3><p>Slide expected control rate to 10% while holding RR fixed. Power falls to roughly 47%.</p></div><div class="demo-act"><h3>Visualize fragility</h3><p>Show heatmap and rescue curve. Explain where assumptions stop meeting the design target.</p></div><div class="demo-act"><h3>Validate the engine</h3><p>Run seeded Monte Carlo, show MC error, source provenance and cross-checks against a reference implementation.</p></div></div><div class="p-grid two" style="margin-top:14px"><div class="panel"><div class="smallcaps">Avoid unsupported claims</div><p class="not-say">“We predict this clinical trial will fail.”</p><p class="not-say">“Public disease prevalence tells us the trial baseline.”</p><p class="not-say">“Our tool recommends a regulator-approved enrollment.”</p></div><div class="panel"><div class="smallcaps">Say what the model actually computes</div><p class="say">“Under the specified stress assumptions, conditional statistical power decreases.”</p><p class="say">“Baseline is an endpoint risk in protocol-eligible control patients.”</p><p class="say">“This is exploratory sensitivity analysis, not a protocol-design decision.”</p></div></div><div class="panel card-highlight" style="margin-top:14px"><div class="kicker">Suggested pitch</div><h3 style="font-size:22px;margin:10px 0">“Trial designs depend on assumptions. Baseline Breaker shows which ones can break them.”</h3><p style="font-size:13px;margin-bottom:0">The compelling technical claim is that the team built and validated a numerical simulation platform—not an AI wrapper. Underneath the visuals: sample-size search, hypothesis tests, seeded Monte Carlo, sensitivity surfaces and real-world source normalization.</p></div></section>
+<section id="report" class="section"><div class="section-head"><div><div class="kicker">10 / Sources + unabridged material</div><h2>Go deeper when needed.</h2><p class="section-sub">The dashboard synthesizes the research report. The original text is also included below so implementation details and edge cases are not lost.</p></div></div><div class="source-links"><a href="https://clinicaltrials.gov/data-api/api" target="_blank" rel="noopener noreferrer">ClinicalTrials.gov API v2<small>Official registry endpoints and schema</small></a><a href="https://www.statsmodels.org/stable/generated/statsmodels.stats.power.NormalIndPower.html" target="_blank" rel="noopener noreferrer">Statsmodels · NormalIndPower<small>Independent numerical power benchmark</small></a><a href="https://www.statsmodels.org/stable/generated/statsmodels.stats.proportion.proportion_effectsize.html" target="_blank" rel="noopener noreferrer">Statsmodels · proportion_effectsize<small>Arcsine transformation reference</small></a><a href="https://www.fda.gov/regulatory-information/search-fda-guidance-documents/e9r1-addendum-estimands-and-sensitivity-analysis-clinical-trials-guideline-industry" target="_blank" rel="noopener noreferrer">FDA / ICH E9(R1)<small>Estimands and sensitivity-analysis guidance</small></a><a href="https://fastapi.tiangolo.com/" target="_blank" rel="noopener noreferrer">FastAPI documentation<small>API modeling and Python service architecture</small></a><a href="https://numpy.org/doc/stable/reference/random/generated/numpy.random.Generator.binomial.html" target="_blank" rel="noopener noreferrer">NumPy binomial RNG<small>Vectorized Monte Carlo sampling</small></a></div>
+<details class="panel archive"><summary>Open the full underlying research report (all sections)</summary><p class="caption">Long-form original technical research, included as an appendix. Research citation tokens are rendered as descriptive markers; use the official external documentation links above for verification.</p><div class="full-report"><h1>Baseline Breaker: Technical Blueprint for a Clinical-Trial Assumption Stress Tester</h1>
+<h2>Executive summary</h2>
+<p><strong>Baseline Breaker should not try to design a clinical trial for researchers.</strong> It should answer a narrower, technically defensible question:</p>
+<blockquote>
+<p><strong>“If the assumptions used to plan this trial are wrong, how badly does the trial’s statistical performance change?”</strong></p>
+</blockquote>
+<p>That is a substantially stronger hackathon concept than an AI trial-design assistant. The core product is a <strong>statistical simulation engine</strong>: a researcher enters the assumptions underlying a proposed two-arm randomized trial—control-group event rate, expected treatment effect, dropout rate, significance threshold, desired power, and enrollment—and Baseline Breaker calculates the planned design, then stress-tests it across thousands of plausible alternative realities.</p>
+<p>This is well aligned with actual clinical-trial methodology. FDA's adoption of ICH E9(R1) explicitly emphasizes defining the treatment effect of interest and using sensitivity analysis to understand how assumptions and data limitations affect interpretation. [research citation in original report]</p>
+<p>The crucial insight is that a trial can look perfectly powered <strong>under its planning assumptions</strong> while becoming substantially underpowered if the actual control-group event rate is different. For example, under a simple two-group normal approximation, detecting a reduction from 20% to 15% at 80% power and a two-sided 5% significance level requires roughly <strong>906 participants per arm</strong>. If the actual baseline rate were 10% and the same 25% relative risk reduction held, that enrollment would provide only about <strong>47% asymptotic power</strong> under the same approximation. That is exactly the sort of cause-and-effect result your demo should make visually obvious. The implementation can be independently checked against statsmodels' two-sample power implementation. [research citation in original report]</p>
+<p>The architecture I recommend is:</p>
+<pre><code class="language-text">                       BASELINE BREAKER
+
+            ┌──────────────────────────────┐
+            │ Trial assumptions / NCT ID   │
+            └──────────────┬───────────────┘
+                           │
+                    ┌──────▼──────┐
+                    │ Assumption  │
+                    │ normalizer  │
+                    └──────┬──────┘
+                           │
+             ┌─────────────┴──────────────┐
+             │                            │
+      ┌──────▼───────┐             ┌──────▼───────┐
+      │ Analytic     │             │ Monte Carlo  │
+      │ power solver │             │ simulation   │
+      └──────┬───────┘             └──────┬───────┘
+             │                            │
+             └─────────────┬──────────────┘
+                           │
+                    ┌──────▼──────┐
+                    │ Stress-grid │
+                    │ evaluation  │
+                    └──────┬──────┘
+                           │
+         ┌─────────────────┼──────────────────┐
+         │                 │                  │
+   Power curve      Failure heatmap     Robustness report
+</code></pre>
+<h3>The recommended hackathon scope</h3>
+<p><strong>MVP:</strong> individually randomized, two-arm, superiority trial with a <strong>binary primary endpoint</strong>.</p>
+<p>Build these five things extremely well:</p>
+<ol>
+<li>Analytical sample-size and power calculator.</li>
+<li>Vectorized Monte Carlo trial simulator.</li>
+<li>Baseline-event-rate × dropout sensitivity heatmap.</li>
+<li>Interactive &quot;assumption shock&quot; controls that update power curves.</li>
+<li>One curated real-trial example plus one guaranteed synthetic demo.</li>
+</ol>
+<p>Everything else—cluster randomization, stratification, survival analysis, probabilistic historical priors, automated protocol parsing—should be treated as an extension.</p>
+<p>That scope is achievable by four strong CS students in 24–36 hours and still gives you enough statistics, simulation, backend engineering, data ingestion, visualization, reproducibility, and testing to produce a serious technical project rather than a thin LLM wrapper.</p>
+<hr />
+<h2>Product definition and assumptions</h2>
+<h3>What exactly is a &quot;baseline&quot;?</h3>
+<p>This distinction is <strong>critical</strong>, especially given your earlier concern about TrialAtlas.</p>
+<p>For Baseline Breaker, the baseline is <strong>not</strong>:</p>
+<blockquote>
+<p>“What fraction of people in the United States have this disease?”</p>
+</blockquote>
+<p>It is:</p>
+<blockquote>
+<p><strong>“Among patients who satisfy this trial's eligibility criteria and receive the control treatment, what proportion are expected to experience the primary endpoint during the specified follow-up period?”</strong></p>
+</blockquote>
+<p>Those are completely different quantities.</p>
+<p>Suppose a heart-failure trial has:</p>
+<ul>
+<li>patients aged 40–80,</li>
+<li>specific ejection-fraction requirements,</li>
+<li>previous hospitalization criteria,</li>
+<li>certain medications required,</li>
+<li>kidney-function exclusions,</li>
+<li>and a primary outcome of hospitalization or cardiovascular death within 12 months.</li>
+</ul>
+<p>The baseline relevant to the power calculation is something like:</p>
+<p>[
+P(\text{primary endpoint by 12 months}
+\mid
+\text{eligible trial population, control arm})
+]</p>
+<p>It is <strong>not</strong> simply:</p>
+<p>[
+P(\text{heart failure in general population})
+]</p>
+<p>This is why CDC PLACES should be an <strong>optional contextual source</strong>, not your source of truth. PLACES publishes modeled small-area health estimates using sources including BRFSS, Census population estimates, and ACS data across counties, census tracts, places, and ZIP Code Tabulation Areas. [research citation in original report] Those data describe populations, not the protocol-defined control-arm outcome risk of an eligible trial population. Therefore, using PLACES directly as the expected control event rate would generally be an invalid leap; that is an inference from the difference between what PLACES measures and what a trial power model needs. [research citation in original report]</p>
+<h3>The actual problem Baseline Breaker solves</h3>
+<p>Imagine the statisticians planning a hypothetical trial believe:</p>
+<p>[
+p_C = 0.20
+]</p>
+<p>where (p_C) is the control-arm event probability.</p>
+<p>They expect the treatment to reduce risk by 25%, so:</p>
+<p>[
+RR = 0.75
+]</p>
+<p>and therefore:</p>
+<p>[
+p_T = 0.20(0.75)=0.15.
+]</p>
+<p>The sample-size calculation is built around the difference between 20% and 15%.</p>
+<p>But what happens if the real control event probability is only 10%?</p>
+<p>Under the same relative effect:</p>
+<p>[
+p_T = 0.10(0.75)=0.075.
+]</p>
+<p>There are now substantially fewer events, and the absolute difference has shrunk from five percentage points to 2.5 percentage points.</p>
+<p>The same enrollment can therefore have much less statistical power.</p>
+<p>That becomes your product's central interaction:</p>
+<blockquote>
+<p><strong>Planned reality:</strong> 20% baseline → 80% planned power<br />
+<strong>Observed/plausible reality:</strong> 10% baseline → ~47% power<br />
+<strong>Baseline shock:</strong> −50%<br />
+<strong>Consequence:</strong> high risk of an inconclusive trial under those assumptions</p>
+</blockquote>
+<p>The user then drags the baseline slider and watches the entire statistical picture change.</p>
+<h3>Inputs for the MVP</h3>
+<p>The planning form should contain:</p>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th style="text-align:right">Symbol</th>
+<th style="text-align:right">Example</th>
+<th>Why it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Expected control event rate</td>
+<td style="text-align:right">(p_C)</td>
+<td style="text-align:right">20%</td>
+<td>Central baseline assumption</td>
+</tr>
+<tr>
+<td>Effect representation</td>
+<td style="text-align:right">—</td>
+<td style="text-align:right">Relative risk</td>
+<td>Determines how (p_T) changes when baseline changes</td>
+</tr>
+<tr>
+<td>Expected treatment effect</td>
+<td style="text-align:right">(RR) or (\Delta)</td>
+<td style="text-align:right">RR = 0.75</td>
+<td>Defines alternative hypothesis</td>
+</tr>
+<tr>
+<td>Significance level</td>
+<td style="text-align:right">(\alpha)</td>
+<td style="text-align:right">0.05</td>
+<td>Type-I error threshold</td>
+</tr>
+<tr>
+<td>Desired power</td>
+<td style="text-align:right">(1-\beta)</td>
+<td style="text-align:right">0.80</td>
+<td>Planning target</td>
+</tr>
+<tr>
+<td>Allocation ratio</td>
+<td style="text-align:right">(r)</td>
+<td style="text-align:right">1:1</td>
+<td>Treatment/control enrollment</td>
+</tr>
+<tr>
+<td>Control dropout</td>
+<td style="text-align:right">(d_C)</td>
+<td style="text-align:right">10%</td>
+<td>Reduces analyzable sample</td>
+</tr>
+<tr>
+<td>Treatment dropout</td>
+<td style="text-align:right">(d_T)</td>
+<td style="text-align:right">10%</td>
+<td>Allows arm-specific attrition</td>
+</tr>
+<tr>
+<td>Monte Carlo repetitions</td>
+<td style="text-align:right">(R)</td>
+<td style="text-align:right">10,000</td>
+<td>Controls simulation precision</td>
+</tr>
+<tr>
+<td>Random seed</td>
+<td style="text-align:right">—</td>
+<td style="text-align:right">42</td>
+<td>Reproducibility</td>
+</tr>
+</tbody>
+</table>
+<p>Statsmodels' power interface explicitly represents effect size, significance level, power, allocation ratio, and alternative hypothesis for two independent samples, which makes it a good validation reference for your implementation. [research citation in original report]</p>
+<h3>The most important modeling toggle</h3>
+<p>Your interface needs this:</p>
+<p><strong>When the baseline changes, what stays constant?</strong></p>
+<pre><code class="language-text">Treatment-effect assumption
+
+○ Constant relative risk
+   RR = 0.75
+
+○ Constant absolute risk difference
+   Δ = -0.05
+</code></pre>
+<p>This is important because these produce completely different stress tests.</p>
+<p>If relative risk stays constant:</p>
+<p>[
+p_T = RR \times p_C
+]</p>
+<p>so:</p>
+<pre><code class="language-text">Control risk    Treatment risk
+20%             15%
+15%             11.25%
+10%              7.5%
+ 5%              3.75%
+</code></pre>
+<p>If absolute reduction stays constant:</p>
+<p>[
+p_T=p_C-\Delta
+]</p>
+<p>then a five-point benefit would imply:</p>
+<pre><code class="language-text">Control risk    Treatment risk
+20%             15%
+15%             10%
+10%              5%
+</code></pre>
+<p>There is no universal reason to assume one parameterization is correct for every disease and treatment. <strong>Do not hide this choice.</strong> Making it explicit actually makes the project more scientifically impressive.</p>
+<h3>Explicit project assumptions</h3>
+<p>For the hackathon, state these assumptions directly in the product:</p>
+<blockquote>
+<p><strong>Baseline Breaker MVP assumptions</strong></p>
+<p>The primary endpoint is binary; participants are individually randomized between two independent arms; the trial is a superiority design; the primary hypothesis test is two-sided; the MVP uses large-sample two-proportion approximations unless Fisher's exact test is explicitly selected; dropout is initially modeled as independent of outcome; treatment effects are expressed as either relative risk or absolute risk difference; simulations do not replace a protocol statistician or regulatory sample-size analysis.</p>
+</blockquote>
+<p>That disclaimer is important because FDA's statistical guidance treats objectives, estimands, design, analysis, and interpretation as interconnected rather than interchangeable pieces. [research citation in original report]</p>
+<h3>MVP versus extensions</h3>
+<table>
+<thead>
+<tr>
+<th>Capability</th>
+<th style="text-align:center">HackRU MVP</th>
+<th style="text-align:center">Stretch</th>
+<th style="text-align:center">Post-hackathon</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Binary two-arm endpoint</td>
+<td style="text-align:center"><strong>Yes</strong></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td>Analytical power</td>
+<td style="text-align:center"><strong>Yes</strong></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td>Monte Carlo power</td>
+<td style="text-align:center"><strong>Yes</strong></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td>Baseline sensitivity</td>
+<td style="text-align:center"><strong>Yes</strong></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td>Dropout sensitivity</td>
+<td style="text-align:center"><strong>Yes</strong></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td>Effect-size sensitivity</td>
+<td style="text-align:center"><strong>Yes</strong></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td>ClinicalTrials.gov import</td>
+<td style="text-align:center"><strong>Yes</strong></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td>Synthetic demo dataset</td>
+<td style="text-align:center"><strong>Yes</strong></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td>Fragility index</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"><strong>Yes</strong></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td>Probabilistic baseline prior</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"><strong>Yes</strong></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td>Stratified design</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"><strong>Yes</strong></td>
+</tr>
+<tr>
+<td>Cluster randomization</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"><strong>Yes</strong></td>
+</tr>
+<tr>
+<td>Survival endpoint</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"><strong>Yes</strong></td>
+</tr>
+<tr>
+<td>Automated protocol/SAP extraction</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"><strong>Yes</strong></td>
+</tr>
+<tr>
+<td>Regulatory-grade recommendations</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"><strong>No</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The most important strategic choice is the last one. <strong>Don't sell the product as &quot;we design your clinical trial.&quot;</strong></p>
+<p>Sell it as:</p>
+<blockquote>
+<p><strong>“We expose how fragile your trial design is to assumptions you may be wrong about.”</strong></p>
+</blockquote>
+<p>That is narrower, safer, and arguably a better hackathon story.</p>
+<hr />
+<h2>Data strategy</h2>
+<p>Baseline Breaker does <strong>not</strong> need a giant biomedical dataset in order to work.</p>
+<p>Its core algorithms operate on planning parameters. Public datasets make the demo more credible and allow you to preload examples, but the simulator itself is mathematical.</p>
+<h3>Data sources</h3>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>What you use</th>
+<th>MVP status</th>
+<th>Main limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ClinicalTrials.gov API v2</strong></td>
+<td>Trial design, enrollment, intervention arms, primary outcomes, posted results, NCT metadata</td>
+<td><strong>Required public integration</strong></td>
+<td>Planning assumptions such as the anticipated control rate may not be conveniently represented as a single structured field</td>
+</tr>
+<tr>
+<td><strong>Public protocol / SAP</strong></td>
+<td>Original sample-size justification, assumed baseline rate, effect size, dropout assumptions</td>
+<td><strong>Curated manually for demo</strong></td>
+<td>Not every trial exposes equally usable documentation</td>
+</tr>
+<tr>
+<td><strong>Published protocol / trial article</strong></td>
+<td>Cross-check assumptions and eventual event rates</td>
+<td>Recommended</td>
+<td>Manual curation during hackathon</td>
+</tr>
+<tr>
+<td><strong>CDC PLACES</strong></td>
+<td>Optional external prevalence context or plausible-range discussion</td>
+<td>Optional only</td>
+<td>General population estimate ≠ eligible control-arm event rate</td>
+</tr>
+<tr>
+<td><strong>Synthetic scenarios</strong></td>
+<td>Guaranteed reproducible demos and edge cases</td>
+<td><strong>Required</strong></td>
+<td>Must be prominently labeled synthetic</td>
+</tr>
+<tr>
+<td><strong>User-entered assumptions</strong></td>
+<td>New/proposed trial scenarios</td>
+<td><strong>Required</strong></td>
+<td>Quality depends on the user's assumptions</td>
+</tr>
+</tbody>
+</table>
+<p>ClinicalTrials.gov's current API is a REST API described using OpenAPI 3.0 and returns structured JSON study data; NLM specifically positions it for researchers and developers building applications on study records. [research citation in original report] That makes it ideal for the trial metadata layer.</p>
+<h3>ClinicalTrials.gov ingestion</h3>
+<p>A user enters:</p>
+<pre><code class="language-text">NCT01234567
+</code></pre>
+<p>Backend:</p>
+<pre><code class="language-text">NCT ID
+  │
+  ▼
+ClinicalTrials.gov v2
+  │
+  ├── study phase
+  ├── enrollment
+  ├── allocation
+  ├── intervention model
+  ├── masking
+  ├── arms
+  ├── primary outcome
+  ├── posted results
+  └── study-document metadata where available
+</code></pre>
+<p>NLM's API modernization standardized data types, dates, JSON responses, and study-record structures, which reduces transformation work for this type of application. [research citation in original report]</p>
+<p>Your internal normalized object might look like:</p>
+<pre><code class="language-python">TrialMetadata(
+    nct_id=&quot;NCT...&quot;,
+    title=&quot;...&quot;,
+    phase=&quot;PHASE3&quot;,
+    enrollment=1800,
+    allocation=&quot;RANDOMIZED&quot;,
+    intervention_model=&quot;PARALLEL&quot;,
+    primary_endpoint=&quot;...&quot;,
+    arm_names=[&quot;Treatment&quot;, &quot;Control&quot;],
+    actual_results=None,
+)
+</code></pre>
+<p>But keep <strong>planning assumptions separate</strong>:</p>
+<pre><code class="language-python">TrialAssumptions(
+    control_event_rate=0.20,
+    effect_type=&quot;relative_risk&quot;,
+    effect_value=0.75,
+    alpha=0.05,
+    target_power=0.80,
+    allocation_ratio=1.0,
+    dropout_control=0.10,
+    dropout_treatment=0.10,
+    source=&quot;protocol_manual_entry&quot;,
+)
+</code></pre>
+<p>That separation prevents an important scientific mistake:</p>
+<blockquote>
+<p><strong>Metadata extracted from ClinicalTrials.gov is not automatically equivalent to the assumptions that were used for the original sample-size calculation.</strong></p>
+</blockquote>
+<p>For your curated real-world demo, manually verify the protocol or statistical analysis plan and enter the planning assumptions yourself. ClinicalTrials.gov recognizes the SAP as the written description of the statistical considerations and analysis methods for a study. [research citation in original report]</p>
+<h3>Do not make PDF/LLM extraction a dependency</h3>
+<p>You could eventually have:</p>
+<pre><code class="language-text">Protocol PDF
+     ↓
+Structured extractor
+     ↓
+&quot;We found:
+ control rate = 18%
+ target RR = 0.78
+ dropout = 12%&quot;
+     ↓
+User confirms values
+</code></pre>
+<p>But this should be <strong>future work</strong>.</p>
+<p>For HackRU, manually curate one trial.</p>
+<p>Otherwise half your weekend disappears into document parsing instead of the part that makes the project technically interesting.</p>
+<h3>CDC PLACES: exactly how I would use it</h3>
+<p>Your earlier concern about geographic prevalence data was correct.</p>
+<p>Do <strong>not</strong> write:</p>
+<blockquote>
+<p>“CDC says diabetes prevalence is 12%, therefore our control event rate is 12%.”</p>
+</blockquote>
+<p>Instead, PLACES could power an optional panel such as:</p>
+<pre><code class="language-text">External population context
+
+Local diagnosed-diabetes estimate:       11.8%
+Trial's assumed endpoint event rate:      24.0%
+
+⚠ These quantities measure different things.
+Population prevalence is shown only as contextual evidence and
+is not used automatically in the trial's power calculation.
+</code></pre>
+<p>CDC says PLACES produces small-area estimates across counties, places, census tracts, and ZCTAs and includes dozens of chronic-disease and health measures. [research citation in original report]</p>
+<p>That can become useful later for modeling <strong>heterogeneity in possible baseline environments</strong>, but not for claiming a precise eligible-patient event probability.</p>
+<h3>Synthetic data is a feature, not an embarrassment</h3>
+<p>Prepare three deterministic scenarios:</p>
+<p><strong>Stable Trial</strong></p>
+<pre><code class="language-text">Planned baseline:  20%
+Actual scenario:   19–21%
+Dropout:            5%
+Result: design stays robust
+</code></pre>
+<p><strong>Baseline Collapse</strong></p>
+<pre><code class="language-text">Planned baseline:  20%
+Actual scenario:   10%
+Effect:             RR 0.75
+Result: dramatic power loss
+</code></pre>
+<p><strong>Attrition Shock</strong></p>
+<pre><code class="language-text">Planned baseline:  20%
+Effect:             RR 0.75
+Planned dropout:    5%
+Actual dropout:    25%
+Result: effective sample size falls
+</code></pre>
+<p>Judges can instantly understand all three.</p>
+<hr />
+<h2>Statistical engine</h2>
+<p>This is the core of the project and where you can make Baseline Breaker look much more sophisticated than a typical hackathon application.</p>
+<h3>Analytical power model</h3>
+<p>For the MVP, consider two independent arms:</p>
+<p>[
+X_C \sim \text{Binomial}(n_C,p_C)
+]</p>
+<p>[
+X_T \sim \text{Binomial}(n_T,p_T)
+]</p>
+<p>where:</p>
+<ul>
+<li>(C) = control,</li>
+<li>(T) = treatment,</li>
+<li>(p_C) = control event probability,</li>
+<li>(p_T) = treatment event probability.</li>
+</ul>
+<p>For equal allocation, a common large-sample approximation to required sample size per arm is:</p>
+<p>[
+n \approx
+\frac{
+\left[
+z_{1-\alpha/2}
+\sqrt{2\bar p(1-\bar p)}
++
+z_{1-\beta}
+\sqrt{p_C(1-p_C)+p_T(1-p_T)}
+\right]^2
+}{
+(p_T-p_C)^2
+}
+]</p>
+<p>where:</p>
+<p>[
+\bar p=\frac{p_C+p_T}{2}.
+]</p>
+<p>The crucial denominator is:</p>
+<p>[
+(p_T-p_C)^2.
+]</p>
+<p>When the absolute separation between the arms gets smaller, required enrollment grows rapidly.</p>
+<p>For production calculations in the hackathon, I would implement the calculation through the standardized two-proportion effect size as a reference pathway:</p>
+<h2>[
+h =
+2\arcsin(\sqrt{p_T})</h2>
+<p>2\arcsin(\sqrt{p_C})
+]</p>
+<p>Statsmodels exposes this quantity through <code>proportion_effectsize</code>, and its independent normal-power solver can solve for sample size, power, significance level, effect size, or allocation ratio. [research citation in original report]</p>
+<p>But <strong>also implement your own integer sample-size solver</strong>, then validate it against statsmodels.</p>
+<p>That gives you a much better technical story:</p>
+<blockquote>
+<p>“We didn't just call a library. We implemented the search algorithm ourselves and use statsmodels as an independent reference implementation.”</p>
+</blockquote>
+<h3>Sample-size solver pseudocode</h3>
+<pre><code class="language-python">def solve_sample_size(
+    p_control: float,
+    effect_type: str,
+    effect_value: float,
+    alpha: float = 0.05,
+    target_power: float = 0.80,
+    allocation_ratio: float = 1.0,
+    dropout_control: float = 0.0,
+    dropout_treatment: float = 0.0,
+) -&gt; SampleSizeResult:
+
+    validate_probability(p_control)
+    validate_alpha(alpha)
+    validate_power(target_power)
+
+    p_treatment = resolve_treatment_rate(
+        p_control,
+        effect_type,
+        effect_value,
+    )
+
+    # Find smallest control-arm N meeting target power.
+    low = 2
+    high = 4
+
+    while analytic_power(
+        n_control=high,
+        n_treatment=ceil(high * allocation_ratio),
+        p_control=p_control,
+        p_treatment=p_treatment,
+        alpha=alpha,
+    ) &lt; target_power:
+        high *= 2
+
+    # Integer binary search.
+    while low &lt; high:
+        mid = (low + high) // 2
+
+        power = analytic_power(
+            n_control=mid,
+            n_treatment=ceil(mid * allocation_ratio),
+            p_control=p_control,
+            p_treatment=p_treatment,
+            alpha=alpha,
+        )
+
+        if power &gt;= target_power:
+            high = mid
+        else:
+            low = mid + 1
+
+    evaluable_control = low
+    evaluable_treatment = ceil(low * allocation_ratio)
+
+    # Enrollment inflation for independent dropout.
+    enroll_control = ceil(
+        evaluable_control / (1.0 - dropout_control)
+    )
+
+    enroll_treatment = ceil(
+        evaluable_treatment / (1.0 - dropout_treatment)
+    )
+
+    return SampleSizeResult(...)
+</code></pre>
+<p>Complexity of the search is only logarithmic in the required sample size:</p>
+<p>[
+O(\log n).
+]</p>
+<h3>Two-proportion hypothesis test</h3>
+<p>Given simulated counts:</p>
+<p>[
+x_T,; n_T,; x_C,; n_C
+]</p>
+<p>calculate:</p>
+<p>[
+\hat p_T=\frac{x_T}{n_T}, \qquad
+\hat p_C=\frac{x_C}{n_C}
+]</p>
+<p>and pooled estimate:</p>
+<p>[
+\hat p =
+\frac{x_T+x_C}{n_T+n_C}.
+]</p>
+<p>Under the null (p_T=p_C):</p>
+<p>[
+Z =
+\frac{
+\hat p_T-\hat p_C
+}{
+\sqrt{
+\hat p(1-\hat p)
+\left(
+\frac{1}{n_T}+\frac{1}{n_C}
+\right)
+}
+}.
+]</p>
+<p>Then for a two-sided test:</p>
+<p>[
+p=2\left[1-\Phi(|Z|)\right].
+]</p>
+<p>Statsmodels provides <code>proportions_ztest</code> for an independent implementation against which your tests can be checked. [research citation in original report]</p>
+<p>For small counts, provide Fisher's exact test as an alternative or warning state. SciPy's <code>fisher_exact</code> operates on contingency tables and returns an exact-test p-value; its documentation explicitly covers the 2×2 case. [research citation in original report]</p>
+<h3>Monte Carlo model</h3>
+<p>This is what differentiates Baseline Breaker from a normal power calculator.</p>
+<p>For each simulated trial:</p>
+<p>[
+R_C \sim \operatorname{Binomial}(N_C,1-d_C)
+]</p>
+<p>[
+R_T \sim \operatorname{Binomial}(N_T,1-d_T)
+]</p>
+<p>where (R) is the number retained.</p>
+<p>Then:</p>
+<p>[
+X_C \sim \operatorname{Binomial}(R_C,p_C)
+]</p>
+<p>[
+X_T \sim \operatorname{Binomial}(R_T,p_T).
+]</p>
+<p>Run the hypothesis test.</p>
+<p>Define simulation success as:</p>
+<p>[
+I_r =
+\begin{cases}
+1,&amp;p_r&lt;\alpha\text{ and effect is in intended direction}\
+0,&amp;\text{otherwise}
+\end{cases}
+]</p>
+<p>and simulated power:</p>
+<h1>[
+\widehat{\text{Power}}</h1>
+<p>\frac{1}{R}
+\sum_{r=1}^{R}I_r.
+]</p>
+<p>At (R=10{,}000), the worst-case Monte Carlo standard error is:</p>
+<p>[
+\sqrt{\frac{0.5(0.5)}{10{,}000}}
+=0.005.
+]</p>
+<p>So even at the maximum-variance case your simulation uncertainty is only about half a percentage point in standard-error terms.</p>
+<p>Display that:</p>
+<pre><code class="language-text">Estimated power     63.7%
+Monte Carlo SE       0.5 pp
+Replicates          10,000
+Seed                    42
+</code></pre>
+<p>That is a small detail that will make the dashboard look scientifically thoughtful.</p>
+<h3>Vectorized simulator</h3>
+<p><strong>Do not loop through 10,000 trials in Python.</strong></p>
+<p>Use NumPy arrays.</p>
+<pre><code class="language-python">def simulate_binary_trials(params, reps=10_000, seed=42):
+    rng = np.random.default_rng(seed)
+
+    retained_c = rng.binomial(
+        params.n_control,
+        1 - params.dropout_control,
+        size=reps,
+    )
+
+    retained_t = rng.binomial(
+        params.n_treatment,
+        1 - params.dropout_treatment,
+        size=reps,
+    )
+
+    events_c = rng.binomial(
+        retained_c,
+        params.p_control,
+    )
+
+    events_t = rng.binomial(
+        retained_t,
+        params.p_treatment,
+    )
+
+    rate_c = events_c / retained_c
+    rate_t = events_t / retained_t
+
+    pooled = (events_c + events_t) / (
+        retained_c + retained_t
+    )
+
+    se = np.sqrt(
+        pooled * (1 - pooled) *
+        (1 / retained_c + 1 / retained_t)
+    )
+
+    z = (rate_t - rate_c) / se
+    p_values = 2 * scipy.stats.norm.sf(np.abs(z))
+
+    correct_direction = rate_t &lt; rate_c
+
+    success = (
+        (p_values &lt; params.alpha)
+        &amp; correct_direction
+    )
+
+    power = success.mean()
+
+    mcse = np.sqrt(
+        power * (1 - power) / reps
+    )
+
+    return SimulationResult(
+        power=power,
+        monte_carlo_se=mcse,
+        ...
+    )
+</code></pre>
+<p>NumPy's vectorized universal functions operate element-wise over arrays and support broadcasting, making them well suited to this style of batched numerical computation. [research citation in original report]</p>
+<h3>Baseline stress grid</h3>
+<p>Now iterate over plausible baseline rates:</p>
+<pre><code class="language-python">baseline_grid = np.linspace(0.05, 0.30, 51)
+dropout_grid  = np.linspace(0.00, 0.30, 31)
+</code></pre>
+<p>For every pair:</p>
+<p>[
+(p_C,d)
+]</p>
+<p>calculate:</p>
+<p>[
+\text{Power}(p_C,d).
+]</p>
+<p>Return a matrix:</p>
+<h1>[
+P_{ij}</h1>
+<p>\Pr(
+\text{trial significant}
+\mid
+p_{C,i},d_j
+).
+]</p>
+<p>Frontend:</p>
+<pre><code class="language-text">                   DROPOUT
+
+            0%    10%   20%   30%
+
+Baseline
+   25%      .91   .87   .81   .72
+   20%      .80   .74   .66   .56
+   15%      .66   .59   .50   .40
+   10%      .47   .40   .32   .24
+    5%      .26   .21   .16   .12
+</code></pre>
+<p>Plotly supports native heatmap visualizations, making this a natural representation for a two-dimensional sensitivity surface. [research citation in original report]</p>
+<h3>Baseline uncertainty instead of a single value</h3>
+<p>This is my favorite stretch feature.</p>
+<p>Instead of:</p>
+<p>[
+p_C=0.20
+]</p>
+<p>allow:</p>
+<p>[
+p_C\sim\operatorname{Beta}(a,b).
+]</p>
+<p>For example, specify expected rate (\mu) and &quot;confidence strength&quot; (k):</p>
+<p>[
+a=\mu k
+]</p>
+<p>[
+b=(1-\mu)k.
+]</p>
+<p>Each simulated trial samples a possible baseline:</p>
+<pre><code class="language-python">p_control = rng.beta(a, b, size=reps)
+</code></pre>
+<p>Then calculate treatment risk from the selected treatment-effect assumption.</p>
+<p>Now Baseline Breaker can answer:</p>
+<blockquote>
+<p><strong>“Accounting for uncertainty in our baseline assumption, what percentage of hypothetical trials would achieve statistical significance?”</strong></p>
+</blockquote>
+<p>This is far more interesting than a standard point-estimate power calculator.</p>
+<p>Visually:</p>
+<pre><code class="language-text">ASSUMED BASELINE
+               20%
+
+UNCERTAINTY
+
+        ▁▂▃▅▇████▇▅▃▂▁
+       10%    20%     30%
+
+Nominal power:                 80%
+Power integrated over
+baseline uncertainty:          67%
+</code></pre>
+<h3>Dropout models</h3>
+<p>For MVP:</p>
+<p>[
+D_i \sim \operatorname{Bernoulli}(d)
+]</p>
+<p>independent of outcome.</p>
+<p>Support arm-specific values:</p>
+<p>[
+d_C \neq d_T.
+]</p>
+<p>Then disclose:</p>
+<blockquote>
+<p>“The MVP assumes independent dropout. Informative missingness can behave differently.”</p>
+</blockquote>
+<p>FDA/ICH sensitivity-analysis guidance is particularly relevant here because post-randomization events and assumptions about how outcomes are handled can affect the treatment effect being estimated and interpreted. [research citation in original report]</p>
+<p>Future model:</p>
+<pre><code class="language-text">Outcome-dependent dropout
+
+P(dropout | would experience event)     = 20%
+P(dropout | would not experience event) =  8%
+</code></pre>
+<p>That lets you stress-test missing-not-at-random-like scenarios without pretending you know the true mechanism.</p>
+<h3>Fragility index</h3>
+<p>Fragility index is a good <strong>stretch feature</strong>, but it serves a different role.</p>
+<p>Baseline sensitivity asks:</p>
+<blockquote>
+<p>“How robust was the planning assumption?”</p>
+</blockquote>
+<p>Fragility index asks:</p>
+<blockquote>
+<p>“For a completed binary-outcome trial, how many outcome changes could flip a significance classification?”</p>
+</blockquote>
+<p>Walsh and colleagues' original study examined the fragility of statistically significant dichotomous outcomes in randomized controlled trials; their reported median FI was 8 among the trials studied. [research citation in original report]</p>
+<p>Basic algorithm:</p>
+<pre><code class="language-python">def fragility_index(
+    events_a,
+    total_a,
+    events_b,
+    total_b,
+    alpha=0.05,
+):
+    table = make_table(...)
+
+    original_p = fisher_exact(table).pvalue
+
+    if original_p &gt;= alpha:
+        return 0  # traditional FI not applicable as &quot;significant → nonsignificant&quot;
+
+    # Identify the arm with fewer events according to
+    # the chosen Walsh-style implementation.
+    target_arm = choose_fragility_arm(table)
+
+    flips = 0
+
+    while fisher_exact(table).pvalue &lt; alpha:
+        if no_non_events_left(target_arm):
+            return None
+
+        convert_one_non_event_to_event(
+            table,
+            target_arm,
+        )
+
+        flips += 1
+
+    return flips
+</code></pre>
+<p>Use <code>scipy.stats.fisher_exact</code> so the statistical test itself is not home-grown. [research citation in original report]</p>
+<p>But add this warning directly beside it:</p>
+<blockquote>
+<p><strong>Fragility Index does not measure clinical importance, bias, or overall trial quality. It describes sensitivity of a significance threshold for a particular binary analysis.</strong></p>
+</blockquote>
+<p>Do not turn it into a giant red &quot;TRIAL IS BAD&quot; score.</p>
+<h3>Stratified designs</h3>
+<p>Post-hackathon, introduce strata:</p>
+<p>[
+k=1,\ldots,K.
+]</p>
+<p>For each:</p>
+<p>[
+w_k=P(\text{participant belongs to stratum }k)
+]</p>
+<p>[
+p_{C,k},;p_{T,k}.
+]</p>
+<p>For example:</p>
+<pre><code class="language-text">Stratum             Weight     Control rate     RR
+
+Age &lt; 65              60%          12%          .75
+Age ≥ 65              40%          28%          .75
+</code></pre>
+<p>Simulate:</p>
+<p>[
+N_k\sim\operatorname{Multinomial}(N,w_1,\ldots,w_K)
+]</p>
+<p>then randomize participants within each stratum.</p>
+<p>A future version could combine strata using a Cochran–Mantel–Haenszel approach or a prespecified regression model.</p>
+<p>This would directly address one flaw of a single baseline:</p>
+<blockquote>
+<p><strong>The &quot;baseline&quot; may actually be a mixture of populations with different underlying risks.</strong></p>
+</blockquote>
+<p>That's an excellent future direction.</p>
+<h3>Cluster-randomized designs</h3>
+<p>Also future-only.</p>
+<p>For equal cluster size (m) and intracluster correlation (\rho), a classic first-order inflation factor is:</p>
+<p>[
+DE=1+(m-1)\rho.
+]</p>
+<p>Then approximately:</p>
+<h1>[
+N_{\text{clustered}}</h1>
+<p>N_{\text{individual}}
+\times DE.
+]</p>
+<p>But do <strong>not</strong> pretend that formula handles arbitrary cluster trials.</p>
+<p>Rutterford, Copas, and Eldridge note that the simplest sample-size method inflates an individually randomized calculation by a design effect, while more complicated designs require methods accounting for factors such as unequal cluster sizes, attrition, covariates, and repeated measures. [research citation in original report]</p>
+<p>That makes this an ideal &quot;future extension&quot; slide:</p>
+<pre><code class="language-text">Baseline Breaker 2.0
+
+Individual RCT
+      │
+      ├── strata
+      ├── cluster randomization
+      ├── repeated measures
+      └── survival endpoints
+</code></pre>
+<h3>Survival endpoints</h3>
+<p>Do not implement survival for HackRU unless everything else is finished.</p>
+<p>A future mode would change the fundamental object being simulated from:</p>
+<p>[
+X\sim\operatorname{Binomial}(n,p)
+]</p>
+<p>to event times:</p>
+<p>[
+T_i.
+]</p>
+<p>Then model:</p>
+<ul>
+<li>hazard ratio,</li>
+<li>accrual,</li>
+<li>censoring,</li>
+<li>follow-up duration,</li>
+<li>dropout,</li>
+<li>number of events.</li>
+</ul>
+<p>The log-rank test compares time-to-event experience between groups using observed versus expected events over event times. [research citation in original report]</p>
+<p>The product could eventually stress-test:</p>
+<pre><code class="language-text">Expected control hazard
+Expected HR
+Accrual speed
+Censoring
+Follow-up
+
+        ↓
+
+Expected event count
+        ↓
+Log-rank power
+</code></pre>
+<p>That would be a meaningful Phase II of the project, but it would weaken your HackRU submission if you attempt it during the first weekend.</p>
+<hr />
+<h2>System architecture and implementation</h2>
+<h3>Recommended stack</h3>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Tool</th>
+<th>Purpose</th>
+<th>Priority</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Language</td>
+<td><strong>Python</strong></td>
+<td>Statistical engine</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Numeric computation</td>
+<td><strong>NumPy</strong></td>
+<td>Vectorized simulation</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Statistics</td>
+<td><strong>SciPy</strong></td>
+<td>Distributions, normal CDF/SF, Fisher exact</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Reference statistics</td>
+<td><strong>statsmodels</strong></td>
+<td>Power and two-proportion validation</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Tabular processing</td>
+<td><strong>Pandas</strong></td>
+<td>Trial/result normalization, exports</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>API</td>
+<td><strong>FastAPI</strong></td>
+<td>Typed HTTP simulation service</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Validation</td>
+<td><strong>Pydantic</strong></td>
+<td>API request/response schemas</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Testing</td>
+<td><strong>pytest</strong></td>
+<td>Statistical + API tests</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Frontend</td>
+<td><strong>Next.js + React + TypeScript</strong></td>
+<td>Dashboard</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Plotting</td>
+<td><strong>Plotly.js</strong></td>
+<td>Heatmaps, curves, distributions</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Simple UI charts</td>
+<td><strong>Recharts</strong></td>
+<td>Cards/simple charts if desired</td>
+<td>Optional</td>
+</tr>
+<tr>
+<td>Containerization</td>
+<td><strong>Docker</strong></td>
+<td>Reproducible deployment</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>CI</td>
+<td><strong>GitHub Actions</strong></td>
+<td>Tests/builds on pushes/PRs</td>
+<td>Stretch</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>JSON/Parquet</td>
+<td>Cached demo scenarios</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Queue</td>
+<td>Process pool</td>
+<td>CPU-bound jobs</td>
+<td>Stretch</td>
+</tr>
+<tr>
+<td>Redis/Celery</td>
+<td>—</td>
+<td>Distributed worker system</td>
+<td><strong>Do not build at HackRU</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Pandas is designed around tabular <code>DataFrame</code> workflows including reading, transforming, aggregating, and combining datasets, which is sufficient for normalizing trial metadata and simulation exports. [research citation in original report]</p>
+<h3>Repository structure</h3>
+<pre><code class="language-text">baseline-breaker/
+│
+├── frontend/
+│   ├── app/
+│   │   ├── page.tsx
+│   │   ├── trial/[id]/page.tsx
+│   │   └── compare/page.tsx
+│   ├── components/
+│   │   ├── AssumptionPanel.tsx
+│   │   ├── PowerCurve.tsx
+│   │   ├── StressHeatmap.tsx
+│   │   ├── SimulationSummary.tsx
+│   │   └── TrialImport.tsx
+│   └── lib/api.ts
+│
+├── backend/
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── models.py
+│   │   ├── routes/
+│   │   │   ├── trials.py
+│   │   │   └── simulation.py
+│   │   ├── statistics/
+│   │   │   ├── power.py
+│   │   │   ├── simulation.py
+│   │   │   ├── fragility.py
+│   │   │   └── validation.py
+│   │   └── data/
+│   │       ├── clinicaltrials.py
+│   │       └── presets.py
+│   │
+│   └── tests/
+│       ├── test_power.py
+│       ├── test_simulation.py
+│       ├── test_fragility.py
+│       └── test_api.py
+│
+├── demo-data/
+│   ├── baseline-collapse.json
+│   ├── attrition-shock.json
+│   └── curated-trial.json
+│
+├── docker/
+├── .github/workflows/
+├── docker-compose.yml
+└── README.md
+</code></pre>
+<h3>API specification</h3>
+<h4>Analytical design endpoint</h4>
+<pre><code class="language-http">POST /api/v1/power
+</code></pre>
+<p>Request:</p>
+<pre><code class="language-json">{
+  &quot;p_control&quot;: 0.20,
+  &quot;effect_type&quot;: &quot;relative_risk&quot;,
+  &quot;effect_value&quot;: 0.75,
+  &quot;alpha&quot;: 0.05,
+  &quot;target_power&quot;: 0.80,
+  &quot;allocation_ratio&quot;: 1.0,
+  &quot;dropout_control&quot;: 0.10,
+  &quot;dropout_treatment&quot;: 0.10
+}
+</code></pre>
+<p>Response:</p>
+<pre><code class="language-json">{
+  &quot;p_treatment&quot;: 0.15,
+  &quot;evaluable_control&quot;: 906,
+  &quot;evaluable_treatment&quot;: 906,
+  &quot;enroll_control&quot;: 1007,
+  &quot;enroll_treatment&quot;: 1007,
+  &quot;total_enrollment&quot;: 2014,
+  &quot;method&quot;: &quot;normal_approximation&quot;
+}
+</code></pre>
+<h4>Simulation endpoint</h4>
+<pre><code class="language-http">POST /api/v1/simulate
+</code></pre>
+<pre><code class="language-json">{
+  &quot;n_control&quot;: 906,
+  &quot;n_treatment&quot;: 906,
+  &quot;p_control&quot;: 0.10,
+  &quot;effect_type&quot;: &quot;relative_risk&quot;,
+  &quot;effect_value&quot;: 0.75,
+  &quot;dropout_control&quot;: 0.05,
+  &quot;dropout_treatment&quot;: 0.05,
+  &quot;alpha&quot;: 0.05,
+  &quot;replicates&quot;: 10000,
+  &quot;seed&quot;: 42
+}
+</code></pre>
+<p>Response:</p>
+<pre><code class="language-json">{
+  &quot;simulated_power&quot;: 0.44,
+  &quot;monte_carlo_se&quot;: 0.005,
+  &quot;mean_control_events&quot;: 86.1,
+  &quot;mean_treatment_events&quot;: 64.6,
+  &quot;replicates&quot;: 10000,
+  &quot;seed&quot;: 42
+}
+</code></pre>
+<h4>Stress test</h4>
+<pre><code class="language-http">POST /api/v1/stress-grid
+</code></pre>
+<pre><code class="language-json">{
+  &quot;design&quot;: {...},
+  &quot;baseline&quot;: {
+    &quot;min&quot;: 0.05,
+    &quot;max&quot;: 0.30,
+    &quot;points&quot;: 40
+  },
+  &quot;dropout&quot;: {
+    &quot;min&quot;: 0.00,
+    &quot;max&quot;: 0.30,
+    &quot;points&quot;: 30
+  },
+  &quot;replicates_per_cell&quot;: 5000
+}
+</code></pre>
+<p>Response:</p>
+<pre><code class="language-json">{
+  &quot;x&quot;: [0.05, 0.056, &quot;...&quot;],
+  &quot;y&quot;: [0.00, 0.01, &quot;...&quot;],
+  &quot;power&quot;: [
+    [0.22, 0.21, &quot;...&quot;],
+    [&quot;...&quot;]
+  ]
+}
+</code></pre>
+<h4>ClinicalTrials import</h4>
+<pre><code class="language-http">GET /api/v1/trials/{nct_id}
+</code></pre>
+<p>Return only normalized fields your frontend needs.</p>
+<h3>Computation strategy</h3>
+<p>FastAPI's own documentation distinguishes I/O-bound concurrency from CPU-bound workloads and notes that CPU-heavy computation benefits from parallelism rather than merely asynchronous waiting. [research citation in original report]</p>
+<p>Therefore:</p>
+<pre><code class="language-text">ClinicalTrials request
+        ↓
+async HTTP call
+        ↓
+FastAPI event loop
+</code></pre>
+<p>but:</p>
+<pre><code class="language-text">100,000-trial Monte Carlo job
+        ↓
+CPU-bound
+        ↓
+NumPy vectorization
+        ↓
+optionally process worker
+</code></pre>
+<p>Do <strong>not</strong> create:</p>
+<pre><code class="language-text">async def simulate():
+    for trial in range(1_000_000):
+        ...
+</code></pre>
+<p>That is the wrong performance model.</p>
+<h3>Parameter-sweep optimization</h3>
+<p>A naïve grid of:</p>
+<ul>
+<li>50 baseline values,</li>
+<li>30 dropout values,</li>
+<li>10,000 simulations each</li>
+</ul>
+<p>would represent:</p>
+<h1>[
+50\times30\times10{,}000</h1>
+<p>15{,}000{,}000
+]</p>
+<p>simulated trials.</p>
+<p>That is perfectly reasonable for vectorized numeric work, but you still should not regenerate the entire grid every time a slider moves.</p>
+<p>Use two modes.</p>
+<p><strong>Interactive mode</strong></p>
+<pre><code class="language-text">2,000–5,000 simulations per point
+small grid
+immediate visual feedback
+</code></pre>
+<p><strong>Refine mode</strong></p>
+<pre><code class="language-text">10,000–50,000 simulations
+full grid
+higher precision
+</code></pre>
+<p>And cache by a hash of parameters:</p>
+<pre><code class="language-python">cache_key = sha256(
+    json.dumps(
+        params,
+        sort_keys=True
+    ).encode()
+).hexdigest()
+</code></pre>
+<h3>Reproducibility</h3>
+<p>Every result should have a visible seed.</p>
+<pre><code class="language-text">Simulation ID: bb_a41dc9
+Seed: 20261011
+Replicates: 10,000
+Model: binary-v1
+</code></pre>
+<p>For one process:</p>
+<pre><code class="language-python">rng = np.random.default_rng(seed)
+</code></pre>
+<p>For parallel workers, derive independent random streams rather than having workers accidentally share identical RNG state.</p>
+<p>A good architecture is:</p>
+<pre><code class="language-text">root seed
+   │
+   ├── worker stream A
+   ├── worker stream B
+   ├── worker stream C
+   └── worker stream D
+</code></pre>
+<p>This makes demos repeatable and results auditable.</p>
+<h3>Frontend</h3>
+<p>I would create a single-screen desktop-first workspace.</p>
+<pre><code class="language-text">┌─────────────────────────────────────────────────────────────────────┐
+│ BASELINE BREAKER                            Trial: Synthetic Demo    │
+├───────────────────┬─────────────────────────────────────────────────┤
+│ DESIGN            │           POWER UNDER BASELINE SHOCK            │
+│                   │                                                 │
+│ Baseline     20%  │ 100% ┤                                         │
+│ [────●────────]   │  80% ┤      ● planned                          │
+│                   │  60% ┤    ╱                                    │
+│ RR           .75  │  40% ┤  ╱                                      │
+│ [─────●───────]   │  20% ┤╱                                        │
+│                   │      └────────────────────────────────────      │
+│ Dropout      10%  │       5  10  15  20  25  30% baseline          │
+│ [──●──────────]   │                                                 │
+├───────────────────┼─────────────────────────────────────────────────┤
+│ Planned power     │        BASELINE × DROPOUT STRESS MAP            │
+│ 80%               │                                                 │
+│                   │         [ interactive heatmap ]                 │
+│ Current power     │                                                 │
+│ 47%               │                                                 │
+│                   │                                                 │
+│ POWER LOSS        │                                                 │
+│ ▼ 33 pp           │                                                 │
+└───────────────────┴─────────────────────────────────────────────────┘
+</code></pre>
+<p>The visual hierarchy should be:</p>
+<p><strong>Big number → explanation → underlying math.</strong></p>
+<p>Not:</p>
+<p><strong>form → giant data table → giant data table → giant data table.</strong></p>
+<h3>Visualization set</h3>
+<p>I would limit yourselves to four main charts.</p>
+<p><strong>Power curve</strong></p>
+<p>[
+x=p_C,\qquad y=\text{Power}.
+]</p>
+<p>Add:</p>
+<pre><code class="language-text">----- 80% target power
+   ● planned baseline
+   ▲ stress scenario
+</code></pre>
+<p><strong>Two-dimensional heatmap</strong></p>
+<p>[
+x=\text{baseline}
+]</p>
+<p>[
+y=\text{dropout}
+]</p>
+<p>[
+z=\text{power}.
+]</p>
+<p>Plotly directly supports matrix heatmaps. [research citation in original report]</p>
+<p><strong>Baseline uncertainty distribution</strong></p>
+<p>Only if Beta-distribution stretch goal is done.</p>
+<p><strong>Trial-outcome histogram</strong></p>
+<pre><code class="language-text">Distribution of simulated treatment effects
+
+                   █
+                 █████
+               █████████
+            ██████████████
+───────────────┬────────────────
+              true effect
+</code></pre>
+<h3>Deployment</h3>
+<p>Next.js supports multiple deployment modes, including Node.js servers, Docker containers, and static export where compatible. [research citation in original report]</p>
+<p>Hackathon recommendation:</p>
+<pre><code class="language-text">Frontend
+Next.js
+   │
+   ▼
+Hosted frontend
+   │ HTTPS
+   ▼
+FastAPI Docker container
+   │
+   ├── ClinicalTrials.gov
+   └── NumPy simulation engine
+</code></pre>
+<p>Do not build Kubernetes.</p>
+<p>Do not build Kafka.</p>
+<p>Do not build Redis unless you actually encounter a need for it.</p>
+<p>A single backend container is enough.</p>
+<p>Docker also has first-party documented integration with GitHub Actions for building container images as part of CI workflows. [research citation in original report]</p>
+<hr />
+<h2>Validation, UX, and demo</h2>
+<p>Your application is making statistical calculations in a health-research context. <strong>Correctness needs to be part of the demo story</strong>, not something added at the end.</p>
+<h3>Test pyramid</h3>
+<pre><code class="language-text">                ┌─────────────┐
+                │  Demo E2E   │
+                └──────┬──────┘
+               ┌───────▼───────┐
+               │ API integration│
+               └───────┬───────┘
+          ┌─────────────▼─────────────┐
+          │ Statistical cross-checks │
+          └─────────────┬─────────────┘
+       ┌────────────────▼────────────────┐
+       │ Unit + mathematical invariants │
+       └─────────────────────────────────┘
+</code></pre>
+<h3>Unit tests</h3>
+<p>Examples:</p>
+<pre><code class="language-python">def test_rr_conversion():
+    assert treatment_rate(
+        p_control=0.20,
+        effect_type=&quot;relative_risk&quot;,
+        effect_value=0.75,
+    ) == pytest.approx(0.15)
+</code></pre>
+<pre><code class="language-python">def test_zero_effect_near_alpha():
+    # Under the null, significance frequency should approach alpha.
+    result = simulate(
+        p_control=0.20,
+        p_treatment=0.20,
+        ...
+    )
+
+    assert abs(result.power - 0.05) &lt; tolerance
+</code></pre>
+<pre><code class="language-python">def test_more_sample_increases_power():
+    small = analytic_power(n=200, ...)
+    large = analytic_power(n=1000, ...)
+
+    assert large &gt; small
+</code></pre>
+<pre><code class="language-python">def test_smaller_effect_requires_more_participants():
+    n_big_effect = solve(... RR=.60)
+    n_small_effect = solve(... RR=.90)
+
+    assert n_small_effect &gt; n_big_effect
+</code></pre>
+<pre><code class="language-python">def test_same_seed_is_reproducible():
+    r1 = simulate(seed=123)
+    r2 = simulate(seed=123)
+
+    assert r1 == r2
+</code></pre>
+<h3>Cross-validation against statsmodels</h3>
+<p>For a matrix of scenarios:</p>
+<pre><code class="language-text">pC     pT     α     power    ratio
+
+.10    .075   .05   .80       1
+.20    .15    .05   .80       1
+.30    .24    .05   .90       1
+.15    .10    .01   .80       2
+</code></pre>
+<p>calculate your sample size.</p>
+<p>Then:</p>
+<pre><code class="language-python">effect = proportion_effectsize(
+    prop1=p_treatment,
+    prop2=p_control,
+)
+
+reference = NormalIndPower().solve_power(
+    effect_size=abs(effect),
+    nobs1=None,
+    alpha=alpha,
+    power=target_power,
+    ratio=ratio,
+)
+</code></pre>
+<p>Statsmodels documents both the two-proportion effect-size transform and <code>NormalIndPower.solve_power</code>; use them as the external numerical benchmark. [research citation in original report]</p>
+<p>Your CI should fail if the difference exceeds your specified tolerance.</p>
+<h3>Analytical versus Monte Carlo validation</h3>
+<p>Run:</p>
+<pre><code class="language-text">Analytical predicted power:   80.0%
+Simulated power:              79.7%
+Monte Carlo SE:                0.4 pp
+</code></pre>
+<p>Then repeat with progressively more simulations.</p>
+<pre><code class="language-text">R =     500   → noisy
+R =   5,000   → closer
+R =  50,000   → very close
+</code></pre>
+<p>This is actually a cool secondary demo of Monte Carlo convergence.</p>
+<h3>Edge cases</h3>
+<p>Test all of these:</p>
+<table>
+<thead>
+<tr>
+<th>Edge case</th>
+<th>Expected handling</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>(p_C=0)</td>
+<td>Reject or specialized handling</td>
+</tr>
+<tr>
+<td>(p_C=1)</td>
+<td>Reject or specialized handling</td>
+</tr>
+<tr>
+<td>(p_T&lt;0) from absolute reduction</td>
+<td>Validation error</td>
+</tr>
+<tr>
+<td>(p_T&gt;1)</td>
+<td>Validation error</td>
+</tr>
+<tr>
+<td>RR ≤ 0</td>
+<td>Validation error</td>
+</tr>
+<tr>
+<td>dropout ≥ 1</td>
+<td>Validation error</td>
+</tr>
+<tr>
+<td>(\alpha≤0) or (\alpha≥1)</td>
+<td>Validation error</td>
+</tr>
+<tr>
+<td>target power ≤ 0 or ≥ 1</td>
+<td>Validation error</td>
+</tr>
+<tr>
+<td>zero retained participants</td>
+<td>Handle without divide-by-zero</td>
+</tr>
+<tr>
+<td>extremely rare events</td>
+<td>Warn normal approximation may be unreliable</td>
+</tr>
+<tr>
+<td>tiny sample</td>
+<td>Offer Fisher exact path</td>
+</tr>
+<tr>
+<td>treatment worse than control</td>
+<td>Preserve direction, don't silently flip effect</td>
+</tr>
+<tr>
+<td>allocation ratio ≤ 0</td>
+<td>Validation error</td>
+</tr>
+</tbody>
+</table>
+<h3>User workflow</h3>
+<p>The hackathon demo should tell a story.</p>
+<h4>Start with the planning assumption</h4>
+<p>Judge sees:</p>
+<blockquote>
+<p><strong>“We expect 20% of control patients to experience the primary outcome, and we expect our treatment to reduce that by 25%.”</strong></p>
+</blockquote>
+<p>Baseline Breaker calculates:</p>
+<pre><code class="language-text">Expected control:          20.0%
+Expected treatment:        15.0%
+Relative risk:              0.75
+
+Target power:              80.0%
+Alpha:                      5.0%
+
+Required evaluable N:     ~1,812
+</code></pre>
+<h4>Show the problem</h4>
+<p>Then say:</p>
+<blockquote>
+<p>“But this calculation assumes the 20% baseline is correct.”</p>
+</blockquote>
+<p>Drag:</p>
+<pre><code class="language-text">20% ──────────────●────────
+                 ↓
+10% ───●───────────────────
+</code></pre>
+<p>The graph changes.</p>
+<pre><code class="language-text">Planned baseline       20%
+Stress baseline        10%
+
+Planned power          80%
+Stress power           ~47%
+
+POWER LOSS             ~33 percentage points
+</code></pre>
+<p>Now the judges immediately understand the project.</p>
+<h4>Introduce Monte Carlo</h4>
+<blockquote>
+<p>“That formula gives us an analytical estimate. But real trials have randomness and dropout, so we simulate the trial thousands of times.”</p>
+</blockquote>
+<p>Animate perhaps 50 dots rather than literally rendering 10,000:</p>
+<pre><code class="language-text">Trial 1   ✓
+Trial 2   ✗
+Trial 3   ✗
+Trial 4   ✓
+...
+Trial 10,000
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-text">4,701 / 10,000 hypothetical trials
+achieved the prespecified significance criterion.
+
+Estimated simulated power: 47.0%
+</code></pre>
+<h4>Stress-test both assumptions</h4>
+<p>Move dropout from 5% → 20%.</p>
+<p>Heatmap highlights the new cell.</p>
+<p>Now the judge sees:</p>
+<blockquote>
+<p>“One incorrect assumption is manageable. Multiple wrong assumptions compound.”</p>
+</blockquote>
+<p>That is your &quot;wow&quot; moment.</p>
+<h4>Show the safe zone</h4>
+<p>Add:</p>
+<pre><code class="language-text">ROBUSTNESS ENVELOPE
+
+Power remains ≥80% when:
+
+Baseline event rate: ≥ 19.6%
+Dropout:             ≤  8.7%
+
+Outside this region, the design falls below its target
+under the selected effect model.
+</code></pre>
+<p>This is arguably a stronger output than saying:</p>
+<blockquote>
+<p>&quot;Your power is 64%.&quot;</p>
+</blockquote>
+<p>You're showing <strong>where the design breaks</strong>.</p>
+<h3>The killer visualization: robustness frontier</h3>
+<p>Plot baseline on x, dropout on y.</p>
+<p>Draw the boundary:</p>
+<p>[
+\text{Power}(p_C,d)=0.80.
+]</p>
+<p>Everything on one side meets the target; everything on the other does not.</p>
+<pre><code class="language-text">Dropout
+ 30% │
+     │        underpowered
+ 20% │            ✕
+     │         ╱
+ 10% │      ╱       ← 80% power boundary
+     │   ╱
+  0% │╱   adequately powered
+     └─────────────────────────
+       5  10  15  20  25  30
+          baseline event %
+</code></pre>
+<p>Call it the:</p>
+<h1>Assumption Safety Envelope</h1>
+<p>That is much more memorable than &quot;power calculator.&quot;</p>
+<h3>What not to say in the demo</h3>
+<p>Avoid:</p>
+<blockquote>
+<p>&quot;This trial should enroll 2,000 people.&quot;</p>
+</blockquote>
+<p>Say:</p>
+<blockquote>
+<p>&quot;Under these assumptions, the model estimates the enrollment required to achieve the selected statistical-power target.&quot;</p>
+</blockquote>
+<p>Avoid:</p>
+<blockquote>
+<p>&quot;The trial will fail.&quot;</p>
+</blockquote>
+<p>Say:</p>
+<blockquote>
+<p>&quot;Under this stress scenario, the estimated probability of meeting the specified significance criterion falls from 80% to 47%.&quot;</p>
+</blockquote>
+<p>Avoid:</p>
+<blockquote>
+<p>&quot;CDC data tells us the baseline.&quot;</p>
+</blockquote>
+<p>Say:</p>
+<blockquote>
+<p>&quot;Population data can contextualize assumptions, but it does not identify the endpoint rate among protocol-eligible control patients.&quot;</p>
+</blockquote>
+<p>Avoid:</p>
+<blockquote>
+<p>&quot;Fragility index tells us whether the trial is trustworthy.&quot;</p>
+</blockquote>
+<p>Say:</p>
+<blockquote>
+<p>&quot;Fragility index is one narrow sensitivity metric for binary statistical-significance results.&quot;</p>
+</blockquote>
+<p>That precision will help tremendously if one of the judges is actually from pharma.</p>
+<hr />
+<h2>Hackathon execution, risks, and resume payoff</h2>
+<h3>Team structure</h3>
+<p>Assuming four CS students, split by <strong>vertical ownership</strong>, not &quot;everyone works everywhere.&quot;</p>
+<table>
+<thead>
+<tr>
+<th>Person</th>
+<th>Primary ownership</th>
+<th>First deliverable</th>
+<th>Secondary responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Engineer A — Statistical Core</strong></td>
+<td>Power formulas, sample-size solver, Monte Carlo, tests</td>
+<td><code>/statistics/power.py</code> + validated simulator</td>
+<td>Statistical explanations</td>
+</tr>
+<tr>
+<td><strong>Engineer B — Backend/Data</strong></td>
+<td>FastAPI, ClinicalTrials.gov adapter, schemas, caching</td>
+<td>Working API with NCT import</td>
+<td>Docker/deployment</td>
+</tr>
+<tr>
+<td><strong>Engineer C — Frontend/Data Viz</strong></td>
+<td>Next.js dashboard, sliders, Plotly heatmap/power curves</td>
+<td>Interactive synthetic dashboard</td>
+<td>Responsive polish</td>
+</tr>
+<tr>
+<td><strong>Engineer D — Integration/Product</strong></td>
+<td>Real demo scenario, API integration, UX, testing, pitch</td>
+<td>End-to-end scenario</td>
+<td>CI, README, demo deck</td>
+</tr>
+</tbody>
+</table>
+<p>The biggest mistake would be assigning one person exclusively to &quot;research.&quot;</p>
+<p>Everyone should be producing code by hour six.</p>
+<h3>Mermaid hackathon timeline</h3>
+<pre><code class="language-mermaid">gantt
+    title Baseline Breaker — HackRU Execution Timeline
+    dateFormat HH
+    axisFormat %Hh
+
+    section Everyone
+    Scope freeze + schemas             :a1, 00, 2h
+    Integration checkpoint             :milestone, a2, after b3, 0h
+    Full demo rehearsal                :a3, 26, 3h
+    Polish + contingency               :a4, 29, 5h
+
+    section Statistical Core
+    Power/sample-size engine           :b1, 02, 4h
+    Monte Carlo simulator              :b2, 06, 5h
+    Parameter sweeps + tests           :b3, 11, 5h
+    Stretch statistical features       :b4, 16, 5h
+
+    section Backend and Data
+    FastAPI schemas/routes             :c1, 02, 4h
+    ClinicalTrials.gov adapter         :c2, 06, 4h
+    Stress-grid API + caching          :c3, 10, 5h
+    Docker + deployment                :c4, 15, 5h
+
+    section Frontend
+    Dashboard shell                    :d1, 02, 4h
+    Interactive controls               :d2, 06, 4h
+    Curves + heatmap                   :d3, 10, 6h
+    UX polish                          :d4, 16, 5h
+
+    section Integration and Demo
+    Synthetic scenarios                :e1, 02, 3h
+    Curated real example               :e2, 05, 6h
+    End-to-end integration             :e3, 11, 6h
+    README + pitch                     :e4, 17, 7h
+</code></pre>
+<p>The timestamps represent elapsed hackathon hours rather than wall-clock time.</p>
+<h3>Hard checkpoints</h3>
+<p><strong>Hour 2</strong></p>
+<p>You should have frozen this schema:</p>
+<pre><code class="language-typescript">interface TrialDesign {
+  pControl: number;
+  effectType: &quot;rr&quot; | &quot;ard&quot;;
+  effectValue: number;
+  alpha: number;
+  targetPower: number;
+  dropoutControl: number;
+  dropoutTreatment: number;
+  allocationRatio: number;
+}
+</code></pre>
+<p>Do not change the entire data model after this point unless there is a major bug.</p>
+<p><strong>Hour 6</strong></p>
+<p>Must have:</p>
+<pre><code class="language-text">✓ analytic sample-size function
+✓ unit tests
+✓ basic React page
+✓ POST /power
+</code></pre>
+<p><strong>Hour 12</strong></p>
+<p>Must have:</p>
+<pre><code class="language-text">✓ Monte Carlo simulation
+✓ slider → API → result
+✓ power graph
+✓ synthetic demo
+</code></pre>
+<p>At that moment, <strong>you already have a valid submission.</strong></p>
+<p><strong>Hour 18</strong></p>
+<p>Add:</p>
+<pre><code class="language-text">✓ stress heatmap
+✓ ClinicalTrials import
+✓ polished assumptions panel
+✓ Dockerized backend
+</code></pre>
+<p><strong>Hour 24</strong></p>
+<p>Feature freeze.</p>
+<p>Anything after this should be:</p>
+<pre><code class="language-text">bugs
+visual polish
+performance
+pitch
+tests
+stretch features
+</code></pre>
+<p>Do not invent a new core feature six hours before judging.</p>
+<h3>Prioritization ladder</h3>
+<h4>Must ship</h4>
+<pre><code class="language-text">P0
+│
+├── Two-arm binary power calculator
+├── Sample-size solver
+├── Monte Carlo simulator
+├── Baseline slider
+├── Dropout slider
+├── Power curve
+├── Stress heatmap
+├── Synthetic demo
+└── Clear statistical assumptions
+</code></pre>
+<h4>Very valuable</h4>
+<pre><code class="language-text">P1
+│
+├── ClinicalTrials.gov NCT import
+├── Assumption safety envelope
+├── reproducible seeds
+├── analytical vs simulation comparison
+├── automated tests
+└── Docker deployment
+</code></pre>
+<h4>Only if ahead of schedule</h4>
+<pre><code class="language-text">P2
+│
+├── Beta baseline uncertainty
+├── fragility index
+├── real curated trial
+├── downloadable result JSON
+└── CI workflow
+</code></pre>
+<h4>Absolutely not during the first hackathon version</h4>
+<pre><code class="language-text">P3
+│
+├── survival endpoints
+├── cluster-randomized simulation
+├── full stratification engine
+├── LLM protocol extraction
+├── multi-endpoint multiplicity
+├── adaptive trial designs
+├── Bayesian trial engine
+└── automated &quot;recommended trial protocol&quot;
+</code></pre>
+<h3>Risk and mitigation matrix</h3>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Severity</th>
+<th>Why it matters</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Confusing disease prevalence with control event rate</strong></td>
+<td>Critical</td>
+<td>Produces scientifically invalid assumptions</td>
+<td>Define baseline explicitly; never auto-use PLACES as trial risk</td>
+</tr>
+<tr>
+<td><strong>Protocol assumptions unavailable</strong></td>
+<td>High</td>
+<td>NCT data alone may not reconstruct original power calculation</td>
+<td>Curate one trial manually; always permit manual input</td>
+</tr>
+<tr>
+<td><strong>Simulator disagrees with analytic power</strong></td>
+<td>High</td>
+<td>Could indicate implementation bug or methodological difference</td>
+<td>Cross-check with statsmodels and explain method differences</td>
+</tr>
+<tr>
+<td><strong>Normal approximation fails for rare events</strong></td>
+<td>High</td>
+<td>Z-test becomes questionable for sparse tables</td>
+<td>Warn on low expected counts; add Fisher exact option</td>
+</tr>
+<tr>
+<td><strong>Effect model changes silently as baseline changes</strong></td>
+<td>High</td>
+<td>RR versus absolute difference gives different results</td>
+<td>Explicit effect-model toggle</td>
+</tr>
+<tr>
+<td><strong>Informative dropout</strong></td>
+<td>Medium–high</td>
+<td>Independent dropout may underestimate sensitivity</td>
+<td>Label MCAR-like assumption; future outcome-dependent stress model</td>
+</tr>
+<tr>
+<td><strong>Monte Carlo randomness confuses users</strong></td>
+<td>Medium</td>
+<td>Same inputs could slightly change estimates</td>
+<td>Fixed/reported seed and Monte Carlo SE</td>
+</tr>
+<tr>
+<td><strong>Simulation endpoint blocks API</strong></td>
+<td>Medium</td>
+<td>CPU work can stall concurrent web requests</td>
+<td>Vectorize first; use worker process if needed</td>
+</tr>
+<tr>
+<td><strong>Heatmaps feel slow</strong></td>
+<td>Medium</td>
+<td>Hurts live demo</td>
+<td>Coarse interactive grid + cached/refined grid</td>
+</tr>
+<tr>
+<td><strong>Fragility index overinterpreted</strong></td>
+<td>Medium</td>
+<td>It is not a universal trial-quality score</td>
+<td>Present only as secondary completed-trial sensitivity metric</td>
+</tr>
+<tr>
+<td><strong>Hackathon scope explosion</strong></td>
+<td>Critical</td>
+<td>Team spends weekend implementing five trial classes</td>
+<td>Freeze MVP to binary two-arm RCT</td>
+</tr>
+<tr>
+<td><strong>Product perceived as medical advice</strong></td>
+<td>High</td>
+<td>Overstates tool capability</td>
+<td>Call it exploratory statistical stress testing, not protocol recommendation</td>
+</tr>
+<tr>
+<td><strong>Real trial example breaks on demo day</strong></td>
+<td>High</td>
+<td>External API/network dependency</td>
+<td>Cache selected NCT metadata and always maintain synthetic fallback</td>
+</tr>
+</tbody>
+</table>
+<p>FDA's E9(R1) guidance is particularly relevant to the risks of oversimplifying assumptions: it emphasizes clear formulation of objectives, treatment effects, design, analysis, and interpretation rather than treating a statistical number in isolation. [research citation in original report]</p>
+<h3>What makes this not an AI wrapper</h3>
+<p>You specifically said you don't want:</p>
+<pre><code class="language-text">user provides trial context
+        ↓
+LLM
+        ↓
+&quot;Here are my recommendations&quot;
+</code></pre>
+<p>Baseline Breaker is fundamentally different.</p>
+<p>Its core pipeline is:</p>
+<pre><code class="language-text">Trial parameters
+      ↓
+mathematical model
+      ↓
+sample-size search
+      ↓
+stochastic simulation
+      ↓
+thousands/millions of generated trial outcomes
+      ↓
+hypothesis testing
+      ↓
+parameter sweep
+      ↓
+robustness surface
+</code></pre>
+<p>There could literally be <strong>zero AI in the MVP</strong> and the project would still work.</p>
+<p>That is a strength.</p>
+<p>Later, AI could extract parameters from protocols, but it would only be an input convenience layer around the real computational system:</p>
+<pre><code class="language-text">                ┌──────── Optional AI ────────┐
+Protocol ──────►│ parameter extraction         │
+                └───────────┬─────────────────┘
+                            ▼
+                ┌──────────────────────────────┐
+                │ STATISTICAL SIMULATION CORE │
+                └──────────────────────────────┘
+</code></pre>
+<p>The algorithm is the product.</p>
+<h3>What makes the project competitive at HackRU</h3>
+<p>There are four pieces judges can appreciate even without knowing biostatistics.</p>
+<p><strong>The problem is intuitive.</strong></p>
+<blockquote>
+<p>“What happens if the number your entire trial was designed around is wrong?”</p>
+</blockquote>
+<p><strong>The consequence is visual.</strong></p>
+<p>Move one slider:</p>
+<pre><code class="language-text">80% power → 47% power
+</code></pre>
+<p><strong>The implementation is technically real.</strong></p>
+<p>You're combining:</p>
+<ul>
+<li>numerical algorithms,</li>
+<li>Monte Carlo simulation,</li>
+<li>statistical hypothesis testing,</li>
+<li>parameter sweeps,</li>
+<li>reproducible random generation,</li>
+<li>REST APIs,</li>
+<li>federal clinical-trial data,</li>
+<li>interactive visualization,</li>
+<li>caching,</li>
+<li>testing,</li>
+<li>containerization.</li>
+</ul>
+<p><strong>The product doesn't pretend to replace domain experts.</strong></p>
+<p>That actually makes it more credible.</p>
+<h3>What makes this good on a resume</h3>
+<p>This project can be <strong>very strong on a software-engineering/data-science resume</strong> if you build the statistical engine yourselves and quantify the engineering rather than writing:</p>
+<blockquote>
+<p>“Made an AI-powered clinical trial app.”</p>
+</blockquote>
+<p>That bullet would be generic.</p>
+<p>Much stronger:</p>
+<blockquote>
+<p><strong>Baseline Breaker — Clinical Trial Robustness Simulator</strong><br />
+Built a vectorized Monte Carlo engine in Python/NumPy to stress-test randomized clinical-trial power under uncertainty in baseline event rates, treatment effects, and patient dropout; exposed simulations through FastAPI and visualized multidimensional sensitivity surfaces in Next.js/Plotly.</p>
+</blockquote>
+<p>Another:</p>
+<blockquote>
+<p>Implemented two-proportion power and integer sample-size solvers, validated numerical outputs against statsmodels, and simulated 10K+ randomized trials per parameter scenario with deterministic seed-based reproducibility.</p>
+</blockquote>
+<p>Another:</p>
+<blockquote>
+<p>Integrated ClinicalTrials.gov's REST API, normalized trial metadata into typed Pydantic schemas, and containerized the statistical backend with automated testing and CI.</p>
+</blockquote>
+<p>NLM explicitly provides the current ClinicalTrials.gov API for researchers and developers to access study records, so that data integration is a legitimate external-system component rather than scraped demo data. [research citation in original report]</p>
+<p>For a quantitative/software role, the most impressive part is probably:</p>
+<blockquote>
+<p><strong>“Implemented and validated a vectorized clinical-trial Monte Carlo simulation engine.”</strong></p>
+</blockquote>
+<p>For SWE:</p>
+<blockquote>
+<p><strong>“Designed a typed FastAPI/Next.js simulation platform with deterministic computation, caching, containerization, and external data ingestion.”</strong></p>
+</blockquote>
+<p>For data science:</p>
+<blockquote>
+<p><strong>“Modeled sensitivity of statistical power to uncertain event-rate and attrition assumptions using analytical and Monte Carlo methods.”</strong></p>
+</blockquote>
+<p>Those are substantially stronger than:</p>
+<blockquote>
+<p>“Used GPT to analyze medical trials.”</p>
+</blockquote>
+<h3>Architecture diagram for the finished submission</h3>
+<pre><code class="language-mermaid">flowchart LR
+    A[Next.js / React UI] --&gt;|POST assumptions| B[FastAPI]
+    A --&gt;|NCT ID| B
+
+    B --&gt; C[ClinicalTrials.gov Adapter]
+    C --&gt; D[(Normalized Trial Metadata)]
+
+    B --&gt; E[Statistical Engine]
+
+    E --&gt; F[Power Solver]
+    E --&gt; G[Monte Carlo Simulator]
+    E --&gt; H[Parameter Sweep]
+    E --&gt; I[Fragility Index - Stretch]
+
+    F --&gt; J[Result Aggregator]
+    G --&gt; J
+    H --&gt; J
+    I --&gt; J
+
+    J --&gt; K[(Cache / JSON / Parquet)]
+    J --&gt; B
+
+    B --&gt;|JSON| A
+
+    A --&gt; L[Power Curves]
+    A --&gt; M[Stress Heatmap]
+    A --&gt; N[Assumption Safety Envelope]
+</code></pre>
+<h3>The final pitch</h3>
+<p>I would pitch Baseline Breaker like this:</p>
+<blockquote>
+<p><strong>Clinical trials are designed using assumptions about how often outcomes will occur, how large the treatment effect will be, and how many participants will drop out. If those assumptions are wrong, a trial that looked adequately powered on paper can become far less informative. Baseline Breaker is an interactive statistical stress-testing platform that simulates thousands of alternative trial realities and shows researchers exactly where a proposed design becomes vulnerable.</strong></p>
+</blockquote>
+<p>Then demo:</p>
+<pre><code class="language-text">Assumed baseline: 20%
+        ↓
+Power: 80%
+
+&quot;What if the baseline is actually 10%?&quot;
+
+        ↓ slider
+
+Power: 47%
+        ↓
+Heatmap changes
+        ↓
+Safety envelope changes
+</code></pre>
+<p>Then your closing line:</p>
+<blockquote>
+<p><strong>“Traditional power calculations tell you whether your trial works if your assumptions are right. Baseline Breaker shows you what happens when they're wrong.”</strong></p>
+</blockquote>
+<p>That is the version of this idea I would build for HackRU.</p>
+</div></details></section>
+<div class="footer">BASELINE BREAKER · Technical implementation explorer · Self-contained visualization. The interactive power calculator uses approximate statistical methods for demonstration and is not validated for clinical trial decision-making.</div>
+</main></div>
+<script>
+(function(){
+ 'use strict';
+ const $=id=>document.getElementById(id);
+ const inputs=['pplan','pshock','dshock','dplan','effect','target'];
+ let effectType='rr';let last={};
+ const fmt=(x,d=1)=>Number.isFinite(x)?(100*x).toFixed(d)+'%':'N/A';
+ const normalCDF=x=>{const sign=x>=0?1:-1;const a=Math.abs(x)/Math.SQRT2;const t=1/(1+.3275911*a);const erf=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-a*a);return .5*(1+sign*erf)};
+ const normalSF=x=>1-normalCDF(x);
+ const zCrit=1.959963984540054;
+ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+ function pTreat(p,e,t){if(t==='rr')return p*e;const q=p-e;return q>=0&&q<=1?q:NaN;}
+ function power(nC,nT,pC,pT,alpha=.05){if(!Number.isFinite(pT)||pC<=0||pC>=1||pT<0||pT>1||nC<=0||nT<=0)return NaN;const pool=(pC+pT)/2;const se0=Math.sqrt(pool*(1-pool)*(1/nC+1/nT));const se1=Math.sqrt(pC*(1-pC)/nC+pT*(1-pT)/nT);if(se1===0||se0===0)return NaN;const diff=Math.abs(pC-pT);const cz=alpha===.05?zCrit:2.575829;return clamp(normalSF((cz*se0-diff)/se1)+normalCDF((-cz*se0-diff)/se1),0,1)}
+ function solveN(pC,pT,target){if(!Number.isFinite(pT)||Math.abs(pC-pT)<.000000001)return NaN;let lo=2,hi=4;while(power(hi,hi,pC,pT)<target&&hi<1000000)hi*=2;if(hi>=1000000)return NaN;while(lo<hi){const mid=Math.floor((lo+hi)/2);if(power(mid,mid,pC,pT)>=target)hi=mid;else lo=mid+1;}return lo;}
+ const xfmt=v=>Number(v).toLocaleString('en-US');
+ const c=(name,text,attrs='')=>`<text ${attrs}>${text}</text>`;
+ function curveMarkup(W,H,margin,series,marks){const {l,r,t,b}=margin,iw=W-l-r,ih=H-t-b;const px=x=>l+(x-.04)/(.40-.04)*iw,py=y=>t+(1-y)*ih;let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;for(let y=0;y<=1.001;y+=.2){const yy=py(y);s+=`<line x1="${l}" y1="${yy}" x2="${W-r}" y2="${yy}" stroke="#3a4b61" stroke-opacity=".5" stroke-dasharray="3 5"/>`;s+=c('',Math.round(y*100)+'%',`x="${l-8}" y="${yy+4}" fill="#7894af" font-size="10" text-anchor="end"`)}for(let x=.05;x<.401;x+=.05){const xx=px(x);s+=c('',Math.round(x*100)+'%',`x="${xx}" y="${H-9}" fill="#7894af" font-size="10" text-anchor="middle"`)}const ytar=py(last.target);s+=`<line x1="${l}" y1="${ytar}" x2="${W-r}" y2="${ytar}" stroke="#e9bd84" stroke-width="1.5" stroke-dasharray="6 5"/>`;for(const item of series){let path='',start=true;for(const a of item.data){if(Number.isFinite(a.y)){path+=(start?'M':'L')+px(a.x).toFixed(2)+','+py(a.y).toFixed(2)+' ';start=false;}else{start=true}}s+=`<path d="${path}" fill="none" stroke="${item.color}" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/>`;}for(const m of marks){if(!Number.isFinite(m.y))continue;s+=`<circle cx="${px(m.x)}" cy="${py(m.y)}" r="6.5" fill="${m.color}" stroke="#091525" stroke-width="3"/>`;s+=c('',m.label,`x="${px(m.x)+10}" y="${py(m.y)-12}" fill="${m.color}" font-size="10" font-weight="700"`)}return s+'</svg>'}
+ function update(){const p=+$('pplan').value/100,sp=+$('pshock').value/100,dp=+$('dplan').value/100,ds=+$('dshock').value/100,target=+$('target').value/100,eff=+$('effect').value,pt=pTreat(p,eff,effectType),st=pTreat(sp,eff,effectType);const n=solveN(p,pt,target);const enrol=Number.isFinite(n)?Math.ceil(n/(1-dp)):NaN;const ep=Number.isFinite(n)?power(enrol*(1-dp),enrol*(1-dp),p,pt):NaN;const actual=Number.isFinite(n)?power(enrol*(1-ds),enrol*(1-ds),sp,st):NaN; last={p,sp,dp,ds,target,eff,pt,st,n,enrol,planned:ep,actual};
+ $('pplanVal').textContent=fmt(p,0);$('pshockVal').textContent=fmt(sp,0);$('dplanVal').textContent=fmt(dp,0);$('dshockVal').textContent=fmt(ds,0);$('targetVal').textContent=fmt(target,0);$('effectVal').textContent=effectType==='rr'?eff.toFixed(2):fmt(eff,1);$('nominalPower').textContent=fmt(ep);$('stressPower').textContent=fmt(actual);$('powerGap').textContent=Number.isFinite(actual)&&Number.isFinite(ep)?((actual-ep)*100>=0?'+':'−')+Math.abs((actual-ep)*100).toFixed(1)+'pp':'N/A';$('stressPower').className=(actual>=target?'green':'red');$('powerGap').className=(actual>=ep?'green':'red');$('evalN').textContent=Number.isFinite(n)?xfmt(n):'N/A';$('totalN').textContent=Number.isFinite(enrol)?xfmt(enrol*2):'N/A';$('currentEvents').textContent=fmt(sp,0)+' / '+fmt(st);$('labInterpret').textContent=!Number.isFinite(actual)?'This absolute-effect scenario is impossible for the selected baseline. Select a larger control risk or smaller absolute reduction.':actual<target?`In this scenario, the same planned enrollment no longer meets the ${(target*100).toFixed(0)}% conditional-power target. This is not a prediction that a real trial will fail.`:`This scenario meets the conditional-power target under the stated assumptions; it still does not validate the assumed treatment effect.`;
+ const series=[];const ss=[],planLine=[];for(let i=0;i<=144;i++){const x=.04+i*.0025;ss.push({x,y:Number.isFinite(enrol)?power(enrol*(1-ds),enrol*(1-ds),x,pTreat(x,eff,effectType)):NaN});planLine.push({x,y:Number.isFinite(enrol)?power(enrol*(1-dp),enrol*(1-dp),x,pTreat(x,eff,effectType)):NaN})}series.push({data:planLine,color:'#b5a1ff'},{data:ss,color:'#71e7d6'});$('powerChart').innerHTML=curveMarkup(650,258,{l:44,r:20,t:20,b:31},series,[{x:p,y:ep,color:'#b5a1ff',label:'Original plan'},{x:sp,y:actual,color:'#ffbe94',label:'Stress'}]);
+ const heat=$('heatmap');heat.replaceChildren();for(let j=12;j>=0;j--){const d=j*.025;for(let i=0;i<19;i++){const pc=.05+i*(.35/18);const ppt=pTreat(pc,eff,effectType);const v=power(enrol*(1-d),enrol*(1-d),pc,ppt);const el=document.createElement('div');el.className='heatcell';if(Number.isFinite(v)){const hue=clamp((v-.2)/.8,0,1)*115+2;const light=clamp(37+v*19,40,62);el.style.background=`hsl(${hue}, 50%, ${light}%)`;el.title=`Baseline ${fmt(pc,1)} · dropout ${fmt(d,1)} · power ${fmt(v,1)}`;el.setAttribute('aria-label',el.title);const fn=()=>{$('hmHover').textContent=el.title};el.addEventListener('mouseover',fn);el.addEventListener('click',fn)}else{el.style.background='#192539';el.title='Effect specification invalid here';el.addEventListener('mouseover',()=>{$('hmHover').textContent='Invalid event-rate combination for absolute-effect model.'})}heat.appendChild(el)}}
+ renderEnrollment();$('simResult').textContent='—';$('simSE').textContent='—';$('simAnalytic').textContent=fmt(actual);$('simMeter').style.width='0';$('simNote').textContent='Preview-only: Bernoulli outcomes + independent dropout, pooled z-test, seed 42. Re-run after changing inputs.';
+ }
+ function renderEnrollment(){const {p,sp,ds,dp,eff,enrol,target}=last;const pt=pTreat(p,eff,effectType),st=pTreat(sp,eff,effectType);const W=530,H=252,l=43,r=17,t=18,b=32,iw=W-l-r,ih=H-t-b;const x=v=>l+(v-0.5)/2.5*iw,y=v=>t+(1-v)*ih;let s=`<svg viewBox="0 0 ${W} ${H}">`;for(let v=0;v<=1.01;v+=.2){s+=`<line x1="${l}" y1="${y(v)}" x2="${W-r}" y2="${y(v)}" stroke="#3b4d63" stroke-dasharray="3 5" opacity=".6"/>`+c('',Math.round(v*100)+'%',`x="${l-8}" y="${y(v)+4}" fill="#859bb6" text-anchor="end" font-size="10"`)}for(let v=.5;v<=3;v+=.5){s+=c('',v.toFixed(1)+'×',`x="${x(v)}" y="${H-9}" fill="#8da5bd" text-anchor="middle" font-size="10"`)}s+=`<line x1="${l}" y1="${y(target)}" x2="${W-r}" y2="${y(target)}" stroke="#ffc480" stroke-dasharray="6 5"/>`;for(const [pc,tt,col] of [[p,pt,'#71e7d6'],[sp,st,'#b5a1ff']]){let d='';let starter=true;for(let m=.5;m<3.01;m+=.025){const n=enrol*m*(1-(pc===p?dp:ds)),pp=power(n,n,pc,tt);if(!Number.isFinite(pp)){starter=true;continue}d+=(starter?'M':'L')+x(m).toFixed(1)+','+y(pp).toFixed(1)+' ';starter=false}s+=`<path d="${d}" fill="none" stroke="${col}" stroke-width="3"/>`}s+=`<line x1="${x(1)}" y1="${t}" x2="${x(1)}" y2="${H-b}" stroke="#9da9b7" stroke-dasharray="2 4"/>`+c('','CURRENT',`x="${x(1)+4}" y="${t+10}" fill="#a8b9d0" font-size="9"`);$('enrollChart').innerHTML=s+'</svg>';}
+ function setEffectType(t){if(effectType===t)return;effectType=t;$('rrBtn').classList.toggle('selected',t==='rr');$('ardBtn').classList.toggle('selected',t==='ard');$('effectLabel').textContent=t==='rr'?'Relative risk (RR)':'Absolute risk reduction';const e=$('effect');if(t==='rr'){e.min=.50;e.max=.95;e.step=.01;e.value=.75}else{e.min=.01;e.max=.10;e.step=.005;e.value=.05}update()}
+ $('rrBtn').addEventListener('click',()=>setEffectType('rr'));$('ardBtn').addEventListener('click',()=>setEffectType('ard'));
+ inputs.forEach(id=>$(id).addEventListener('input',update));
+ document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{setEffectType('rr');$('pplan').value=20;$('effect').value=.75;$('dplan').value=10;$('target').value=80;if(b.dataset.preset==='collapse'){$('pshock').value=10;$('dshock').value=10}else if(b.dataset.preset==='stable'){$('pshock').value=20;$('dshock').value=8}else{$('pshock').value=20;$('dshock').value=30}update();}));
+ function rngFactory(seed){let a=seed>>>0;return()=>{a+=0x6D2B79F5;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296}}
+ $('simulateBtn').addEventListener('click',()=>{const {enrol,sp,st,ds,actual}=last;if(!Number.isFinite(st)||!Number.isFinite(enrol))return;const button=$('simulateBtn');button.disabled=true;button.textContent='Simulating…';const reps=2000,rand=rngFactory(42),N=Math.floor(enrol);setTimeout(()=>{let significant=0;for(let k=0;k<reps;k++){let xC=0,xT=0,nC=0,nT=0;for(let i=0;i<N;i++){if(rand()>=ds){nC++;if(rand()<sp)xC++}if(rand()>=ds){nT++;if(rand()<st)xT++}}if(nC<2||nT<2)continue;const pooled=(xC+xT)/(nC+nT),se=Math.sqrt(pooled*(1-pooled)*(1/nC+1/nT));if(se>0&&Math.abs(xC/nC-xT/nT)/se>=zCrit)significant++;}const r=significant/reps,se=Math.sqrt(r*(1-r)/reps);$('simResult').textContent=fmt(r,1);$('simSE').textContent='± '+(se*100).toFixed(2)+'pp';$('simAnalytic').textContent=fmt(actual,1);$('simMeter').style.width=fmt(r,1);$('simNote').textContent=`${xfmt(significant)} / ${xfmt(reps)} simulated trials reached the two-sided 5% z-test criterion. Seed 42. The Monte Carlo error quantifies simulation noise only, not scientific model uncertainty.`;button.disabled=false;button.textContent='Run 2,000 trials ↗';},20)});
+ const checks=['Sample-size formula validated against reference','POST /api/v1/power works','Inputs and outputs share a frozen schema','Monte Carlo simulation seeded and reproducible','One complete synthetic demo','Power curve tracks the controls','Baseline × dropout stress heatmap','Pooled z-test and rare-event guardrails','ClinicalTrials.gov adapter or verified cached fixture','Docker/backend deploy smoke test','Integration/end-to-end demo rehearsal','Scientific limitations visible in the UI'];
+ let saved={};try{saved=JSON.parse(localStorage.getItem('baseline-breaker-checks')||'{}')}catch(_){saved={}}
+ checks.forEach((name,i)=>{const label=document.createElement('label');label.className='checkrow'+(saved[i]?' done':'');const cb=document.createElement('input');cb.type='checkbox';cb.checked=!!saved[i];cb.addEventListener('change',()=>{saved[i]=cb.checked;label.classList.toggle('done',cb.checked);try{localStorage.setItem('baseline-breaker-checks',JSON.stringify(saved))}catch(_){}countChecks()});const span=document.createElement('span');span.textContent=name;label.append(cb,span);$('checklist').appendChild(label)});function countChecks(){const x=Object.values(saved).filter(Boolean).length;$('checkProgress').textContent=x+' / '+checks.length;$('checkMeter').style.width=(100*x/checks.length)+'%'}countChecks();
+ const risks=[['critical','Disease prevalence substituted for control-arm event rate','Scientific','Never auto-populate trial event risk from general population prevalence. Require protocol-relevant endpoint/risk.'],['critical','Hackathon scope explosion','Execution','Freeze two-arm binary superiority endpoint and manual-input fallback.'],['high','Original trial assumptions absent from public registry','Data','Curate protocol/SAP example and label all sources; never infer planning baseline from observed results.'],['high','Analytic and simulation methods disagree','Statistics','Validate test conventions and expected deviations versus statsmodels; show MC uncertainty.'],['high','Sparse events invalidate z approximation','Statistics','Warn for low expected counts; defer rare events or implement exact test branch.'],['high','RR and absolute reduction silently conflated','Statistics','Require explicit effect assumption toggle and reject impossible resulting rates.'],['high','Demo breaks when live registry is unavailable','Engineering','Bundle synthetic scenarios and a source-verified cached example.'],['high','Product misconstrued as regulatory or treatment recommendation','Safety','Prominently label exploratory model; no claims to replace statisticians.'],['medium','Dropout depends on unobserved outcomes','Statistics','Disclose independent-dropout MVP; optional informative-missingness stress modeling later.'],['medium','Monte Carlo noise mistaken for model uncertainty','Statistics','Seed RNG, state replicate count and MC standard error.'],['medium','CPU-heavy simulation stalls API','Engineering','Vectorize with NumPy, cap workload, use a process worker if measurements justify one.'],['medium','Heatmap expensive or sluggish','Engineering','Use analytic coarse grid interactively; cache or batch high-resolution simulations.'],['medium','Fragility index overclaimed','Science','Keep as optional binary endpoint result sensitivity; not a global trust score.'],['medium','Data handling and privacy','Security','Use public metadata and synthetic data only; do not ingest identifiable patient data.']];
+ let riskSeverity='all';function renderRisks(){const list=$('risklist');list.replaceChildren();risks.filter(r=>riskSeverity==='all'||r[0]===riskSeverity).forEach(([s,title,kind,fix])=>{const el=document.createElement('div');el.className='risk';el.innerHTML=`<div class="severity ${s}">${s.toUpperCase()}</div><div><strong></strong><br><span></span></div><div class="resolution"></div>`;el.querySelector('strong').textContent=title;el.querySelector('span').textContent=kind;el.querySelector('.resolution').textContent=fix;list.appendChild(el)})}document.querySelectorAll('[data-severity]').forEach(b=>b.addEventListener('click',()=>{riskSeverity=b.dataset.severity;document.querySelectorAll('[data-severity]').forEach(x=>x.classList.toggle('on',x===b));renderRisks()}));renderRisks();
+ const navs=[...document.querySelectorAll('.rail .nav')];window.addEventListener('scroll',()=>{let current='overview';for(const s of document.querySelectorAll('main section[id]')){if(s.getBoundingClientRect().top<220)current=s.id}navs.forEach(n=>n.classList.toggle('active',n.getAttribute('href')==='#'+current))},{passive:true});
+ update();
+})();
+</script></body></html>
