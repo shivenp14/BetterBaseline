@@ -278,6 +278,18 @@ def test_openapi_documents_error_envelope_for_422() -> None:
     assert "ValidationError" not in schemas
 
 
+def test_openapi_documents_payload_and_saturation_errors_for_compute_routes() -> None:
+    schema = app.openapi()
+    for endpoint in ["/api/v1/design/calculate", "/api/v1/scenarios/evaluate"]:
+        responses = schema["paths"][endpoint]["post"]["responses"]
+        for status_code in ("413", "429"):
+            response = responses[status_code]
+            assert response["content"]["application/json"]["schema"]["$ref"] == (
+                "#/components/schemas/ErrorEnvelope"
+            )
+        assert responses["429"]["headers"]["Retry-After"]["schema"]["type"] == "integer"
+
+
 def test_design_calculate_routes_through_compute_helper(client: TestClient) -> None:
     """POST /api/v1/design/calculate routes computation through execute_guarded_computation."""
     from unittest.mock import patch

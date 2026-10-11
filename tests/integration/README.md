@@ -106,3 +106,11 @@ DEPLOYMENT.md for the tested image and CORS evidence. Current local HTTP evidenc
 pass on Python 3.12.14 with the same locked numerical library versions; 14
 invariant regressions and 305 backend/fixture tests (201 subtests) pass. Provenance normalization and real browser
 export/offline acceptance remain pending.
+
+
+After merged #72/#68, the current-main locked environment passes 320
+backend/fixture tests (201 subtests), all 14 invariant regressions, and the
+calculate/evaluate/grid HTTP checker against the rebuilt backend container.
+Full provenance/UI-export acceptance still awaits #67/#76. See DEPLOYMENT.md
+for the separate built-container browser smoke; it does not establish exports
+or complete offline acceptance.
