@@ -1,5 +1,6 @@
 """Issue #67 provenance normalization and frozen API v1 export checks."""
 
+import hashlib
 import json
 import pytest
 from fastapi.testclient import TestClient
@@ -113,10 +114,29 @@ def test_export_roundtrip_contains_assumptions_results_methods_warnings_and_prov
             "source": "manual_user",
             "description": "Verified by user",
             "source_url": "https://example.org/protocol.pdf",
+            "source_location": "Page 14, Table 2",
+            "verified_by_user": True,
+        }, "/planned_design/target_power": {
+            "origin": "synthetic_preset",
+            "description": "Synthetic demo target power",
+            "source_location": "Demo manifest",
+            "verified_by_user": False,
+        }, "/registry/observed_endpoint": {
+            "source": "clinicaltrials_registry",
+            "description": "Observed registry endpoint result",
+            "source_url": "https://clinicaltrials.gov/study/NCT12345678",
+            "source_location": "Results section",
+            "verified_by_user": False,
+            "is_observed_registry_result": True,
         }},
     }
     design_response = client.post("/api/v1/design/calculate", json=design_request)
     assert design_response.status_code == 200, design_response.text
+    assert design_response.json()["provenance"]["/planned_design/control_event_rate"]["source"] == "manual_user"
+    assert design_response.json()["provenance"]["/planned_design/control_event_rate"]["source_location"] == "Page 14, Table 2"
+    assert design_response.json()["provenance"]["/planned_design/control_event_rate"]["verified_by_user"] is True
+    assert design_response.json()["provenance"]["/planned_design/target_power"]["source"] == "synthetic_preset"
+    assert design_response.json()["provenance"]["/registry/observed_endpoint"]["is_observed_registry_result"] is True
 
     evaluate_request = {
         "planned_design": {k: v for k, v in design_request.items() if k != "provenance"},
@@ -131,6 +151,11 @@ def test_export_roundtrip_contains_assumptions_results_methods_warnings_and_prov
     eval_response = client.post("/api/v1/scenarios/evaluate", json=evaluate_request)
     assert eval_response.status_code == 200, eval_response.text
     assert eval_response.json()["provenance"]["/planned_design/control_event_rate"]["source"] == "manual_user"
+    assert eval_response.json()["provenance"]["/planned_design/control_event_rate"]["source_location"] == "Page 14, Table 2"
+    assert eval_response.json()["provenance"]["/planned_design/control_event_rate"]["source_url"] == "https://example.org/protocol.pdf"
+    assert eval_response.json()["provenance"]["/planned_design/control_event_rate"]["verified_by_user"] is True
+    assert eval_response.json()["provenance"]["/planned_design/target_power"]["source"] == "synthetic_preset"
+    assert eval_response.json()["provenance"]["/planned_design/target_power"]["source_location"] == "Demo manifest"
 
     grid_request = {
         "planned_design": evaluate_request["planned_design"],
@@ -142,6 +167,11 @@ def test_export_roundtrip_contains_assumptions_results_methods_warnings_and_prov
     grid_response = client.post("/api/v1/scenarios/grid", json=grid_request)
     assert grid_response.status_code == 200, grid_response.text
     assert grid_response.json()["provenance"]["/planned_design/control_event_rate"]["source"] == "manual_user"
+    assert grid_response.json()["provenance"]["/planned_design/control_event_rate"]["source_url"] == "https://example.org/protocol.pdf"
+    assert grid_response.json()["provenance"]["/planned_design/control_event_rate"]["source_location"] == "Page 14, Table 2"
+    assert grid_response.json()["provenance"]["/planned_design/control_event_rate"]["verified_by_user"] is True
+    assert grid_response.json()["provenance"]["/planned_design/target_power"]["source"] == "synthetic_preset"
+    assert grid_response.json()["provenance"]["/planned_design/target_power"]["source_location"] == "Demo manifest"
 
     payload = build_export_payload(
         planned_design=TrialAssumptions.model_validate(evaluate_request["planned_design"]),
@@ -170,9 +200,88 @@ def test_export_roundtrip_contains_assumptions_results_methods_warnings_and_prov
     assert restored.grid_result.warnings
     assert restored.provenance["/planned_design/control_event_rate"].source == "manual_user"
     assert restored.provenance["/planned_design/control_event_rate"].source_url == "https://example.org/protocol.pdf"
+    assert restored.provenance["/planned_design/control_event_rate"].source_location == "Page 14, Table 2"
+    assert restored.provenance["/planned_design/control_event_rate"].verified_by_user is True
+    assert restored.provenance["/planned_design/target_power"].source == "synthetic_preset"
+    assert restored.provenance["/planned_design/target_power"].source_location == "Demo manifest"
+    assert restored.provenance["/registry/observed_endpoint"].is_observed_registry_result is True
     assert restored.design_result.inputs_hash
     assert restored.evaluation_result.metadata.inputs_hash
     assert restored.grid_result.inputs_hash
+    assert restored.inputs_hash and restored.inputs_hash.startswith("sha256:")
+    assert restored.evaluation_result.monte_carlo.mean_retained_control is not None
+    assert restored.evaluation_result.monte_carlo.rng
+    assert restored.evaluation_result.metadata.software_versions
+    assert restored.evaluation_result.metadata.fixed_enrollment == ArmCounts(control=951, treatment=951)
+
+
+def test_export_constructor_guarantees_hash_even_without_results():
+    planned = TrialAssumptions(
+        control_event_rate=.20,
+        effect=RelativeRiskEffect(value=.75),
+    )
+    enrollment = ArmCounts(control=903, treatment=903)
+    legacy_payload = ExportPayload(
+        planned_design=planned,
+        fixed_enrollment=enrollment,
+        exported_at="2026-10-11T12:00:00+00:00",
+    )
+    assert legacy_payload.inputs_hash.startswith("sha256:")
+    restored = ExportPayload.model_validate(json.loads(legacy_payload.model_dump_json()))
+    assert restored.inputs_hash == legacy_payload.inputs_hash
+
+    tagged = ExportPayload(
+        planned_design=planned,
+        fixed_enrollment=enrollment,
+        provenance={"/a": {"source": "manual_user"}, "/b": {"origin": "synthetic_preset"}},
+        exported_at="2026-10-11T12:00:00+00:00",
+    )
+    reordered = ExportPayload(
+        planned_design=planned,
+        fixed_enrollment=enrollment,
+        provenance={"/b": {"source": "synthetic_preset"}, "/a": {"source": "manual_user"}},
+        exported_at="2026-10-11T12:00:00+00:00",
+    )
+    assert tagged.inputs_hash == reordered.inputs_hash
+    changed = ExportPayload(
+        planned_design=planned,
+        fixed_enrollment=enrollment,
+        provenance={"/a": {"source": "manual_user", "verified_by_user": True}},
+        exported_at="2026-10-11T12:00:00+00:00",
+    )
+    assert changed.inputs_hash != legacy_payload.inputs_hash
+
+    altered = legacy_payload.model_dump(mode="json")
+    altered["planned_design"]["target_power"] = .90
+    with pytest.raises(ValidationError, match="does not match canonical"):
+        ExportPayload.model_validate(altered)
+
+
+def test_calculate_route_defaults_provenance_and_rejects_registry_relabel():
+    client = TestClient(app)
+    request = {
+        "control_event_rate": .20,
+        "effect": {"kind": "relative_risk", "value": .75},
+        "alpha": .05,
+        "target_power": .80,
+    }
+    response = client.post("/api/v1/design/calculate", json=request)
+    assert response.status_code == 200, response.text
+    assert response.json()["provenance"] == {}
+    legacy_hash = hashlib.sha256(
+        TrialAssumptions.model_validate(request).model_dump_json(exclude_none=True).encode("utf-8")
+    ).hexdigest()[:16]
+    assert response.json()["inputs_hash"] == legacy_hash
+
+    request["provenance"] = {"/planned_design/control_event_rate": {
+        "source": "protocol_curated",
+        "description": "Observed endpoint results",
+        "source_url": "https://clinicaltrials.gov/study/NCT12345678",
+        "is_observed_registry_result": True,
+    }}
+    rejected = client.post("/api/v1/design/calculate", json=request)
+    assert rejected.status_code == 422
+    assert "protocol_curated" in rejected.text
 
 
 def test_input_hash_is_canonical_for_dict_and_model():

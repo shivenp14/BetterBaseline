@@ -324,7 +324,9 @@ class ScenarioEvaluationAPITests(unittest.TestCase):
             "source_url": None, "retrieved_at": None,
         }}
         result = self.evaluate(payload)
-        self.assertEqual(result["provenance"], payload["provenance"])
+        provenance = result["provenance"]["planned_design.control_event_rate"]
+        self.assertEqual(provenance["source"], "synthetic_preset")
+        self.assertEqual(provenance["description"], "Synthetic checker assumption")
 
     def test_metadata_records_versions_and_rng(self):
         result = self.evaluate(request_payload())

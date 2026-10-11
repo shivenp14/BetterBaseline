@@ -16,6 +16,7 @@ from pydantic import BaseModel
 
 from ..schemas import (
     ArmCounts,
+    compute_export_inputs_hash,
     DesignCalculateResponse,
     ExportPayload,
     FieldProvenance,
@@ -27,17 +28,7 @@ from ..schemas import (
 
 
 class FieldProvenanceRecord(FieldProvenance):
-    """Normalized record accepting the richer D1 manifest metadata.
-
-    The frozen API v1 ``FieldProvenance`` contract includes source, description,
-    retrieval time, and source URL. The additional fields are retained while
-    loading presets and normalizing route inputs; they require a schema handoff
-    before they can be added to serialized API/export models.
-    """
-
-    source_location: Optional[str] = None
-    verified_by_user: Optional[bool] = None
-    is_observed_registry_result: Optional[bool] = None
+    """Normalized field record, including the optional audit metadata in v1."""
 
 
 ProvenanceInput = Optional[Union[Dict[str, Any], List[Dict[str, Any]]]]
@@ -144,7 +135,11 @@ def build_export_payload(
     software_versions: Optional[Dict[str, str]] = None,
     exported_at: Optional[str] = None,
 ) -> ExportPayload:
-    """Construct the frozen v1 export envelope with normalized provenance."""
+    """Construct an export envelope retaining complete typed route results."""
+    normalized_provenance = normalize_provenance(provenance)
+    inputs_hash = compute_export_inputs_hash(
+        planned_design, fixed_enrollment, stress_scenario, normalized_provenance
+    )
     return ExportPayload(
         export_schema_version=1,
         model_version=planned_design.model_version,
@@ -155,6 +150,7 @@ def build_export_payload(
         evaluation_result=evaluation_result,
         grid_result=grid_result,
         software_versions=software_versions or get_current_software_versions(),
-        provenance=normalize_provenance(provenance),
+        provenance=normalized_provenance,
         exported_at=exported_at or datetime.now(timezone.utc).isoformat(),
+        inputs_hash=inputs_hash,
     )
