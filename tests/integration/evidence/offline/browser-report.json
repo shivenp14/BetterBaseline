@@ -1,0 +1,53 @@
+{
+  "captured_at": "2026-10-11T13:00:43.221Z",
+  "browser": "154.0.8037.57",
+  "page_url": "http://localhost:3181",
+  "api_url": "http://127.0.0.1:8181",
+  "engine_commit": "0f8d80928697686e8a37b81c8c0983f6e0cf5b06",
+  "captures": [
+    {
+      "name": "preset",
+      "enrollment": {
+        "control": 903,
+        "treatment": 903
+      },
+      "inputs_hash": "sha256:dcbe1fad286070d2c593e9774494fa1aa4ec46ab21c76b7bc1d84470fe951582",
+      "seed": 42,
+      "replicates": 10000
+    },
+    {
+      "name": "fresh-manual",
+      "enrollment": {
+        "control": 903,
+        "treatment": 903
+      },
+      "inputs_hash": "sha256:e73e982b8e82f2b37d0b3baee927d0729b57a994c276a59d79e23dff81734ec8",
+      "seed": 43,
+      "replicates": 1000
+    },
+    {
+      "name": "same-seed-repeat",
+      "enrollment": {
+        "control": 903,
+        "treatment": 903
+      },
+      "inputs_hash": "sha256:e73e982b8e82f2b37d0b3baee927d0729b57a994c276a59d79e23dff81734ec8",
+      "seed": 43,
+      "replicates": 1000
+    }
+  ],
+  "post_requests": 8,
+  "statuses": [
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200
+  ],
+  "external_attempts": [],
+  "page_errors": [],
+  "isolation": "Browser HTTP/WebSocket allowlist; backend egress isolation is supplied and recorded by the runner."
+}
