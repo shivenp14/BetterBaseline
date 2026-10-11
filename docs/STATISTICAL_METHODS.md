@@ -33,6 +33,13 @@ and a shared dropout fraction and returns `floor(enrolled_n * (1-dropout))`.
 This deterministic expected-count approximation can be zero; it is separate
 from actual retained counts drawn by later Monte Carlo simulation.
 
+For retention flooring, interpret the validated dropout float using its shortest
+round-trip decimal string, then use exact rational integer arithmetic. This
+preserves `1000` enrolled at dropout `0.8` as `200` expected retained, avoiding
+binary subtraction rounding to `199.99999999999994`. Genuinely fractional counts
+still floor down, including values immediately below an integer; no epsilon or
+nearest-integer tolerance is applied.
+
 `StatisticalInputError` extends `ValueError`, with a readable message, stable
 `code`, and `field`. Invalid values use `INVALID_MODEL_INPUT`. API adapters may
 map these to structured 422 responses without depending on exception text.

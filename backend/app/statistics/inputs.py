@@ -1,7 +1,7 @@
 """Immutable, validated core inputs; HTTP schemas are owned by the API layer."""
 
 from dataclasses import dataclass
-import math
+from decimal import Decimal
 from typing import Literal
 
 from .errors import StatisticalInputError
@@ -14,10 +14,13 @@ def expected_retained_count(enrolled_n: int, dropout: float) -> int:
     """Floor expected retention for one arm; this is not a random draw.
 
     P0 callers use the same enrollment and shared dropout for both arms.
+    Interpret dropout via its shortest round-trip decimal representation and
+    floor with integer arithmetic, avoiding binary rounding at integer counts.
     """
     enrollment = FixedEnrollment(enrolled_n, enrolled_n)
     retention = Dropout(dropout, dropout)
-    return math.floor(enrollment.control * (1 - retention.control))
+    numerator, denominator = Decimal(str(retention.control)).as_integer_ratio()
+    return enrollment.control * (denominator - numerator) // denominator
 
 
 @dataclass(frozen=True)

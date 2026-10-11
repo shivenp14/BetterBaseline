@@ -1,6 +1,7 @@
 """Task #56 numerical and domain-boundary acceptance checks."""
 
 from dataclasses import FrozenInstanceError
+import math
 
 import pytest
 
@@ -11,6 +12,22 @@ from app.statistics import expected_retained_count
 @pytest.mark.parametrize("enrolled,dropout,expected", [(903, 0, 903), (1004, .1, 903), (3, .5, 1), (1, .9, 0)])
 def test_expected_retention_is_floored(enrolled, dropout, expected):
     assert expected_retained_count(enrolled, dropout) == expected
+
+
+@pytest.mark.parametrize("enrolled,dropout,expected", [(1000, .8, 200), (100, .7, 30), (1000, .9, 100)])
+def test_expected_retention_exact_decimal_integer_boundaries(enrolled, dropout, expected):
+    assert expected_retained_count(enrolled, dropout) == expected
+
+
+def test_expected_retention_preserves_fractional_counts_near_boundary():
+    assert expected_retained_count(1000, math.nextafter(.8, 1)) == 199
+    assert expected_retained_count(1000, math.nextafter(.8, 0)) == 200
+    assert expected_retained_count(1000, .8001) == 199
+    assert expected_retained_count(1000, .7999) == 200
+
+
+def test_expected_retention_uses_exact_arithmetic_for_large_counts():
+    assert expected_retained_count(10**30, .8) == 2 * 10**29
 
 
 @pytest.mark.parametrize("enrolled,dropout", [(0, .1), (True, .1), (3.0, .1), (3, 1), (3, "10"), (3, float("nan"))])
