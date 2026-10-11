@@ -86,9 +86,9 @@ export function PowerCurve({ current, result, status, error, onSelectBaseline }:
   const id = useId();
   const problem = curveProblem(current, result);
   if (status !== "ready" || problem || !result) {
-    return <section aria-labelledby={`${id}-heading`} aria-busy={status === "loading"}>
+    return <section className={"analytics-panel"} aria-labelledby={`${id}-heading`} aria-busy={status === "loading"}>
       <h2 id={`${id}-heading`}>Analytic conditional power by baseline risk</h2>
-      <p role={status === "error" ? "alert" : "status"}>
+      <p className={status === "error" ? "analytics-error" : problem?.startsWith("Stale") ? "analytics-warning" : undefined} role={status === "error" ? "alert" : "status"}>
         {status === "loading" ? "Loading analytic curve for current inputs."
           : status === "error" ? (error || "Analytic curve could not be loaded.")
             : status === "idle" ? "Calculate a design and request its analytic curve." : problem}
@@ -105,7 +105,7 @@ export function PowerCurve({ current, result, status, error, onSelectBaseline }:
   const x = (baseline: number) => left + (baseline - min) / (max - min) * (right - left);
   const y = (power: number) => bottom - power * (bottom - top);
 
-  return <section aria-labelledby={`${id}-heading`}>
+  return <section className={"analytics-panel"} aria-labelledby={`${id}-heading`}>
     <h2 id={`${id}-heading`}>Analytic conditional power by baseline risk</h2>
     <p role="status">Current analytic curve. {result.illustrative ? "Illustrative synthetic fixture; not a measured result." : "Calculated from the supplied API response."}</p>
     <p>Method: {result.method}. Effect: {result.effectKind === "relative_risk" ? "RR" : "ARR"}.
@@ -145,17 +145,19 @@ export function PowerCurve({ current, result, status, error, onSelectBaseline }:
         Triangle: {plannedLabel}. Circle: selected baseline.
         Null/invalid scenarios have no point marker or connecting segment.</figcaption>
     </figure>
+    <div className={"analytics-tableScroll"} role="region" aria-label="Analytic curve numerical alternative" tabIndex={0}>
     <table>
       <caption>Analytic curve at symmetric dropout {percent(current.dropout)}; target {percent(current.targetPower)}</caption>
       <thead><tr><th scope="col">Control baseline risk</th><th scope="col">Approximate conditional power</th>
         {onSelectBaseline ? <th scope="col">Select baseline</th> : null}</tr></thead>
       <tbody>{result.powerCurve.map((point) => <tr key={point.baseline}>
         <th scope="row">{percent(point.baseline)} ({point.baseline} fraction)</th>
-        <td>{point.power === null ? "Invalid scenario (null)" : percent(point.power)}</td>
+        <td className={point.power === null ? "analytics-error" : undefined}>{point.power === null ? "Invalid scenario (null)" : percent(point.power)}</td>
         {onSelectBaseline ? <td><button type="button" disabled={point.power === null}
           onClick={() => onSelectBaseline(point.baseline)}>Select baseline {percent(point.baseline)}</button></td> : null}
       </tr>)}</tbody>
     </table>
+    </div>
     <p>Inputs hash: {result.inputsHash}</p>
   </section>;
 }

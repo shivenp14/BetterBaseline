@@ -1,0 +1,74 @@
+[
+  {
+    "width": 1440,
+    "preset": "baseline-collapse-v1",
+    "enrollment": {
+      "control": 903,
+      "treatment": 903
+    },
+    "hash": "sha256:4b306d2196d039371f7f5613fd0fc8efbf8d58ed0c8a83f0c929abd1a7423f0d",
+    "identity": "full design/evaluate/grid equality",
+    "keyboard": "heatmap Enter",
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "preset": "attrition-shock-v1",
+    "enrollment": {
+      "control": 951,
+      "treatment": 951
+    },
+    "hash": "sha256:55a4e738c59cd341787b23d7c530caba1e53b1cd14f230dec673d7a164f963ce",
+    "identity": "full design/evaluate/grid equality",
+    "keyboard": "heatmap Enter",
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "preset": "stable-design-v1",
+    "enrollment": {
+      "control": 951,
+      "treatment": 951
+    },
+    "hash": "sha256:2397089c4fd9d55917c3972fc74e9458e1757f4f3f0d77fdaf969dc4d9624032",
+    "identity": "full design/evaluate/grid equality",
+    "keyboard": "heatmap Enter",
+    "overflow": false
+  },
+  {
+    "width": 375,
+    "preset": "baseline-collapse-v1",
+    "enrollment": {
+      "control": 903,
+      "treatment": 903
+    },
+    "hash": "sha256:60d651786142bfeb710a086b0cbeea1c9bf3700599b1f9af0b30803dd8cca7c0",
+    "identity": "full design/evaluate/grid equality",
+    "keyboard": "heatmap Enter",
+    "overflow": false
+  },
+  {
+    "width": 375,
+    "preset": "attrition-shock-v1",
+    "enrollment": {
+      "control": 951,
+      "treatment": 951
+    },
+    "hash": "sha256:b0097082dcee81430df8c8778c834fe0fa9275e4c27a642ee52d5cb7d7d88bc3",
+    "identity": "full design/evaluate/grid equality",
+    "keyboard": "heatmap Enter",
+    "overflow": false
+  },
+  {
+    "width": 375,
+    "preset": "stable-design-v1",
+    "enrollment": {
+      "control": 951,
+      "treatment": 951
+    },
+    "hash": "sha256:781e57fe7b47e44e0746a07f39803851787e6ce74328128049dffd613c6fb878",
+    "identity": "full design/evaluate/grid equality",
+    "keyboard": "heatmap Enter",
+    "overflow": false
+  }
+]

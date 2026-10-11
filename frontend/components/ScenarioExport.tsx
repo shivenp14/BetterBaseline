@@ -26,14 +26,17 @@ export function ScenarioExport({ payload, unavailableReason }: ScenarioExportPro
       setFeedback({ error: true, message: error instanceof Error ? error.message : "Unable to read scenario JSON." });
     }
   }
-  return <section aria-labelledby={`${id}-heading`}>
+  return <section className={"auditPanel"} aria-labelledby={`${id}-heading`}>
     <h2 id={`${id}-heading`}>Scenario export</h2>
     <p>JSON v1 records complete assumptions, locked enrollment, analytic grid and curve, selected simulation, separate MCSEs, warnings, hashes, software versions, RNG and field provenance.</p>
-    {json ? <a download="better-baseline-scenario-v1.json" href={`data:application/json;charset=utf-8,${encodeURIComponent(json)}`}>Download current scenario JSON</a>
-      : <><button type="button" disabled>Download current scenario JSON</button><p role={validationError ? "alert" : "status"}>{validationError ?? unavailableReason ?? "Complete current results are required before export."}</p></>}
+    {json && <p className={"auditCurrentStatus"} role="status"><strong>Export ready.</strong> Complete current results are available.</p>}
+    {json ? <a className={"auditDownload"} download="better-baseline-scenario-v1.json" href={`data:application/json;charset=utf-8,${encodeURIComponent(json)}`}>Download current scenario JSON</a>
+      : <><button type="button" disabled>Download current scenario JSON</button><p className={validationError ? "auditErrorStatus" : "auditWarningStatus"} role={validationError ? "alert" : "status"}>{validationError ?? unavailableReason ?? "Complete current results are required before export."}</p></>}
     <p>Reconstruction requires the recorded software environment. Schema validation does not independently verify statistical correctness.</p>
+    <div className={"auditValidator"}><h3>Detached artifact validation</h3>
+    <p>Reopening validates the file without changing workspace inputs, restoring enrollment or rerunning calculations.</p>
     <label htmlFor={`${id}-reload`}>Reopen and validate scenario JSON</label>{" "}
     <input id={`${id}-reload`} type="file" accept=".json,application/json" onChange={event => { void reopen(event.target.files?.[0]); event.target.value = ""; }} />
-    {feedback && <p role={feedback.error ? "alert" : "status"}>{feedback.message}</p>}
-  </section>;
+    {feedback && <p className={feedback.error ? "auditErrorStatus" : "auditCurrentStatus"} role={feedback.error ? "alert" : "status"}>{feedback.message}</p>}
+  </div></section>;
 }

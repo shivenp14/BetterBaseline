@@ -13,9 +13,10 @@ export interface MonteCarloPanelProps {
 const percent = (n: number) => `${(n * 100).toFixed(3)}%`;
 export function MonteCarloResults({ result }: { result: SimulationResult }) {
   const mc = result.monte_carlo;
-  return <>
+  return <div className={"auditResults"}>
     <MethodDisclosures />
-    <dl>
+    <div className={"auditResultColumns"}>
+    <dl className={"auditReadings"}>
       <dt>Two-sided significance fraction</dt><dd>{percent(mc.significant_two_sided_fraction)}</dd>
       <dt>Two-sided MCSE (percentage points)</dt><dd>{(mc.mcse_two_sided * 100).toFixed(3)}</dd>
       <dt>Favorable-direction significance fraction</dt><dd>{percent(mc.significant_favorable_fraction)}</dd>
@@ -26,7 +27,7 @@ export function MonteCarloResults({ result }: { result: SimulationResult }) {
       <dt>Random number generator</dt><dd>{mc.rng}</dd>
       <dt>Inputs hash</dt><dd>{result.metadata.inputs_hash}</dd><dt>Computed at</dt><dd>{result.metadata.computed_at}</dd>
     </dl>
-    <table><caption>Expected analytical counts and sampled simulation means per arm</caption>
+    <div className={"auditTableScroll"} role="region" aria-label="Simulation participant counts" tabIndex={0}><table><caption>Expected analytical counts and sampled simulation means per arm</caption>
       <thead><tr><th scope="col">Count</th><th scope="col">Control</th><th scope="col">Treatment</th></tr></thead>
       <tbody>
         <tr><th scope="row">Frozen enrolled participants</th><td>{result.metadata.fixed_enrollment.control}</td><td>{result.metadata.fixed_enrollment.treatment}</td></tr>
@@ -34,13 +35,13 @@ export function MonteCarloResults({ result }: { result: SimulationResult }) {
         <tr><th scope="row">Mean actual retained participants (simulation)</th><td>{mc.mean_retained_control.toFixed(2)}</td><td>{mc.mean_retained_treatment.toFixed(2)}</td></tr>
         <tr><th scope="row">Mean events (simulation)</th><td>{mc.mean_control_events.toFixed(2)}</td><td>{mc.mean_treatment_events.toFixed(2)}</td></tr>
       </tbody>
-    </table>
-    <h3>Software versions</h3><dl>{Object.entries(result.metadata.software_versions).map(([name, value]) => <div key={name}><dt>{name}</dt><dd>{value}</dd></div>)}</dl>
-    <h3>Field provenance</h3>{Object.keys(result.provenance).length ? <dl>{Object.entries(result.provenance).map(([field, source]) => <div key={field}>
+    </table></div></div>
+    <h3>Software versions</h3><dl className={"auditMetadata"}>{Object.entries(result.metadata.software_versions).map(([name, value]) => <div key={name}><dt>{name}</dt><dd>{value}</dd></div>)}</dl>
+    <h3>Field provenance</h3>{Object.keys(result.provenance).length ? <dl className={"auditMetadata"}>{Object.entries(result.provenance).map(([field, source]) => <div key={field}>
       <dt>{field}</dt><dd>{source.source}{source.description && ` — ${source.description}`}{source.retrieved_at && `; retrieved ${source.retrieved_at}`}{source.source_url && `; source URL: ${source.source_url}`}</dd>
     </div>)}</dl> : <p>No field provenance supplied.</p>}
-    {result.warnings.length > 0 && <><h3>Simulation warnings</h3><ul>{result.warnings.map((warning, index) => <li key={`${index}-${warning}`}>{warning}</li>)}</ul></>}
-  </>;
+    {result.warnings.length > 0 && <><h3>Simulation warnings</h3><ul className={"auditWarning"}>{result.warnings.map((warning, index) => <li key={`${index}-${warning}`}>{warning}</li>)}</ul></>}
+  </div>;
 }
 export function MonteCarloPanel({ selection, runSimulation, unavailableReason, onResult }: MonteCarloPanelProps) {
   const id = useId();
@@ -80,17 +81,25 @@ export function MonteCarloPanel({ selection, runSimulation, unavailableReason, o
       if (generation.current === token) { setPendingRequest(null); controller.current = null; inFlight.current = null; }
     }
   }
-  return <section aria-labelledby={`${id}-heading`} aria-busy={pending}>
+  return <section className={"auditPanel"} aria-labelledby={`${id}-heading`} aria-busy={pending}>
     <h2 id={`${id}-heading`}>Selected-scenario Monte Carlo simulation</h2>
-    {!available && <p role="status">Simulation unavailable: {unavailableReason ?? (!selection ? "calculate and select a valid frozen design first." : "the live simulation adapter is not connected.")}</p>}
-    <form onSubmit={run} noValidate>
+    {selection && <div className={"auditSelection"}><h3>Selected scenario · frozen enrollment</h3><dl className={"auditSelectionReadings"}>
+      <div><dt>Control endpoint risk</dt><dd>{percent(selection.stress_scenario.control_event_rate)}</dd></div>
+      <div><dt>Dropout · control / treatment</dt><dd>{percent(selection.stress_scenario.dropout.control)} / {percent(selection.stress_scenario.dropout.treatment)}</dd></div>
+      <div><dt>Selected effect</dt><dd>{(selection.stress_scenario.effect_override ?? selection.planned_design.effect).kind === "relative_risk" ? `RR ${(selection.stress_scenario.effect_override ?? selection.planned_design.effect).value}` : `ARR ${((selection.stress_scenario.effect_override ?? selection.planned_design.effect).value * 100).toFixed(3)} percentage points`}</dd></div>
+      <div><dt>Two-sided alpha / target power</dt><dd>{percent(selection.planned_design.alpha)} / {percent(selection.planned_design.target_power)}</dd></div>
+      <div><dt>Frozen enrolled · control / treatment</dt><dd>{selection.fixed_enrollment.control} / {selection.fixed_enrollment.treatment}</dd></div>
+    </dl></div>}
+    {!available && <p className={"auditWarningStatus"} role="status">Simulation unavailable: {unavailableReason ?? (!selection ? "calculate and select a valid frozen design first." : "the live simulation adapter is not connected.")}</p>}
+    <form className={"auditSettings"} onSubmit={run} noValidate>
+      <div className={"auditField"}>
       <label htmlFor={`${id}-seed`}>Simulation seed</label>{" "}<input id={`${id}-seed`} type="text" inputMode="numeric" value={seed} onChange={(event) => setSeed(event.target.value)} aria-describedby={`${id}-bounds`} />
-      <label htmlFor={`${id}-reps`}>Simulation replicates</label>{" "}<input id={`${id}-reps`} type="text" inputMode="numeric" value={replicates} onChange={(event) => setReplicates(event.target.value)} aria-describedby={`${id}-bounds`} />
-      <p id={`${id}-bounds`}>Whole numbers: seed 0–{MAX_SEED}; replicates 1–{MAX_REPLICATES}. Each run simulates one selected scenario at frozen enrollment.</p>
+      </div><div className={"auditField"}><label htmlFor={`${id}-reps`}>Simulation replicates</label>{" "}<input id={`${id}-reps`} type="text" inputMode="numeric" value={replicates} onChange={(event) => setReplicates(event.target.value)} aria-describedby={`${id}-bounds`} />
+      </div><p className={"auditBounds"} id={`${id}-bounds`}>Whole numbers: seed 0–{MAX_SEED}; replicates 1–{MAX_REPLICATES}. Each run simulates one selected scenario at frozen enrollment.</p>
       <button type="submit" disabled={!available || Boolean(invalid) || pending}>{pending ? "Running simulation…" : "Run simulation"}</button>
     </form>
-    {invalid && <p role="alert">{invalid}</p>}{error && <p role="alert">{error}</p>}
-    {pending && <p role="status">Running the selected seeded simulation.</p>}
-    {snapshot ? <>{stale && <p role="status"><strong>Stale simulation.</strong> These values belong to a previous run; run the current selection to refresh.</p>}<MonteCarloResults result={snapshot.result} /></> : <p>No simulation result yet.</p>}
+    {invalid && <p className={"auditErrorStatus"} role="alert">{invalid}</p>}{error && <p className={"auditErrorStatus"} role="alert">{error}</p>}
+    {pending && <p className={"auditCurrentStatus"} role="status">Running the selected seeded simulation.</p>}
+    {snapshot ? <>{!stale && <p className={"auditCurrentStatus"} role="status"><strong>Current simulation.</strong> These values match the selected scenario and displayed execution settings.</p>}{stale && <p className={"auditWarningStatus"} role="status"><strong>Stale simulation.</strong> These values belong to a previous run; run the current selection to refresh.</p>}<MonteCarloResults result={snapshot.result} /></> : <p>No simulation result yet.</p>}
   </section>;
 }

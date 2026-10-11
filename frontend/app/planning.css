@@ -1,0 +1,22 @@
+.planning-presets p,.planning-formSection > p,.planning-field p,.planning-summary p { color:var(--muted); }
+.planning-presetControls { display:flex; align-items:center; flex-wrap:wrap; gap:12px; margin-top:20px; }
+.planning-presetControls select { flex:1; min-width:220px; }
+.planning-presetDetails { margin-top:18px; font-size:12px; }
+.planning-presetDetails code { color:var(--mint); }
+.planning-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px 24px; margin-top:24px; }
+.planning-field label { display:block; font-weight:600; margin-bottom:8px; }
+.planning-field input,.planning-field select { display:block; width:100%; }
+.planning-field p { font-size:12px; line-height:1.5; margin:8px 0 0; }
+.planning-field p[id$="-error"] { color:var(--error); }
+.planning-fields > button { grid-column:1 / -1; margin-top:4px; }
+.planning-summary { background:var(--surface); border-top:2px solid var(--mint); padding:24px; }
+.planning-summary h2 { color:var(--mint); }
+.planning-summary dl { border-top:1px solid var(--rule); padding-top:16px; font-size:12px; }
+.planning-summary dd { color:var(--text); }
+.planning-summary tbody td { color:var(--mint); font-size:18px; }
+.planning-summary p[role="status"] { color:var(--warning); }
+.planning-summary p[role="alert"] { color:var(--error); }
+.planning-tableScroll { overflow-x:auto; max-width:100%; }
+.planning-tableScroll table { min-width:440px; }
+@media(max-width:900px) { .planning-fields { grid-template-columns:1fr; } }
+@media(max-width:640px) { .planning-summary { padding:20px 16px; } .planning-presetControls { align-items:stretch; flex-direction:column; } .planning-presetControls select { min-width:0; width:100%; } }

@@ -20,6 +20,7 @@ import { StressHeatmap, workspaceHeatmapProps } from "@/components/StressHeatmap
 import { MonteCarloPanel } from "@/components/MonteCarloPanel";
 import { MethodDisclosures } from "@/components/MethodDisclosures";
 import { ScenarioExport } from "@/components/ScenarioExport";
+import styles from "./planning.module.css";
 
 // The chart revision seam tracks inputs, independently of concurrent operation tokens.
 const chartState = (state: WorkspaceState): WorkspaceState => ({ ...state, requestRevision: state.inputGeneration });
@@ -145,19 +146,25 @@ export default function Home() {
       return { payload: buildScenarioExport(state, runs) };
     } catch (error) { return { payload: null, exportReason: error instanceof Error ? error.message : "Complete current calculations and a selected simulation before exporting." }; }
   }, [state, runs, simulationDraft]);
-  return <main>
-    <header><h1>Better Baseline</h1><p>Trial planning workspace backed by a local calculation service.</p><p><strong>Execution mode:</strong> {getApiMode() === "demo" ? "DEMO — fixtures and client calculations; no backend execution" : "LIVE — fresh calculations require the backend service"}</p></header>
+  return <main className={styles.workspace}>
+    <header className={styles.header}><h1>Better Baseline</h1><p>Trial planning workspace backed by a local calculation service.</p><p><strong>Execution mode:</strong> {getApiMode() === "demo" ? "DEMO — fixtures and client calculations; no backend execution" : "LIVE — fresh calculations require the backend service"}</p></header>
     <PresetSelector selectedPresetId={state.presetId} onSelectPreset={selectPreset} onResetPreset={() => selectPreset()} />
-    <section aria-labelledby="planned-heading"><h2 id="planned-heading">Planned design and enrollment locking</h2>
+    <div className={styles.planningGrid}>
+    <section className={styles.planning} aria-labelledby="planned-heading"><h2 id="planned-heading">Planned design and enrollment locking</h2>
       <DesignForm key={`${state.presetId}:${formResetKey}`} initialAssumptions={getPresetById(state.presetId).planned_design} presetId={state.presetId} onCalculate={calculate} onDraftChange={changePlanned} isCalculating={state.designStatus === "calculating"} error={state.designError} submitLabel="Calculate & Lock Design" />
     </section>
     <DesignSummary result={state.calculatedDesign} isStale={state.designStatus !== "success"} isCalculating={state.designStatus === "calculating"} error={state.designError} />
+    </div>
+    <div className={styles.stressWorkspace}>
     <StressControls frozenEnrollment={state.frozenEnrollment} stressBaseline={state.stressBaseline} stressDropout={state.stressDropout} onBaselineChange={changeBaseline} onDropoutChange={changeDropout} onEvaluate={() => { void evaluateAnalytic(); }} evaluateStatus={state.evaluateStatus} evaluateError={state.evaluateError} isCalculating={state.designStatus !== "success"} />
-    <section aria-labelledby="grid-heading"><h2 id="grid-heading">Analytic chart requests</h2><button type="button" onClick={() => { void loadGrid(); }} disabled={state.designStatus !== "success" || state.gridStatus === "loading"}>{state.gridStatus === "loading" ? "Loading Grid..." : "Load grid response from backend"}</button><span> Status: {state.gridStatus.toUpperCase()}</span>{state.gridError && <p role="alert">{state.gridError}</p>}</section>
+    <section className={styles.gridRequest} aria-labelledby="grid-heading"><h2 id="grid-heading">Analytic chart requests</h2><button type="button" onClick={() => { void loadGrid(); }} disabled={state.designStatus !== "success" || state.gridStatus === "loading"}>{state.gridStatus === "loading" ? "Loading Grid..." : "Load grid response from backend"}</button><span> Status: {state.gridStatus.toUpperCase()}</span>{state.gridError && <p role="alert">{state.gridError}</p>}</section>
+    </div>
     <DesignComparison {...workspaceComparisonProps(chartState(state), completedGrid)} />
+    <div className={styles.analyticsGrid}>
     <PowerCurve {...curve} onSelectBaseline={changeBaseline} />
     <StressHeatmap {...heatmap} onSelectPoint={selectPoint} />
-    <div onChangeCapture={event => {
+    </div>
+    <div className={styles.simulation} onChangeCapture={event => {
       if (!(event.target instanceof HTMLInputElement)) return;
       const fields = event.currentTarget.querySelectorAll<HTMLInputElement>('input[type="text"]'); if (fields.length !== 2) return;
       const next = { seed: fields[0].value, replicates: fields[1].value };
@@ -165,8 +172,8 @@ export default function Home() {
       if (!pointers.length) return; changeInputs(); setSimulationDraft(next); dispatch({ type: "UPDATE_SIMULATION_PROVENANCE", pointers });
     }}><MonteCarloPanel key={`${state.presetId}:${formResetKey}`} selection={selection} runSimulation={runSimulation} unavailableReason={getApiMode() === "demo" ? "Live simulation is unavailable in demo mode." : undefined} /></div>
     <ScenarioExport payload={payload} unavailableReason={exportReason} />
-    <section aria-labelledby="provenance-heading"><h2 id="provenance-heading">Field provenance and audit trail</h2><p>Current result hash: <code>{state.displayedInputsHash ?? "stale/unhashed"}</code></p>
-      <table><caption>Active field provenance</caption><thead><tr><th scope="col">Field</th><th scope="col">Source</th><th scope="col">Description</th></tr></thead><tbody>{Object.entries(state.provenanceLedger).map(([field, source]) => <tr key={field}><th scope="row">{field}</th><td>{source.source}</td><td>{source.description}{source.source_url && <> — <a href={source.source_url}>{source.source_url}</a></>}</td></tr>)}</tbody></table>
+    <section className={styles.provenance} aria-labelledby="provenance-heading"><h2 id="provenance-heading">Field provenance and audit trail</h2><p>Current result hash: <code>{state.displayedInputsHash ?? "stale/unhashed"}</code></p>
+      <div className={styles.tableScroll} role="region" aria-label="Active field provenance table" tabIndex={0}><table><caption>Active field provenance</caption><thead><tr><th scope="col">Field</th><th scope="col">Source</th><th scope="col">Description</th></tr></thead><tbody>{Object.entries(state.provenanceLedger).map(([field, source]) => <tr key={field}><th scope="row">{field}</th><td>{source.source}</td><td>{source.description}{source.source_url && <> — <a href={source.source_url}>{source.source_url}</a></>}</td></tr>)}</tbody></table></div>
     </section><MethodDisclosures />
   </main>;
 }
