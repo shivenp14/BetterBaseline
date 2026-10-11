@@ -1,8 +1,9 @@
 "use client";
 
 import { useId } from "react";
+import type { WorkspaceState } from "../lib/workspace-contracts";
 
-/** Proposed C3/C4 handoff: replace with #72's frozen shared type before wiring. */
+/** Presentational identity adapted from #72 by workspaceCurveProps. */
 export interface CurveContext {
   inputsHash: string;
   designHash: string;
@@ -26,6 +27,7 @@ export interface CurveSnapshot extends CurveContext {
   plannedPoint: CurvePoint;
   selectedPoint: CurvePoint;
   illustrative: boolean;
+  plannedPointDropout?: number;
 }
 
 export interface PowerCurveProps {
@@ -62,6 +64,8 @@ export function curveProblem(current: CurveContext, result: CurveSnapshot | null
       || result.fixedEnrollment.control !== result.fixedEnrollment.treatment) {
     return "Invalid analytic curve metadata.";
   }
+  if (result.plannedPointDropout !== undefined && (!Number.isFinite(result.plannedPointDropout)
+      || result.plannedPointDropout < 0 || result.plannedPointDropout >= 1)) return "Invalid planned point dropout.";
   if (result.powerCurve.length < 2 || result.powerCurve.some((point, index) => (
     !probability(point.baseline) || !powerValue(point.power)
     || (index > 0 && point.baseline <= result.powerCurve[index - 1].baseline)
@@ -72,7 +76,8 @@ export function curveProblem(current: CurveContext, result: CurveSnapshot | null
       return "Invalid analytic point marker.";
     }
     const exact = result.powerCurve.find((sample) => sample.baseline === point.baseline);
-    if (exact && exact.power !== point.power) return "Point marker disagrees with the analytic curve.";
+    if (exact && (point !== result.plannedPoint || result.plannedPointDropout === undefined
+        || result.plannedPointDropout === current.dropout) && exact.power !== point.power) return "Point marker disagrees with the analytic curve.";
   }
   return null;
 }
@@ -91,6 +96,8 @@ export function PowerCurve({ current, result, status, error, onSelectBaseline }:
     </section>;
   }
 
+  const plannedLabel = result.plannedPointDropout === undefined ? "planned baseline at selected dropout"
+    : `original planned scenario at ${percent(result.plannedPointDropout)} dropout`;
   const left = 70, right = 590, top = 30, bottom = 250;
   const baselines = [...result.powerCurve.map((point) => point.baseline),
     result.plannedPoint.baseline, result.selectedPoint.baseline];
@@ -109,7 +116,7 @@ export function PowerCurve({ current, result, status, error, onSelectBaseline }:
       <svg viewBox="0 0 640 320" width="640" height="320" role="img" aria-labelledby={`${id}-title ${id}-description`}>
         <title id={`${id}-title`}>Approximate conditional power versus control baseline event risk</title>
         <desc id={`${id}-description`}>Analytic values at {percent(current.dropout)} dropout and fixed enrollment.
-          Dashed line: target {percent(current.targetPower)}. Triangle: planned baseline at selected dropout.
+          Dashed line: target {percent(current.targetPower)}. Triangle: {plannedLabel}.
           Circle: selected stress baseline. Invalid values break the trace. The numerical table follows.</desc>
         <line x1={left} y1={bottom} x2={right} y2={bottom} stroke="currentColor" />
         <line x1={left} y1={top} x2={left} y2={bottom} stroke="currentColor" />
@@ -135,7 +142,7 @@ export function PowerCurve({ current, result, status, error, onSelectBaseline }:
           data-power={result.selectedPoint.power} cx={x(result.selectedPoint.baseline)} cy={y(result.selectedPoint.power)} r="5" fill="none" stroke="currentColor" /> : null}
       </svg>
       <figcaption>Solid segments: supplied analytic power. Dashed line: selected target.
-        Triangle: planned baseline at selected dropout. Circle: selected baseline.
+        Triangle: {plannedLabel}. Circle: selected baseline.
         Null/invalid scenarios have no point marker or connecting segment.</figcaption>
     </figure>
     <table>
@@ -151,4 +158,72 @@ export function PowerCurve({ current, result, status, error, onSelectBaseline }:
     </table>
     <p>Inputs hash: {result.inputsHash}</p>
   </section>;
+}
+
+
+/** Raw #66 data before coordinate-only frontend normalization. #76 passes this
+ * with a detached #72 state snapshot captured at grid request start.
+ */
+export interface CurveApiResponse {
+  method: "cohen_h_normal_v1";
+  inputs_hash: string;
+  fixed_enrollment: { control: number; treatment: number };
+  target_power: number;
+  power_curve: readonly { p_control: number; power: number | null; is_valid: boolean }[];
+  planned_point: { p_control: number; dropout: number; power: number | null };
+  selected_point: { p_control: number; dropout: number; power: number | null } | null;
+}
+
+function workspaceIdentity(state: WorkspaceState): string {
+  return JSON.stringify([state.requestRevision, state.calculatedDesign?.inputs_hash,
+    state.plannedDraft, state.frozenEnrollment, state.stressBaseline,
+    state.stressDropout, state.provenanceLedger]);
+}
+
+/** Pure handoff adapter; no API calls, interpolation or statistical calculation. */
+export function workspaceCurveProps(currentState: WorkspaceState,
+  completed: { requestState: WorkspaceState; response: CurveApiResponse } | null): PowerCurveProps {
+  const captured = completed?.requestState, raw = completed?.response;
+  const fresh = captured && workspaceIdentity(currentState) === workspaceIdentity(captured);
+  function context(state: WorkspaceState, inputsHash: string): CurveContext {
+    return { inputsHash, designHash: state.calculatedDesign?.inputs_hash ?? "",
+      fixedEnrollment: state.frozenEnrollment ?? { control: 0, treatment: 0 },
+      dropout: state.stressDropout, effectKind: state.plannedDraft.effect.kind,
+      targetPower: state.plannedDraft.target_power,
+      plannedBaseline: state.plannedDraft.control_event_rate, selectedBaseline: state.stressBaseline };
+  }
+  const current = context(currentState, raw ? (fresh ? raw.inputs_hash : `stale:${raw.inputs_hash}`) : "");
+  if (currentState.designStatus === "calculating" || currentState.gridStatus === "loading") {
+    return { current, result: null, status: "loading" };
+  }
+  if (currentState.gridStatus === "error") {
+    return { current, result: null, status: "error", error: currentState.gridError ?? "Grid request failed." };
+  }
+  if (!captured || !raw || !captured.frozenEnrollment || !captured.calculatedDesign) {
+    return { current, result: null, status: "idle" };
+  }
+  if (!raw.power_curve || !raw.selected_point || raw.planned_point.power === undefined
+      || raw.selected_point.power === undefined || !raw.fixed_enrollment) {
+    return { current, result: null, status: "error", error: "Raw analytic curve and comparison powers are required." };
+  }
+  const expected = context(captured, raw.inputs_hash);
+  if (raw.target_power !== expected.targetPower
+      || raw.fixed_enrollment.control !== expected.fixedEnrollment.control
+      || raw.fixed_enrollment.treatment !== expected.fixedEnrollment.treatment
+      || raw.planned_point.p_control !== expected.plannedBaseline
+      || raw.planned_point.dropout !== captured.plannedDraft.dropout.control
+      || raw.selected_point.p_control !== expected.selectedBaseline
+      || raw.selected_point.dropout !== expected.dropout
+      || raw.power_curve.some(p => p.is_valid !== (p.power !== null))) {
+    return { current, result: null, status: "error", error: "Analytic response disagrees with its captured workspace request." };
+  }
+  const result: CurveSnapshot = { ...expected, method: raw.method,
+    powerCurve: raw.power_curve.map(p => ({ baseline: p.p_control, power: p.power })),
+    plannedPoint: { baseline: raw.planned_point.p_control, power: raw.planned_point.power },
+    selectedPoint: { baseline: raw.selected_point.p_control, power: raw.selected_point.power },
+    plannedPointDropout: raw.planned_point.dropout, illustrative: false };
+  if (currentState.designStatus !== "success" || currentState.gridStatus !== "success") {
+    current.inputsHash = `stale:${raw.inputs_hash}`;
+  }
+  return { current, result, status: "ready" };
 }
