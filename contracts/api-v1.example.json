@@ -12,6 +12,14 @@
     "dropout": {
       "control": 0.10,
       "treatment": 0.10
+    },
+    "provenance": {
+      "/planned_design/control_event_rate": {
+        "source": "manual_user",
+        "source_url": "https://example.org/protocol.pdf",
+        "source_location": "Page 14, Table 2",
+        "verified_by_user": true
+      }
     }
   },
   "design_calculate_response": {
@@ -30,6 +38,14 @@
     "warnings": [
       "Dropout inflation represents expected retention, not guaranteed evaluable counts."
     ],
+    "provenance": {
+      "/planned_design/control_event_rate": {
+        "source": "manual_user",
+        "source_url": "https://example.org/protocol.pdf",
+        "source_location": "Page 14, Table 2",
+        "verified_by_user": true
+      }
+    },
     "inputs_hash": "sha256:example-calculate-hash"
   },
   "scenario_evaluate_request": {
@@ -63,6 +79,14 @@
     "simulation": {
       "replicates": 10000,
       "seed": 42
+    },
+    "provenance": {
+      "/planned_design/control_event_rate": {
+        "source": "synthetic_preset",
+        "description": "Synthetic baseline assumption",
+        "source_location": "demo-data/stable-design-v1/manifest.json#/provenance/0",
+        "verified_by_user": false
+      }
     }
   },
   "scenario_evaluate_response": {
@@ -92,6 +116,14 @@
     "metadata": {
       "computed_at": "2026-10-10T23:30:00Z",
       "inputs_hash": "sha256:example-evaluate-hash"
+    },
+    "provenance": {
+      "/planned_design/control_event_rate": {
+        "source": "synthetic_preset",
+        "description": "Synthetic baseline assumption",
+        "source_location": "demo-data/stable-design-v1/manifest.json#/provenance/0",
+        "verified_by_user": false
+      }
     }
   },
   "scenario_grid_request": {
@@ -132,6 +164,14 @@
         "treatment": 0.0
       },
       "effect_override": null
+    },
+    "provenance": {
+      "/planned_design/control_event_rate": {
+        "source": "manual_user",
+        "source_url": "https://example.org/protocol.pdf",
+        "source_location": "Page 14, Table 2",
+        "verified_by_user": true
+      }
     }
   },
   "scenario_grid_response": {
@@ -205,6 +245,14 @@
     "warnings": [
       "Grid evaluates floor expected evaluable count per cell."
     ],
+    "provenance": {
+      "/planned_design/control_event_rate": {
+        "source": "manual_user",
+        "source_url": "https://example.org/protocol.pdf",
+        "source_location": "Page 14, Table 2",
+        "verified_by_user": true
+      }
+    },
     "computed_at": "2026-10-10T23:30:00Z",
     "inputs_hash": "sha256:example-grid-hash"
   },
@@ -273,10 +321,14 @@
     "provenance": {
       "control_event_rate": {
         "source": "synthetic_preset",
-        "description": "Baseline collapse preset scenario"
+        "description": "Baseline collapse preset scenario",
+        "source_location": "demo-data/baseline-collapse-v1/manifest.json#/provenance/0",
+        "verified_by_user": false,
+        "is_observed_registry_result": false
       }
     },
-    "exported_at": "2026-10-10T23:30:00Z"
+    "exported_at": "2026-10-10T23:30:00Z",
+    "inputs_hash": "sha256:1314d53f01dbd11477f0f2c083ea32820b1b1f60e0f001397c10acba5cbfed85"
   },
   "error_envelope": {
     "error": {

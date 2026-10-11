@@ -5,6 +5,7 @@ import jsonschema
 import pytest
 from pydantic import ValidationError
 
+from app.main import create_app
 from app.schemas import (
     DesignCalculateRequest,
     DesignCalculateResponse,
@@ -24,6 +25,7 @@ from app.schemas import (
     MonteCarloEvaluation,
     StressScenario,
     AnalyticEvaluation,
+    StatisticalDiagnostic,
     ExpectedRetainedCounts,
     PowerCurvePoint,
 )
@@ -86,6 +88,16 @@ def test_export_payload_fixture(example_fixtures):
     exp = ExportPayload.model_validate(example_fixtures["export_payload"])
     assert exp.export_schema_version == 1
     assert "control_event_rate" in exp.provenance
+    assert exp.inputs_hash == example_fixtures["export_payload"]["inputs_hash"]
+
+
+def test_provenance_metadata_and_export_hash_are_in_frozen_schema(json_schema):
+    field_schema = json_schema["$defs"]["FieldProvenance"]["properties"]
+    assert {"source_location", "verified_by_user", "is_observed_registry_result"} <= set(field_schema)
+    assert "provenance" in json_schema["$defs"]["DesignCalculateRequest"]["properties"]
+    assert "provenance" in json_schema["$defs"]["DesignCalculateResponse"]["properties"]
+    export_schema = json_schema["$defs"]["ExportPayload"]
+    assert "inputs_hash" in export_schema["required"]
 
 
 def test_error_envelope_fixture(example_fixtures):
@@ -97,6 +109,18 @@ def test_error_envelope_fixture(example_fixtures):
 def test_validate_fixtures_against_json_schema(example_fixtures, json_schema):
     """Validate example fixtures directly against the machine-readable api-v1.schema.json."""
     jsonschema.validate(instance=example_fixtures, schema=json_schema)
+
+
+def test_statistical_diagnostic_schema_matches_generated_model(json_schema):
+    assert json_schema["$defs"]["StatisticalDiagnostic"] == StatisticalDiagnostic.model_json_schema()
+    for model in (DesignCalculateResponse, ScenarioEvaluateResponse, ScenarioGridResponse):
+        generated = model.model_json_schema()["properties"]["diagnostics"]
+        assert json_schema["$defs"][model.__name__]["properties"]["diagnostics"] == generated
+
+
+def test_openapi_snapshot_matches_registered_app():
+    snapshot_path = Path(__file__).resolve().parents[2] / "contracts" / "openapi.snapshot.json"
+    assert json.loads(snapshot_path.read_text(encoding="utf-8")) == create_app().openapi()
 
 
 # ── ROLAND REVIEW BOUNDARY TESTS ──

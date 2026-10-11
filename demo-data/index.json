@@ -4,15 +4,18 @@
   "presets": [
     {
       "preset_id": "baseline-collapse-v1",
-      "manifest": "baseline-collapse-v1/manifest.json"
+      "manifest": "baseline-collapse-v1/manifest.json",
+      "final_response": "baseline-collapse-v1/final-response.json"
     },
     {
       "preset_id": "attrition-shock-v1",
-      "manifest": "attrition-shock-v1/manifest.json"
+      "manifest": "attrition-shock-v1/manifest.json",
+      "final_response": "attrition-shock-v1/final-response.json"
     },
     {
       "preset_id": "stable-design-v1",
-      "manifest": "stable-design-v1/manifest.json"
+      "manifest": "stable-design-v1/manifest.json",
+      "final_response": "stable-design-v1/final-response.json"
     }
   ]
 }
