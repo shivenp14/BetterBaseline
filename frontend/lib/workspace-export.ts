@@ -86,6 +86,16 @@ function pythonString(value: string): string {
   });
 }
 
+function compareUnicodeCodePoints(left: string, right: string): number {
+  const leftPoints = Array.from(left, (character) => character.codePointAt(0)!);
+  const rightPoints = Array.from(right, (character) => character.codePointAt(0)!);
+  const length = Math.min(leftPoints.length, rightPoints.length);
+  for (let index = 0; index < length; index++) {
+    if (leftPoints[index] !== rightPoints[index]) return leftPoints[index] - rightPoints[index];
+  }
+  return leftPoints.length - rightPoints.length;
+}
+
 function canonicalJson(value: unknown): string {
   if (value && typeof value === "object" && "__canonical_python_float__" in value) {
     return pythonFloat((value as CanonicalFloat).__canonical_python_float__);
@@ -100,7 +110,7 @@ function canonicalJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
   if (typeof value === "object") {
     const record = value as Record<string, unknown>;
-    return `{${Object.keys(record).sort().map((key) => `${pythonString(key)}:${canonicalJson(record[key])}`).join(",")}}`;
+    return `{${Object.keys(record).sort(compareUnicodeCodePoints).map((key) => `${pythonString(key)}:${canonicalJson(record[key])}`).join(",")}}`;
   }
   throw new Error("Export inputs contain a value that cannot be represented as canonical JSON.");
 }

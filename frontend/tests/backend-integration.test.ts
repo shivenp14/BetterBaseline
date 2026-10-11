@@ -15,9 +15,23 @@ async function run() {
     retrieved_at: "2026-10-11T12:00:00Z",
     verified_by_user: true,
   };
+  const bmpUnicodeRecord = {
+    source: "manual_user" as const,
+    description: "BMP key with Unicode value β and 😀",
+    source_location: "Appendix – table α",
+    verified_by_user: true,
+  };
+  const nonBmpUnicodeRecord = {
+    source: "synthetic_preset" as const,
+    description: "Non-BMP key; retained verbatim",
+    source_location: "Fixture manifest",
+    verified_by_user: false,
+  };
   state.provenanceLedger = {
     ...state.provenanceLedger,
     "/planned_design/control_event_rate": manuallyVerifiedBaseline,
+    "\uE000": bmpUnicodeRecord,
+    "\u{1F600}": nonBmpUnicodeRecord,
   };
   assert.equal(state.frozenEnrollment, null, "live mode cannot evaluate preset enrollment before calculation");
   const planned = { ...state.plannedDraft, dropout: { control: 0.1, treatment: 0.1 } };
@@ -172,6 +186,8 @@ async function run() {
   assert.equal(downloadedPayload.inputs_hash, exportPayload.inputs_hash);
   assert.equal(downloadedPayload.provenance["/planned_design/control_event_rate"].source_location, "Page 14, Table 2 — β");
   assert.equal(downloadedPayload.provenance["/planned_design/control_event_rate"].verified_by_user, true);
+  assert.equal(downloadedPayload.provenance["\uE000"].description, "BMP key with Unicode value β and 😀");
+  assert.equal(downloadedPayload.provenance["\u{1F600}"].description, "Non-BMP key; retained verbatim");
   assert.equal(downloadedPayload.grid_result!.provenance["/planned_design/control_event_rate"].source_location, "Page 14, Table 2 — β");
   if (process.env.WORKSPACE_EXPORT_PATH) writeFileSync(process.env.WORKSPACE_EXPORT_PATH, downloadedJson);
 
