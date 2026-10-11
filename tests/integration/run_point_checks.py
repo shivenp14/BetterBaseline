@@ -1,6 +1,6 @@
-"""Check actual calculate→fixed-enrollment evaluation over local HTTP.
+"""Check actual calculate→fixed-enrollment evaluation→grid over local HTTP.
 
-This is partial API integration, not UI export/grid/offline acceptance. Uses the
+This is partial API integration, not UI export/offline acceptance. Uses the
 running app's typed OpenAPI response model as a read-only contract, never an
 import of a calculator or a synthetic substitute for an endpoint response.
 """
@@ -14,7 +14,7 @@ from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
 from jsonschema import Draft202012Validator
-from invariants import check_design, check_evaluation, require
+from invariants import check_design, check_evaluation, check_grid_handoff, require
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -67,16 +67,88 @@ def check_point_api(base):
     # model. Shared export-schema adaptation remains with #67/#76.
     openapi = exchange(base, '/openapi.json')
     components = json.loads(json.dumps(openapi['components']['schemas']).replace('#/components/schemas/', '#/$defs/'))
-    ref = openapi['paths']['/api/v1/scenarios/evaluate']['post']['responses']['200']['content']['application/json']['schema']['$ref']
-    contract = {'$defs': components, '$ref': ref.replace('#/components/schemas/', '#/$defs/')}
+    def validate(route, value):
+        ref = openapi['paths'][route]['post']['responses']['200']['content']['application/json']['schema']['$ref']
+        contract = {'$defs': components, '$ref': ref.replace('#/components/schemas/', '#/$defs/')}
+        Draft202012Validator(contract).validate(value)
+
+    shared = json.loads((ROOT / 'contracts/api-v1.schema.json').read_text())
+    grid_contract = {'$defs': shared['$defs'], '$ref': '#/$defs/ScenarioGridResponse'}
+
     for response in (first, repeat, second):
-        Draft202012Validator(contract).validate(response)
+        validate('/api/v1/scenarios/evaluate', response)
+    validate('/api/v1/design/calculate', design)
+    grid_request = {'planned_design': deepcopy(request['planned_design']),
+                    'fixed_enrollment': deepcopy(request['fixed_enrollment']),
+                    'x_baseline': {'min': .1, 'max': .3, 'steps': 3},
+                    'y_dropout': {'min': 0, 'max': .2, 'steps': 2},
+                    'selected_scenario': deepcopy(request['stress_scenario'])}
+    grid_route = '/api/v1/scenarios/grid'
+    evaluation_route = '/api/v1/scenarios/evaluate'
+    grids = []
+    for dropout in (0, .13):
+        selected_request = deepcopy(request)
+        selected_request['simulation'] = None
+        selected_request['stress_scenario']['dropout'] = {'control': dropout, 'treatment': dropout}
+        selected_response = exchange(base, evaluation_route, selected_request)
+        check_evaluation(selected_request, selected_response)
+        validate(evaluation_route, selected_response)
+        grid_request['selected_scenario'] = deepcopy(selected_request['stress_scenario'])
+        grid = exchange(base, grid_route, grid_request)
+        validate(grid_route, grid)
+        Draft202012Validator(grid_contract).validate(grid)
+        curve_responses = []
+        for baseline in grid['x_baseline']:
+            point_request = deepcopy(selected_request)
+            point_request['stress_scenario']['control_event_rate'] = baseline
+            point = exchange(base, evaluation_route, point_request)
+            check_evaluation(point_request, point)
+            validate(evaluation_route, point)
+            curve_responses.append(point)
+        check_grid_handoff(selected_request, selected_response, grid_request, grid, curve_responses)
+        grids.append(grid)
+    require(grids[0]['inputs_hash'] != grids[1]['inputs_hash'], 'grid identity did not change with selected dropout')
+    require(grids[0]['planned_point'] == grids[1]['planned_point'], 'stress mutated original planned comparison')
+    # Check every nonsquare matrix cell against a separate HTTP point evaluation.
+    for row, dropout in zip(grids[0]['power'], grids[0]['y_dropout']):
+        for cell, baseline in zip(row, grids[0]['x_baseline']):
+            point_request = deepcopy(request)
+            point_request['simulation'] = None
+            point_request['stress_scenario'].update(control_event_rate=baseline,
+                dropout={'control': dropout, 'treatment': dropout})
+            point = exchange(base, evaluation_route, point_request)
+            require(abs(cell - point['analytic']['conditional_power_approx']) < 1e-10,
+                    'grid row/column disagrees with independent point evaluation')
+    # ARR .15 is invalid at .10 but valid at .20/.30. Never substitute zero.
+    arr_request = deepcopy(grid_request)
+    arr_request['selected_scenario']['control_event_rate'] = .2
+    arr_request['selected_scenario']['effect_override'] = {'kind': 'absolute_risk_reduction', 'value': .15}
+    arr_grid = exchange(base, grid_route, arr_request)
+    validate(grid_route, arr_grid)
+    Draft202012Validator(grid_contract).validate(arr_grid)
+    require(arr_grid['invalid_mask'] == [[True, False, False], [True, False, False]], 'ARR invalid-mask orientation')
+    require(all(row[0] is None for row in arr_grid['power'])
+            and arr_grid['power_curve'][0]['power'] is None
+            and arr_grid['power_curve'][0]['is_valid'] is False, 'ARR invalid cells/curve must be null')
+    require(arr_grid['invalid_cell_count'] == 2, 'ARR invalid-cell count')
+    require(arr_grid['planned_point'] == grids[0]['planned_point'], 'stress effect mutated original plan')
+    for row, dropout in zip(arr_grid['power'], arr_grid['y_dropout']):
+        for baseline, cell in zip(arr_grid['x_baseline'][1:], row[1:]):
+            point_request = deepcopy(request)
+            point_request['simulation'] = None
+            point_request['stress_scenario'] = {'control_event_rate': baseline,
+                'dropout': {'control': dropout, 'treatment': dropout},
+                'effect_override': {'kind': 'absolute_risk_reduction', 'value': .15}}
+            point = exchange(base, evaluation_route, point_request)
+            require(abs(cell - point['analytic']['conditional_power_approx']) < 1e-10, 'ARR grid/point effect mismatch')
     planned_dropout = deepcopy(request['planned_design'])
     planned_dropout['dropout'] = {'control': .10, 'treatment': .10}
     inflated = exchange(base, '/api/v1/design/calculate', planned_dropout)
     check_design(planned_dropout, inflated)
     require(inflated['enrolled_n'] == {'control': 1004, 'treatment': 1004}, 'dropout inflation reference')
-    return {'status': 'passed', 'scope': 'real_calculate_and_evaluate_only',
+    validate('/api/v1/design/calculate', inflated)
+    return {'status': 'passed', 'scope': 'real_calculate_evaluate_and_grid',
+            'grid_shape': [2, 3], 'off_grid_dropout': .13, 'arr_invalid_cells': 2,
             'power': first['analytic']['conditional_power_approx'],
             'seed': first['monte_carlo']['seed'],
             'software_versions': first['metadata']['software_versions']}

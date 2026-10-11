@@ -55,7 +55,7 @@ def check_evaluation(request, response):
             == 'floor_of_expected_retained_count', 'analytic retention semantics')
 
 
-def check_grid(request, response, grid):
+def check_grid(request, response, grid, *, require_grid_node=True):
     finite_json(grid)
     require(grid['method'] == response['analytic']['method'], 'grid/point method mismatch')
     xs, ys = grid['x_baseline'], grid['y_dropout']
@@ -71,10 +71,11 @@ def check_grid(request, response, grid):
             require(power is None if invalid else probability(power), 'invalid cells must be null, never zero')
     stress = request['stress_scenario']
     baseline, dropout = stress['control_event_rate'], stress['dropout']['control']
-    require(baseline in xs and dropout in ys, 'test scenario must be an exact grid node')
-    r, c = ys.index(dropout), xs.index(baseline)
-    require(not masks[r][c], 'selected scenario unexpectedly invalid')
-    require(math.isclose(powers[r][c], response['analytic']['conditional_power_approx'], abs_tol=1e-10), 'grid/point disagreement at same fixed N/dropout')
+    if require_grid_node or (baseline in xs and dropout in ys):
+        require(baseline in xs and dropout in ys, 'test scenario must be an exact grid node')
+        r, c = ys.index(dropout), xs.index(baseline)
+        require(not masks[r][c], 'selected scenario unexpectedly invalid')
+        require(math.isclose(powers[r][c], response['analytic']['conditional_power_approx'], abs_tol=1e-10), 'grid/point disagreement at same fixed N/dropout')
     require(grid['target_power'] == request['planned_design']['target_power'], 'target drift')
 
 
@@ -97,3 +98,32 @@ def check_design(planned, design):
         require(type(design['enrolled_n'][arm]) is int, 'strict enrolled count')
         require(design['enrolled_n'][arm] == math.ceil(n / (1 - planned['dropout'][arm])), 'dropout enrollment inflation')
     require(design['evaluable_n']['control'] == design['evaluable_n']['treatment'], 'unequal enrollment')
+
+
+def check_grid_handoff(request, response, grid_request, grid, curve_responses):
+    """Compare grid/curve identities with independently requested point results."""
+    check_grid(request, response, grid, require_grid_node=False)
+    require(grid_request['planned_design'] == request['planned_design'], 'grid planned design drift')
+    require(grid_request['fixed_enrollment'] == request['fixed_enrollment']
+            == grid['fixed_enrollment'], 'grid enrollment drift')
+    require(grid_request['selected_scenario'] == request['stress_scenario'], 'grid stress identity drift')
+    selected = grid['selected_point']
+    stress = request['stress_scenario']
+    require(selected['p_control'] == stress['control_event_rate']
+            and selected['dropout'] == stress['dropout']['control'], 'selected grid coordinate drift')
+    require(selected['expected_evaluable_n'] == response['analytic']['assumed_evaluable_n'],
+            'grid expected retention drift')
+    require(math.isclose(selected['power'], response['analytic']['conditional_power_approx'], abs_tol=1e-10),
+            'off-grid selected point disagreement')
+    require(math.isclose(grid['analytic_delta'], selected['power'] - grid['planned_point']['power'], abs_tol=1e-10),
+            'grid planned comparison delta drift')
+    curve = grid['power_curve']
+    require(len(curve) == len(grid['x_baseline']) == len(curve_responses), 'curve shape drift')
+    for baseline, point, evaluated in zip(grid['x_baseline'], curve, curve_responses):
+        require(point['p_control'] == baseline and point['is_valid'] is True, 'curve baseline/validity drift')
+        require(evaluated['analytic']['assumed_evaluable_n'] == response['analytic']['assumed_evaluable_n'],
+                'curve used grid row instead of exact selected dropout')
+        require(math.isclose(point['power'], evaluated['analytic']['conditional_power_approx'], abs_tol=1e-10),
+                'curve/point disagreement at exact selected dropout')
+    require(grid['below_target'] == [[p < grid['target_power'] if p is not None else None for p in row]
+                                     for row in grid['power']], 'grid target mask drift')

@@ -10,7 +10,7 @@ Provides strongly typed models for:
 
 import math
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 # ── DOMAIN PRIMITIVES ──
 
@@ -180,9 +180,10 @@ class ScenarioEvaluateResponse(BaseModel):
 
 # 3. POST /api/v1/scenarios/grid
 class GridAxisSpec(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     min: Annotated[float, Field(gt=0.0, lt=1.0)]
     max: Annotated[float, Field(gt=0.0, lt=1.0)]
-    steps: Annotated[int, Field(ge=2, le=81)]
+    steps: Annotated[int, Field(strict=True, ge=2, le=81)]
 
     @model_validator(mode="after")
     def validate_range(self) -> "GridAxisSpec":
@@ -192,9 +193,10 @@ class GridAxisSpec(BaseModel):
 
 
 class GridDropoutAxisSpec(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     min: Annotated[float, Field(ge=0.0, lt=1.0, default=0.0)]
     max: Annotated[float, Field(ge=0.0, lt=1.0, default=0.30)]
-    steps: Annotated[int, Field(ge=2, le=61, default=10)]
+    steps: Annotated[int, Field(strict=True, ge=2, le=61, default=10)]
 
     @model_validator(mode="after")
     def validate_range(self) -> "GridDropoutAxisSpec":
@@ -210,6 +212,8 @@ class ScenarioGridRequest(BaseModel):
     at selected_scenario.dropout (or 0.0 if omitted). Each curve point uses floored
     expected retention floor(enrolled_n * (1 - dropout)) and the effective effect.
     """
+    model_config = ConfigDict(extra="forbid")
+    provenance: Dict[str, "FieldProvenance"] = Field(default_factory=dict)
     planned_design: TrialAssumptions
     fixed_enrollment: ArmCounts
     x_baseline: GridAxisSpec = Field(
@@ -248,6 +252,8 @@ class ScenarioGridRequest(BaseModel):
 
 
 class GridPoint(BaseModel):
+    expected_evaluable_n: Optional[ExpectedRetainedCounts] = None
+    invalid_reason: Optional[str] = None
     p_control: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
     dropout: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
     power: Optional[float] = Field(default=None, ge=0.0, le=1.0, allow_inf_nan=False)
@@ -284,6 +290,13 @@ class PowerCurvePoint(BaseModel):
 
 
 class ScenarioGridResponse(BaseModel):
+    grid_label: Literal["expected_count_approximation"] = "expected_count_approximation"
+    fixed_enrollment: Optional[ArmCounts] = None
+    below_target: List[List[Optional[bool]]] = Field(default_factory=list)
+    analytic_delta: Optional[float] = Field(default=None, allow_inf_nan=False,
+        description="Selected minus original planned power in fraction units, independent of grid-domain validity; null when either comparison point is unavailable.")
+    software_versions: Dict[str, str] = Field(default_factory=dict)
+    provenance: Dict[str, "FieldProvenance"] = Field(default_factory=dict)
     model_version: ModelVersion = "binary-v1"
     method: AnalyticalMethod = "cohen_h_normal_v1"
     x_baseline: List[float]
@@ -293,8 +306,10 @@ class ScenarioGridResponse(BaseModel):
     target_power: float = Field(gt=0.0, lt=1.0, allow_inf_nan=False)
     planned_point: GridPoint
     selected_point: Optional[GridPoint] = None
-    frontier_points: List[GridPoint] = Field(default_factory=list)
-    contour_segments: List[ContourSegment] = Field(default_factory=list)
+    frontier_points: List[GridPoint] = Field(default_factory=list,
+        description="Unique interpolated target-frontier coordinates for markers. This list conveys no connectivity; use contour_segments to draw edges, never join frontier_points in list order.")
+    contour_segments: List[ContourSegment] = Field(default_factory=list,
+        description="Independent adjacent frontier edges, preserving disconnected paths and avoiding invalid cells.")
     power_curve: List[PowerCurvePoint] = Field(default_factory=list)
     invalid_cell_count: int = Field(ge=0)
     worst_case_power: Optional[float] = Field(default=None, ge=0.0, le=1.0, allow_inf_nan=False)
@@ -408,3 +423,8 @@ class ExportPayload(BaseModel):
     )
     provenance: Dict[str, FieldProvenance] = Field(default_factory=dict)
     exported_at: str
+
+
+# Resolve grid provenance types declared below the endpoint schemas.
+ScenarioGridRequest.model_rebuild()
+ScenarioGridResponse.model_rebuild()

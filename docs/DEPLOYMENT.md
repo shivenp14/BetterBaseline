@@ -2,7 +2,7 @@
 
 The backend builds and serves real calculate/evaluate requests from the committed
 dependency lock. The frontend still uses fixtures. Full browser, grid, export and
-fresh offline acceptance await #66/#68/#76; this draft does not close #81.
+fresh offline acceptance await #68/#76; this draft does not close #81.
 No public deployment has been verified.
 
 ## Local startup

@@ -1,4 +1,4 @@
-name: Integration invariants (fixture and point API)
+name: Integration invariants (fixture and live API)
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  fixture-and-point-api:
+  fixture-and-live-api:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -26,7 +26,7 @@ jobs:
         run: uv sync --locked --extra dev
       - name: Check fixture invariants and mutation regressions
         run: uv run --project backend --locked --extra dev python -m unittest discover -s tests/integration -p 'test_*.py' -v
-      - name: Check actual calculate to evaluation HTTP handoff
+      - name: Check actual calculate, evaluation and grid HTTP handoffs
         shell: bash
         run: |
           set -euo pipefail
@@ -38,5 +38,5 @@ jobs:
             exit 1
           fi
 
-# Partial integration only. Add real grid/provenance/UI-export orchestration
-# after #66/#67/#76. Keep browser E2E and core CI in their separate workflows.
+# Partial integration only. Add real provenance/UI-export orchestration
+# after #67/#76. Keep browser E2E and core CI in their separate workflows.
