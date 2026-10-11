@@ -47,6 +47,7 @@
 15. **Worst-Case Grid Summary:**
    - `worst_case_power` is required to contain the minimum over valid grid cells (comparison tolerance `1e-4`); it is `null` exactly when no valid cells exist.
    - Contour segments follow `target_power` and never bridge invalid cells; 80% is only the default/demo target.
+   - Grid points and power-curve entries carry numeric `power` exactly when `is_valid` is true; invalid entries carry `null`.
 16. **Canonical Planning Documentation:**
    - The three planning docs use Better Baseline naming and these canonical API fields. A/B/C/D denote task categories; live issue assignees and recorded file handoffs determine ownership.
    - JSON Schema describes structural types and scalar constraints; Pydantic validators additionally enforce cross-field/domain invariants such as equal arms and grid summary consistency.

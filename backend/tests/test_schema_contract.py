@@ -25,6 +25,7 @@ from app.schemas import (
     StressScenario,
     AnalyticEvaluation,
     ExpectedRetainedCounts,
+    PowerCurvePoint,
 )
 
 
@@ -390,3 +391,28 @@ def test_all_invalid_grid_requires_null_minimum(example_fixtures):
         ScenarioGridResponse.model_validate(grid)
     grid["worst_case_power"] = None
     assert ScenarioGridResponse.model_validate(grid).worst_case_power is None
+
+
+@pytest.mark.parametrize("model", [GridPoint, PowerCurvePoint])
+@pytest.mark.parametrize("is_valid,power", [(True, None), (False, 0.8)])
+def test_point_validity_rejects_contradictory_power(model, is_valid, power):
+    with pytest.raises(ValidationError, match="exactly when is_valid"):
+        model(p_control=0.2, dropout=0.1, is_valid=is_valid, power=power)
+
+
+@pytest.mark.parametrize("model", [GridPoint, PowerCurvePoint])
+@pytest.mark.parametrize("is_valid,power", [(True, 0.8), (False, None)])
+def test_point_validity_accepts_consistent_power(model, is_valid, power):
+    result = model(p_control=0.2, dropout=0.1, is_valid=is_valid, power=power)
+    assert result.is_valid == is_valid
+    assert result.power == power
+
+
+@pytest.mark.parametrize("field", ["planned_point", "selected_point", "frontier_points", "power_curve"])
+@pytest.mark.parametrize("is_valid,power", [(True, None), (False, 0.8)])
+def test_grid_rejects_contradictory_nested_points(example_fixtures, field, is_valid, power):
+    grid = example_fixtures["scenario_grid_response"]
+    point = {"p_control": 0.2, "dropout": 0.1, "is_valid": is_valid, "power": power}
+    grid[field] = [point] if field in ("frontier_points", "power_curve") else point
+    with pytest.raises(ValidationError, match="exactly when is_valid"):
+        ScenarioGridResponse.model_validate(grid)

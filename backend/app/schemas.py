@@ -254,6 +254,12 @@ class GridPoint(BaseModel):
     is_safe: bool = False
     is_valid: bool = True
 
+    @model_validator(mode="after")
+    def validate_power_availability(self) -> "GridPoint":
+        if self.is_valid != (self.power is not None):
+            raise ValueError("Point power must be numeric exactly when is_valid is true")
+        return self
+
 
 class ContourPoint(BaseModel):
     p_control: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
@@ -269,6 +275,12 @@ class PowerCurvePoint(BaseModel):
     p_control: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
     power: Optional[float] = Field(default=None, ge=0.0, le=1.0, allow_inf_nan=False)
     is_valid: bool = True
+
+    @model_validator(mode="after")
+    def validate_power_availability(self) -> "PowerCurvePoint":
+        if self.is_valid != (self.power is not None):
+            raise ValueError("Curve power must be numeric exactly when is_valid is true")
+        return self
 
 
 class ScenarioGridResponse(BaseModel):
