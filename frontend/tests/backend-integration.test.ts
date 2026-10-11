@@ -13,7 +13,10 @@ async function run() {
     type: "UPDATE_PLANNED_FIELD", fieldPointer: "/planned_design/dropout/control", update: { dropout: planned.dropout },
   });
   const revision = state.requestRevision;
-  state = workspaceReducer(state, { type: "START_CALCULATE", requestRevision: revision });
+  state = workspaceReducer(state, {
+    type: "START_CALCULATE", requestRevision: revision,
+    expectedInputGeneration: state.inputGeneration,
+  });
   const calculation = await calculateDesign({ ...planned, preset_id: state.presetId, provenance_ledger: state.provenanceLedger });
   assert.equal(calculation.enrolled_n.control, 1004);
   assert.equal(calculation.enrolled_n.treatment, 1004);
@@ -26,7 +29,10 @@ async function run() {
   state = workspaceReducer(state, { type: "UPDATE_STRESS_DROPOUT", dropout: 0.25 });
   assert.deepEqual(state.frozenEnrollment, frozen, "stress edits preserve the frozen planned enrollment");
   const evaluationRevision = state.requestRevision + 1;
-  state = workspaceReducer(state, { type: "START_EVALUATE", requestRevision: evaluationRevision });
+  state = workspaceReducer(state, {
+    type: "START_EVALUATE", requestRevision: evaluationRevision,
+    expectedInputGeneration: state.inputGeneration,
+  });
   const result = await evaluateScenario({
     planned_design: planned,
     fixed_enrollment: state.frozenEnrollment!,
@@ -52,7 +58,10 @@ async function run() {
   assert.deepEqual(state.frozenEnrollment, frozen, "evaluation does not resize enrollment");
 
   const gridRevision = state.requestRevision + 1;
-  state = workspaceReducer(state, { type: "START_GRID", requestRevision: gridRevision });
+  state = workspaceReducer(state, {
+    type: "START_GRID", requestRevision: gridRevision,
+    expectedInputGeneration: state.inputGeneration,
+  });
   const grid = await getStressGrid({
     planned_design: planned,
     fixed_enrollment: frozen!,

@@ -15,15 +15,15 @@ import type { ExtendedEvaluateRequest } from "./api";
 export type WorkspaceAction =
   | { type: "LOAD_PRESET"; presetId: string }
   | { type: "UPDATE_PLANNED_FIELD"; fieldPointer: string; fieldPointers?: string[]; update: Partial<TrialAssumptions> }
-  | { type: "START_CALCULATE"; requestRevision: number }
+  | { type: "START_CALCULATE"; requestRevision: number; expectedInputGeneration: number }
   | { type: "CALCULATE_SUCCESS"; response: CalculateResponse; requestRevision: number }
   | { type: "CALCULATE_ERROR"; error: string; requestRevision: number }
   | { type: "UPDATE_STRESS_BASELINE"; baseline: number }
   | { type: "UPDATE_STRESS_DROPOUT"; dropout: number }
-  | { type: "START_EVALUATE"; requestRevision?: number }
+  | { type: "START_EVALUATE"; requestRevision?: number; expectedInputGeneration: number }
   | { type: "EVALUATE_SUCCESS"; response: EvaluateResponse; requestRevision: number }
   | { type: "EVALUATE_ERROR"; error: string; requestRevision: number }
-  | { type: "START_GRID"; requestRevision?: number }
+  | { type: "START_GRID"; requestRevision?: number; expectedInputGeneration: number }
   | { type: "GRID_SUCCESS"; response: GridResponse; requestRevision: number }
   | { type: "GRID_ERROR"; error: string; requestRevision: number }
   | { type: "RESET_TO_PRESET" };
@@ -64,6 +64,7 @@ export function initializeWorkspaceState(presetId = "baseline-collapse-v1"): Wor
     gridStatus: "idle",
     gridError: null,
     activeGridRevision: null,
+    inputGeneration: 0,
     displayedInputsHash: preset.inputs_hash,
     requestRevision: 0,
   };
@@ -114,6 +115,7 @@ export function workspaceReducer(
         // monotonic so an already-resolving old request can never own the new
         // preset, even when no request is started after the switch.
         requestRevision: state.requestRevision + 1,
+        inputGeneration: state.inputGeneration + 1,
       };
     }
 
@@ -121,6 +123,7 @@ export function workspaceReducer(
       return {
         ...initializeWorkspaceState(state.presetId),
         requestRevision: state.requestRevision + 1,
+        inputGeneration: state.inputGeneration + 1,
       };
     }
 
@@ -145,15 +148,18 @@ export function workspaceReducer(
         gridStatus: "stale",
         displayedInputsHash: null,
         requestRevision: state.requestRevision + 1,
+        inputGeneration: state.inputGeneration + 1,
       };
     }
 
     case "START_CALCULATE": {
+      if (action.expectedInputGeneration !== state.inputGeneration) return state;
       return {
         ...state,
         // Calculation replaces the enrollment lock, so evaluation and grid
         // requests owned by the previous lock can no longer publish results.
         requestRevision: action.requestRevision,
+        inputGeneration: state.inputGeneration + 1,
         designStatus: "calculating",
         designError: null,
         activeCalculateRevision: action.requestRevision,
@@ -225,6 +231,7 @@ export function workspaceReducer(
         gridStatus: "stale",
         displayedInputsHash: null,
         requestRevision: state.requestRevision + 1,
+        inputGeneration: state.inputGeneration + 1,
       };
     }
 
@@ -251,10 +258,12 @@ export function workspaceReducer(
         gridStatus: "stale",
         displayedInputsHash: null,
         requestRevision: state.requestRevision + 1,
+        inputGeneration: state.inputGeneration + 1,
       };
     }
 
     case "START_EVALUATE": {
+      if (action.expectedInputGeneration !== state.inputGeneration) return state;
       if (state.designStatus === "calculating") return state;
       const requestRevision = action.requestRevision ?? state.requestRevision + 1;
       return {
@@ -301,6 +310,7 @@ export function workspaceReducer(
     }
 
     case "START_GRID": {
+      if (action.expectedInputGeneration !== state.inputGeneration) return state;
       if (state.designStatus === "calculating") return state;
       const requestRevision = action.requestRevision ?? state.requestRevision + 1;
       return {

@@ -1,6 +1,6 @@
 // Mount the production page and hold independent API responses to exercise real
-// overlapping evaluation/grid lifecycle behavior. Requires PLAYWRIGHT_MODULE and
-// PAGE_URL; API replies are fulfilled by the browser route handlers below.
+// evaluation/grid ownership and debounced input-generation behavior. Requires
+// PLAYWRIGHT_MODULE and PAGE_URL; API replies are fulfilled by browser routes.
 import assert from "node:assert/strict";
 import { pathToFileURL } from "node:url";
 
@@ -48,9 +48,19 @@ const gridResponse = {
 };
 
 function deferred() {
-  let resolve;
-  const promise = new Promise((res) => { resolve = res; });
-  return { promise, resolve };
+  let settle;
+  let timer;
+  const promise = new Promise((res, reject) => {
+    settle = res;
+    timer = setTimeout(() => reject(new Error("Timed out waiting for a controlled browser request.")), 30000);
+  });
+  return {
+    promise,
+    resolve(value) {
+      clearTimeout(timer);
+      settle(value);
+    },
+  };
 }
 
 function statusSelector(kind) {
@@ -134,6 +144,86 @@ async function runCase({ startFirst, completeFirst, evaluationOutcome, gridOutco
   await page.close();
 }
 
+async function mountLiveWorkspace(page, onEvaluation) {
+  await page.route("**/api/v1/design/calculate", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify(calculateResponse),
+  }));
+  await page.route("**/api/v1/scenarios/evaluate", async (route) => {
+    await onEvaluation(route);
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(evaluateResponse),
+    });
+  });
+  await page.goto(process.env.PAGE_URL);
+  await page.getByRole("button", { name: "Calculate & Lock Design", exact: true }).click();
+  await page.waitForFunction(() => {
+    const button = Array.from(document.querySelectorAll("button"))
+      .find((candidate) => candidate.textContent?.trim() === "Evaluate Stress Scenario");
+    return button instanceof HTMLButtonElement && !button.disabled;
+  });
+}
+
+async function runLiveDebouncedStressEvaluation() {
+  const page = await browser.newPage();
+  const evaluationStarted = deferred();
+  const requests = [];
+  await mountLiveWorkspace(page, async (route) => {
+    requests.push(route.request().postDataJSON());
+    evaluationStarted.resolve();
+  });
+
+  await page.locator("#stress-baseline-num").fill("0.16");
+  await evaluationStarted.promise;
+  assert.equal(requests.length, 1, "one stress slider edit issues one debounced live evaluation");
+  assert.deepEqual(requests[0].fixed_enrollment, { control: 903, treatment: 903 },
+    "live stress evaluation uses the actual calculated fixed enrollment");
+  assert.equal(requests[0].stress_scenario.control_event_rate, 0.16,
+    "live stress evaluation uses the current slider value");
+  assert.equal(requests[0].provenance["/stress_scenario/control_event_rate"].source, "manual_user",
+    "live request carries current stress-input provenance");
+  await waitForStatus(page, "evaluation", "SUCCESS");
+  await page.waitForTimeout(400);
+  assert.equal(requests.length, 1, "the settled debounce does not issue a duplicate request");
+  await page.close();
+}
+
+async function runPendingDebounceInvalidation({ label, transition }) {
+  const page = await browser.newPage();
+  const requests = [];
+  await mountLiveWorkspace(page, async (route) => {
+    requests.push(route.request().postDataJSON());
+  });
+
+  await page.locator("#stress-baseline-num").fill("0.16");
+  await page.waitForFunction(() => document.querySelector("#stress-baseline-num")?.value === "0.16");
+  await page.waitForTimeout(80);
+
+  if (transition === "planned-edit") {
+    await page.getByLabel("Relative risk (decimal ratio)").fill("0.8");
+    await page.waitForFunction(() => Array.from(document.querySelectorAll("input"))
+      .some((input) => input.getAttribute("name") === "relativeRisk" && input.value === "0.8"));
+  } else if (transition === "preset") {
+    await page.locator("#preset-select").selectOption("attrition-shock-v1");
+    await page.waitForFunction(() => document.querySelector("#preset-select")?.value === "attrition-shock-v1");
+  } else {
+    await page.getByRole("button", { name: "Reset to Preset Defaults", exact: true }).click();
+    await page.waitForFunction(() => document.querySelector("#stress-baseline-num")?.value === "0.1");
+  }
+
+  await page.waitForTimeout(450);
+  assert.equal(requests.length, 0, `${label} invalidates a pending stress debounce before it reaches the API`);
+  assert.notEqual(
+    (await page.locator(statusSelector("evaluation")).textContent())?.trim(),
+    "EVALUATING",
+    `${label} cannot strand the evaluation status`,
+  );
+  await page.close();
+}
+
 try {
   for (const evaluationOutcome of ["success", "error"]) {
     for (const gridOutcome of ["success", "error"]) {
@@ -144,7 +234,15 @@ try {
       }
     }
   }
-  console.log("PASS: mounted production page settles overlapping evaluation/grid success and error responses in both start and completion orders.");
+  await runLiveDebouncedStressEvaluation();
+  for (const invalidation of [
+    { label: "planned/effect edit", transition: "planned-edit" },
+    { label: "preset selection", transition: "preset" },
+    { label: "preset reset", transition: "reset" },
+  ]) {
+    await runPendingDebounceInvalidation(invalidation);
+  }
+  console.log("PASS: mounted production page preserves evaluation/grid overlap, sends one fixed-enrollment live stress evaluation, and cancels pending debounces across planned edits, presets, and reset.");
 } finally {
   await browser.close();
 }

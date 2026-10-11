@@ -32,6 +32,7 @@ export default function Home() {
   const gridAbortRef = useRef<AbortController | null>(null);
   const stressEvaluationPendingRef = useRef(false);
   const nextRequestRevisionRef = useRef(0);
+  const inputGenerationRef = useRef(state.inputGeneration);
 
   const {
     presetId,
@@ -51,6 +52,7 @@ export default function Home() {
     gridError,
     displayedInputsHash,
     requestRevision,
+    inputGeneration,
   } = state;
 
   const displayedDesign = calculatedDesign;
@@ -63,13 +65,20 @@ export default function Home() {
     gridAbortRef.current?.abort();
   }
 
+  function advanceInputGeneration() {
+    inputGenerationRef.current += 1;
+    return inputGenerationRef.current;
+  }
+
   function handleSelectPreset(nextPresetId: string) {
+    advanceInputGeneration();
     abortAllPending();
     stressEvaluationPendingRef.current = false;
     dispatch({ type: "LOAD_PRESET", presetId: nextPresetId });
   }
 
   function handleResetPreset() {
+    advanceInputGeneration();
     abortAllPending();
     stressEvaluationPendingRef.current = false;
     dispatch({ type: "RESET_TO_PRESET" });
@@ -77,29 +86,45 @@ export default function Home() {
   }
 
   function handleStressBaselineChange(val: number) {
+    advanceInputGeneration();
     abortAllPending();
     stressEvaluationPendingRef.current = true;
     dispatch({ type: "UPDATE_STRESS_BASELINE", baseline: val });
   }
 
   function handleStressDropoutChange(val: number) {
+    advanceInputGeneration();
     abortAllPending();
     stressEvaluationPendingRef.current = true;
     dispatch({ type: "UPDATE_STRESS_DROPOUT", dropout: val });
   }
 
   function handlePlannedDraftChange(draft: PlanningDraft, changedField: DraftField) {
+    advanceInputGeneration();
+    stressEvaluationPendingRef.current = false;
     dispatch(plannedFieldUpdateAction(draft, changedField, presetId));
   }
 
   async function handleCalculate(request: CalculateRequest) {
+    const expectedInputGeneration = inputGeneration;
+    if (expectedInputGeneration !== inputGenerationRef.current) return;
+
+    // Recalculation is an input-snapshot transition because it replaces the
+    // enrollment lock. Advance synchronously so a pending debounce cannot
+    // start against the old lock before React applies the reducer action.
+    advanceInputGeneration();
+    stressEvaluationPendingRef.current = false;
     abortAllPending();
     const controller = new AbortController();
     calculateAbortRef.current = controller;
     const revision = Math.max(requestRevision, nextRequestRevisionRef.current) + 1;
     nextRequestRevisionRef.current = revision;
 
-    dispatch({ type: "START_CALCULATE", requestRevision: revision });
+    dispatch({
+      type: "START_CALCULATE",
+      requestRevision: revision,
+      expectedInputGeneration,
+    });
     try {
       const response = await calculateDesign(
         { ...request, provenance_ledger: provenanceLedger },
@@ -116,7 +141,11 @@ export default function Home() {
     }
   }
 
-  const handleEvaluate = useCallback(async () => {
+  const handleEvaluate = useCallback(async (expectedInputGeneration = inputGeneration) => {
+    if (
+      expectedInputGeneration !== inputGenerationRef.current ||
+      expectedInputGeneration !== inputGeneration
+    ) return;
     if (designStatus === "calculating" || !frozenEnrollment ||
       (getApiMode() === "live" && designStatus !== "success")) return;
     evaluateAbortRef.current?.abort();
@@ -125,7 +154,11 @@ export default function Home() {
     const revision = Math.max(requestRevision, nextRequestRevisionRef.current) + 1;
     nextRequestRevisionRef.current = revision;
 
-    dispatch({ type: "START_EVALUATE", requestRevision: revision });
+    dispatch({
+      type: "START_EVALUATE",
+      requestRevision: revision,
+      expectedInputGeneration,
+    });
     try {
       const response = await evaluateScenario(buildStressEvaluationRequest(state), controller.signal);
       dispatch({ type: "EVALUATE_SUCCESS", response, requestRevision: revision });
@@ -137,18 +170,22 @@ export default function Home() {
         requestRevision: revision,
       });
     }
-  }, [designStatus, frozenEnrollment, requestRevision, state]);
+  }, [designStatus, frozenEnrollment, inputGeneration, requestRevision, state]);
 
   useEffect(() => {
     if (!stressEvaluationPendingRef.current || !frozenEnrollment || designStatus === "calculating" ||
       (getApiMode() === "live" && designStatus !== "success")) return;
+    const expectedInputGeneration = inputGeneration;
     return scheduleDebounced(() => {
+      if (expectedInputGeneration !== inputGenerationRef.current) return;
       stressEvaluationPendingRef.current = false;
-      void handleEvaluate();
+      void handleEvaluate(expectedInputGeneration);
     }, 350);
-  }, [stressBaseline, stressDropout, frozenEnrollment, designStatus, handleEvaluate]);
+  }, [stressBaseline, stressDropout, frozenEnrollment, designStatus, inputGeneration, handleEvaluate]);
 
   async function handleLoadGrid() {
+    const expectedInputGeneration = inputGeneration;
+    if (expectedInputGeneration !== inputGenerationRef.current) return;
     if (designStatus === "calculating" || !frozenEnrollment || !displayedGrid) return;
     gridAbortRef.current?.abort();
     const controller = new AbortController();
@@ -156,7 +193,11 @@ export default function Home() {
     const revision = Math.max(requestRevision, nextRequestRevisionRef.current) + 1;
     nextRequestRevisionRef.current = revision;
 
-    dispatch({ type: "START_GRID", requestRevision: revision });
+    dispatch({
+      type: "START_GRID",
+      requestRevision: revision,
+      expectedInputGeneration,
+    });
     try {
       const response = await getStressGrid(
         {
@@ -287,7 +328,7 @@ export default function Home() {
         stressDropout={stressDropout}
         onBaselineChange={handleStressBaselineChange}
         onDropoutChange={handleStressDropoutChange}
-        onEvaluate={handleEvaluate}
+        onEvaluate={() => { void handleEvaluate(); }}
         evaluateStatus={evaluateStatus}
         evaluateError={evaluateError}
         isCalculating={designStatus === "calculating"}

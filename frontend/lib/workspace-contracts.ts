@@ -62,6 +62,8 @@ export interface WorkspaceState {
   gridError: string | null;
   /** Exact owner token for the currently active grid request, if any. */
   activeGridRevision: number | null;
+  /** Input snapshot identity. Mutating inputs or starting a recalculation advances it. */
+  inputGeneration: number;
   displayedInputsHash: string | null;
   /** Monotonic token allocator; operation ownership is tracked in the active fields above. */
   requestRevision: number;

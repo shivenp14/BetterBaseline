@@ -10,7 +10,10 @@ async function main() {
     update: { control_event_rate: 0.22 },
   });
   const revision = state.requestRevision + 1;
-  state = workspaceReducer(state, { type: "START_CALCULATE", requestRevision: revision });
+  state = workspaceReducer(state, {
+    type: "START_CALCULATE", requestRevision: revision,
+    expectedInputGeneration: state.inputGeneration,
+  });
   state = workspaceReducer(state, {
     type: "CALCULATE_SUCCESS",
     response: {

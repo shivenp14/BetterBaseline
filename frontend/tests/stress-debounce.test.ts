@@ -5,7 +5,10 @@ import { buildStressEvaluationRequest, initializeWorkspaceState, workspaceReduce
 async function main() {
   const baseline = initializeWorkspaceState("baseline-collapse-v1");
   const calculationRevision = baseline.requestRevision + 1;
-  let state = workspaceReducer(baseline, { type: "START_CALCULATE", requestRevision: calculationRevision });
+  let state = workspaceReducer(baseline, {
+    type: "START_CALCULATE", requestRevision: calculationRevision,
+    expectedInputGeneration: baseline.inputGeneration,
+  });
   state = workspaceReducer(state, {
     type: "CALCULATE_SUCCESS",
     response: baseline.calculatedDesign!,

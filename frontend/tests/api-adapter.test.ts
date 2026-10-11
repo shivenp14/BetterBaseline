@@ -64,7 +64,10 @@ async function run() {
   assert.equal(calculated.execution?.mode, "backend");
   assert.deepEqual(calculated.provenance.field_provenance, ledger);
   const calculateRevision = liveState.requestRevision;
-  liveState = workspaceReducer(liveState, { type: "START_CALCULATE", requestRevision: calculateRevision });
+  liveState = workspaceReducer(liveState, {
+    type: "START_CALCULATE", requestRevision: calculateRevision,
+    expectedInputGeneration: liveState.inputGeneration,
+  });
   liveState = workspaceReducer(liveState, {
     type: "CALCULATE_SUCCESS", response: calculated, requestRevision: calculateRevision,
   });
