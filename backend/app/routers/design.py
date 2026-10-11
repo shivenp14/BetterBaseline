@@ -13,6 +13,7 @@ from ..schemas import (
 )
 from ..services.compute import execute_guarded_computation
 from ..statistics.effect import resolve_treatment_risk
+from ..statistics.diagnostics import analytic_diagnostics
 from ..statistics.inputs import Dropout as StatDropout, Effect as StatEffect
 from ..statistics.sample_size import minimum_sample_size
 
@@ -98,6 +99,11 @@ def calculate_design(request: DesignCalculateRequest, http_request: Request) -> 
             f"Control event rate {request.control_event_rate} is near or outside common binary trial planning regimes (0.05 - 0.40)."
         )
 
+    diagnostics = analytic_diagnostics(
+        request.control_event_rate, p_treatment,
+        evaluable_n.control, evaluable_n.treatment, request.alpha,
+    )["diagnostics"]
+
     return DesignCalculateResponse(
         model_version="binary-v1",
         method="cohen_h_normal_v1",
@@ -106,5 +112,6 @@ def calculate_design(request: DesignCalculateRequest, http_request: Request) -> 
         enrolled_n=enrolled_n,
         nominal_power_evaluable=size_result.achieved_power,
         warnings=warnings,
+        diagnostics=diagnostics,
         inputs_hash=compute_inputs_hash(request),
     )

@@ -25,7 +25,7 @@ from ..schemas import (
 )
 from ..services.compute import ComputeResourceGuard, execute_guarded_computation
 from ..statistics.analytic import analytic_power
-from ..statistics.diagnostics import analytic_diagnostics
+from ..statistics.diagnostics import analytic_diagnostics, simulation_diagnostics
 from ..statistics.effect import resolve_treatment_risk
 from ..statistics.errors import StatisticalInputError
 from ..statistics.inputs import Effect, expected_retained_count
@@ -108,7 +108,8 @@ def _evaluate(request: EvaluationRequest, guard: ComputeResourceGuard) -> Evalua
     )
     diagnostics = analytic_diagnostics(p_control, p_treatment, counts.control,
                                        counts.treatment, request.planned_design.alpha)
-    warnings = [item['message'] for item in diagnostics['diagnostics']]
+    diagnostic_records = list(diagnostics['diagnostics'])
+    warnings = [item['message'] for item in diagnostic_records]
     power = None
     if counts.control:
         power = analytic_power(p_control, p_treatment, counts.control, counts.treatment,
@@ -124,6 +125,14 @@ def _evaluate(request: EvaluationRequest, guard: ComputeResourceGuard) -> Evalua
         )
         mc = EvaluationMonteCarlo.model_validate(simulated)
         warnings.extend(simulated['warnings'])
+        simulated_diagnostics = simulation_diagnostics(
+            enrollment.control, enrollment.treatment, p_control, p_treatment,
+            stress.dropout.control, stress.dropout.treatment,
+            alpha=request.planned_design.alpha,
+            invalid_test_fraction=simulated['invalid_test_fraction'],
+            replicates=simulated['replicates'],
+        )
+        diagnostic_records.extend(simulated_diagnostics['diagnostics'])
     versions = {'python': platform.python_version(),
                 **{package: version(package) for package in ('numpy', 'scipy', 'statsmodels')}}
     canonical = json.dumps(request.model_dump(mode='json'), sort_keys=True,
@@ -133,6 +142,7 @@ def _evaluate(request: EvaluationRequest, guard: ComputeResourceGuard) -> Evalua
         analytic=AnalyticEvaluation(method='cohen_h_normal_v1', conditional_power_approx=power,
                                     assumed_evaluable_n=counts),
         monte_carlo=mc, warnings=list(dict.fromkeys(warnings)),
+        diagnostics=diagnostic_records,
         metadata=EvaluationMetadata(
             computed_at=datetime.now(timezone.utc).isoformat(),
             inputs_hash='sha256:' + hashlib.sha256(canonical.encode()).hexdigest(),
