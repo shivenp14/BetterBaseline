@@ -59,9 +59,11 @@ export function initializeWorkspaceState(presetId = "baseline-collapse-v1"): Wor
     evaluateResult: initialEvaluate,
     evaluateStatus: "idle",
     evaluateError: null,
+    activeEvaluateRevision: null,
     gridResult: initialGrid,
     gridStatus: "idle",
     gridError: null,
+    activeGridRevision: null,
     displayedInputsHash: preset.inputs_hash,
     requestRevision: 0,
   };
@@ -137,6 +139,8 @@ export function workspaceReducer(
         provenanceLedger: nextProvenance,
         designStatus: "idle",
         activeCalculateRevision: null,
+        activeEvaluateRevision: null,
+        activeGridRevision: null,
         evaluateStatus: "stale",
         gridStatus: "stale",
         displayedInputsHash: null,
@@ -147,15 +151,16 @@ export function workspaceReducer(
     case "START_CALCULATE": {
       return {
         ...state,
-        // Calculation invalidates prior evaluation/grid requests even when the
-        // assumptions did not change. Bump the shared revision so their late
-        // completions cannot overwrite results for the newly locked design.
+        // Calculation replaces the enrollment lock, so evaluation and grid
+        // requests owned by the previous lock can no longer publish results.
         requestRevision: action.requestRevision,
         designStatus: "calculating",
         designError: null,
         activeCalculateRevision: action.requestRevision,
+        activeEvaluateRevision: null,
         evaluateStatus: state.evaluateStatus === "evaluating" ? "stale" : state.evaluateStatus,
         evaluateError: null,
+        activeGridRevision: null,
         gridStatus: state.gridStatus === "loading" ? "stale" : state.gridStatus,
         gridError: null,
       };
@@ -179,6 +184,8 @@ export function workspaceReducer(
         designStatus: "success",
         designError: null,
         activeCalculateRevision: null,
+        activeEvaluateRevision: null,
+        activeGridRevision: null,
         displayedInputsHash: action.response.inputs_hash,
         evaluateStatus: "stale",
         gridStatus: "stale",
@@ -212,6 +219,8 @@ export function workspaceReducer(
         provenanceLedger: nextProv,
         designStatus: state.designStatus === "calculating" ? "idle" : state.designStatus,
         activeCalculateRevision: null,
+        activeEvaluateRevision: null,
+        activeGridRevision: null,
         evaluateStatus: "stale",
         gridStatus: "stale",
         displayedInputsHash: null,
@@ -236,6 +245,8 @@ export function workspaceReducer(
         provenanceLedger: nextProv,
         designStatus: state.designStatus === "calculating" ? "idle" : state.designStatus,
         activeCalculateRevision: null,
+        activeEvaluateRevision: null,
+        activeGridRevision: null,
         evaluateStatus: "stale",
         gridStatus: "stale",
         displayedInputsHash: null,
@@ -245,22 +256,28 @@ export function workspaceReducer(
 
     case "START_EVALUATE": {
       if (state.designStatus === "calculating") return state;
+      const requestRevision = action.requestRevision ?? state.requestRevision + 1;
       return {
         ...state,
-        // Every evaluation gets a unique revision. AbortController cancellation
-        // is best-effort; the revision also rejects transports that resolve late.
-        requestRevision: action.requestRevision ?? state.requestRevision + 1,
+        // Keep the operation token separate from other request kinds: evaluation
+        // and grid are valid concurrently for the same frozen inputs.
+        requestRevision,
+        activeEvaluateRevision: requestRevision,
         evaluateStatus: "evaluating",
         evaluateError: null,
       };
     }
 
     case "EVALUATE_SUCCESS": {
-      if (action.requestRevision !== state.requestRevision || state.evaluateStatus !== "evaluating") {
+      if (
+        action.requestRevision !== state.activeEvaluateRevision ||
+        state.evaluateStatus !== "evaluating"
+      ) {
         return state;
       }
       return {
         ...state,
+        activeEvaluateRevision: null,
         evaluateResult: action.response,
         evaluateStatus: "success",
         evaluateError: null,
@@ -269,11 +286,15 @@ export function workspaceReducer(
     }
 
     case "EVALUATE_ERROR": {
-      if (action.requestRevision !== state.requestRevision || state.evaluateStatus !== "evaluating") {
+      if (
+        action.requestRevision !== state.activeEvaluateRevision ||
+        state.evaluateStatus !== "evaluating"
+      ) {
         return state;
       }
       return {
         ...state,
+        activeEvaluateRevision: null,
         evaluateStatus: "error",
         evaluateError: action.error,
       };
@@ -281,20 +302,26 @@ export function workspaceReducer(
 
     case "START_GRID": {
       if (state.designStatus === "calculating") return state;
+      const requestRevision = action.requestRevision ?? state.requestRevision + 1;
       return {
         ...state,
-        requestRevision: action.requestRevision ?? state.requestRevision + 1,
+        requestRevision,
+        activeGridRevision: requestRevision,
         gridStatus: "loading",
         gridError: null,
       };
     }
 
     case "GRID_SUCCESS": {
-      if (action.requestRevision !== state.requestRevision || state.gridStatus !== "loading") {
+      if (
+        action.requestRevision !== state.activeGridRevision ||
+        state.gridStatus !== "loading"
+      ) {
         return state;
       }
       return {
         ...state,
+        activeGridRevision: null,
         gridResult: action.response,
         gridStatus: "success",
         gridError: null,
@@ -303,11 +330,15 @@ export function workspaceReducer(
     }
 
     case "GRID_ERROR": {
-      if (action.requestRevision !== state.requestRevision || state.gridStatus !== "loading") {
+      if (
+        action.requestRevision !== state.activeGridRevision ||
+        state.gridStatus !== "loading"
+      ) {
         return state;
       }
       return {
         ...state,
+        activeGridRevision: null,
         gridStatus: "error",
         gridError: action.error,
       };
