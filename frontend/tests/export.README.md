@@ -11,12 +11,14 @@ npm run build
 ```
 
 The tests start and clean up a temporary local Uvicorn process, then make fresh
-HTTP calculate/evaluate/grid calls for synthetic, manual and ARR cases. Eight
+HTTP calculate/evaluate/grid calls for synthetic, manual and ARR cases. Nine
 tests cover JSON download/reopen, full result/provenance preservation, both MCSEs,
 RNG/count aggregates, curve/contours/null masks, stale/pending/error guards,
 independent operation tokens, canonical export hash integrity and backend schema
 validation, including exact decimal retention at 1000 enrolled/.07 dropout
-(930 retained) through download/reopen. `EXPORT_TEST_OUTPUT=/tmp/export-review` saves fresh artifacts.
+(930 retained) through display/download/reopen and direct backend parity across
+adjacent decimal boundaries and scientific notation. StressControls uses the
+same exact-decimal helper as export validation. `EXPORT_TEST_OUTPUT=/tmp/export-review` saves fresh artifacts.
 
 ## Captured inputs and raw results
 

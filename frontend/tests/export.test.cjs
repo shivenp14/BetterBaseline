@@ -16,6 +16,8 @@ require.extensions[".ts"] = require.extensions[".tsx"] = (module, filename) => m
 const { validateScenarioExport, serializeScenarioExport, parseScenarioExport, buildScenarioExport, normalizeExportProvenance } = require("../lib/export.ts");
 const { computeWorkspaceExportInputsHash } = require("../lib/workspace-export.ts");
 const { ScenarioExport } = require("../components/ScenarioExport.tsx");
+const { StressControls } = require("../components/StressControls.tsx");
+const { expectedRetainedCount } = require("../lib/expected-retained.ts");
 const { initializeWorkspaceState, workspaceReducer } = require("../lib/workspace-state.ts");
 const python = process.env.EXPORT_TEST_PYTHON || "python3";
 const backend = path.resolve(__dirname, "../../backend");
@@ -95,6 +97,10 @@ test("decimal retention boundary from fresh HTTP results downloads and reopens",
   const data = await calculateFixture(false, false, true);
   assert.deepEqual(data.fixed_enrollment, { control: 1000, treatment: 1000 });
   assert.deepEqual(data.evaluation_result.analytic.assumed_evaluable_n, { control: 930, treatment: 930 });
+  const controls = renderToStaticMarkup(React.createElement(StressControls, { frozenEnrollment: data.fixed_enrollment, stressBaseline: .12, stressDropout: .07, onBaselineChange() {}, onDropoutChange() {}, evaluateStatus: "success", evaluateError: null }));
+  assert.match(controls, /930 control \/.*930 treatment evaluable/);
+  const empty = renderToStaticMarkup(React.createElement(StressControls, { frozenEnrollment: null, stressBaseline: .12, stressDropout: .07, onBaselineChange() {}, onDropoutChange() {}, evaluateStatus: "idle", evaluateError: null }));
+  assert.match(empty, /No calculated design locked yet/);
   assert.equal(Math.floor(1000 * (1 - .07)), 929); // Reproduce the binary-rounding bug.
   assert.deepEqual(parseScenarioExport(serializeScenarioExport(data)), data);
   const html = renderToStaticMarkup(React.createElement(ScenarioExport, { payload: data }));
@@ -102,6 +108,13 @@ test("decimal retention boundary from fresh HTTP results downloads and reopens",
   assert.deepEqual(parseScenarioExport(decodeURIComponent(encoded)), data);
   const result = spawnSync(python, ["-c", "import sys,json; from app.schemas import ExportPayload; p=json.load(sys.stdin); assert ExportPayload.model_validate(p).inputs_hash==p['inputs_hash']"], { cwd: backend, input: JSON.stringify(data), encoding: "utf8" });
   assert.equal(result.status, 0, result.stderr);
+});
+test("decimal retention helper agrees with backend across boundaries and scientific notation", () => {
+  const cases = [[1000, .07], [1000, .07000000000000002], [1000, .06999999999999999], [903, .1], [1000, 1e-7], [1000, 5e-324], [1000, 0], [1000, .9999999999999999]];
+  const result = spawnSync(python, ["-c", "import sys,json; from app.statistics.inputs import expected_retained_count; print(json.dumps([expected_retained_count(n,d) for n,d in json.load(sys.stdin)]))"], { cwd: backend, input: JSON.stringify(cases), encoding: "utf8" });
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(cases.map(([n, d]) => expectedRetainedCount(n, d)), JSON.parse(result.stdout));
+  assert.throws(() => expectedRetainedCount(1000, 1), RangeError);
 });
 test("downloads reopen as complete JSON; unavailable/invalid snapshots have no download link", () => {
   const html = renderToStaticMarkup(React.createElement(ScenarioExport, { payload: fixture }));
