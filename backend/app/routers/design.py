@@ -1,10 +1,12 @@
 """Design calculation route."""
 
 import hashlib
+import json
 from typing import Any
 from fastapi import APIRouter, Request
 
 from ..cache import make_cache_key
+from ..data.provenance import normalize_provenance
 from ..schemas import (
     ArmCounts,
     DesignCalculateRequest,
@@ -38,7 +40,11 @@ router = APIRouter(
 
 
 def compute_inputs_hash(request: DesignCalculateRequest) -> str:
-    raw = request.model_dump_json(exclude_none=True)
+    values = request.model_dump(mode="json", exclude_none=True)
+    # Keep the historical digest for older clients that omit provenance.
+    if not values.get("provenance"):
+        values.pop("provenance", None)
+    raw = json.dumps(values, separators=(",", ":"))
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
 
@@ -113,5 +119,6 @@ def calculate_design(request: DesignCalculateRequest, http_request: Request) -> 
         nominal_power_evaluable=size_result.achieved_power,
         warnings=warnings,
         diagnostics=diagnostics,
+        provenance=normalize_provenance(request.provenance),
         inputs_hash=compute_inputs_hash(request),
     )

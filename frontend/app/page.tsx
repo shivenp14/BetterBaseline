@@ -1,18 +1,21 @@
 "use client";
 
-import { useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { calculateDesign, evaluateScenario, getApiMode, getStressGrid } from "@/lib/api";
 import type { CalculateRequest } from "@/lib/contracts";
 import { getPresetById } from "@/lib/presets";
 import { plannedFieldUpdateAction } from "@/lib/workspace-planning";
 import type { DraftField, PlanningDraft } from "@/lib/validation";
 import {
+  buildStressEvaluationRequest,
   initializeWorkspaceState,
   workspaceReducer,
 } from "@/lib/workspace-state";
 import { PresetSelector } from "@/components/PresetSelector";
 import { DesignForm } from "@/components/DesignForm";
 import { StressControls } from "@/components/StressControls";
+import { buildWorkspaceExport, downloadWorkspaceExport, hasCurrentExportableResults } from "@/lib/workspace-export";
+import { scheduleDebounced } from "@/lib/debounce";
 
 function percent(value: number, digits = 0): string {
   return `${(value * 100).toFixed(digits)}%`;
@@ -27,6 +30,10 @@ export default function Home() {
   const calculateAbortRef = useRef<AbortController | null>(null);
   const evaluateAbortRef = useRef<AbortController | null>(null);
   const gridAbortRef = useRef<AbortController | null>(null);
+  const stressEvaluationPendingRef = useRef(false);
+  const cancelStressDebounceRef = useRef<(() => void) | null>(null);
+  const nextRequestRevisionRef = useRef(0);
+  const inputGenerationRef = useRef(state.inputGeneration);
 
   const {
     presetId,
@@ -46,11 +53,18 @@ export default function Home() {
     gridError,
     displayedInputsHash,
     requestRevision,
+    inputGeneration,
   } = state;
 
   const displayedDesign = calculatedDesign;
   const displayedEvaluate = evaluateResult;
   const displayedGrid = gridResult;
+
+  const cancelPendingStressEvaluation = useCallback(() => {
+    stressEvaluationPendingRef.current = false;
+    cancelStressDebounceRef.current?.();
+    cancelStressDebounceRef.current = null;
+  }, []);
 
   function abortAllPending() {
     calculateAbortRef.current?.abort();
@@ -58,38 +72,68 @@ export default function Home() {
     gridAbortRef.current?.abort();
   }
 
+  function advanceInputGeneration() {
+    inputGenerationRef.current += 1;
+    return inputGenerationRef.current;
+  }
+
   function handleSelectPreset(nextPresetId: string) {
+    advanceInputGeneration();
     abortAllPending();
+    cancelPendingStressEvaluation();
     dispatch({ type: "LOAD_PRESET", presetId: nextPresetId });
   }
 
   function handleResetPreset() {
+    advanceInputGeneration();
     abortAllPending();
+    cancelPendingStressEvaluation();
     dispatch({ type: "RESET_TO_PRESET" });
     setFormResetKey((key) => key + 1);
   }
 
   function handleStressBaselineChange(val: number) {
+    advanceInputGeneration();
     abortAllPending();
+    cancelPendingStressEvaluation();
+    stressEvaluationPendingRef.current = true;
     dispatch({ type: "UPDATE_STRESS_BASELINE", baseline: val });
   }
 
   function handleStressDropoutChange(val: number) {
+    advanceInputGeneration();
     abortAllPending();
+    cancelPendingStressEvaluation();
+    stressEvaluationPendingRef.current = true;
     dispatch({ type: "UPDATE_STRESS_DROPOUT", dropout: val });
   }
 
   function handlePlannedDraftChange(draft: PlanningDraft, changedField: DraftField) {
+    advanceInputGeneration();
+    cancelPendingStressEvaluation();
     dispatch(plannedFieldUpdateAction(draft, changedField, presetId));
   }
 
   async function handleCalculate(request: CalculateRequest) {
+    const expectedInputGeneration = inputGeneration;
+    if (expectedInputGeneration !== inputGenerationRef.current) return;
+
+    // Recalculation is an input-snapshot transition because it replaces the
+    // enrollment lock. Advance synchronously so a pending debounce cannot
+    // start against the old lock before React applies the reducer action.
+    advanceInputGeneration();
+    cancelPendingStressEvaluation();
     abortAllPending();
     const controller = new AbortController();
     calculateAbortRef.current = controller;
-    const revision = requestRevision + 1;
+    const revision = Math.max(requestRevision, nextRequestRevisionRef.current) + 1;
+    nextRequestRevisionRef.current = revision;
 
-    dispatch({ type: "START_CALCULATE", requestRevision: revision });
+    dispatch({
+      type: "START_CALCULATE",
+      requestRevision: revision,
+      expectedInputGeneration,
+    });
     try {
       const response = await calculateDesign(
         { ...request, provenance_ledger: provenanceLedger },
@@ -106,30 +150,29 @@ export default function Home() {
     }
   }
 
-  async function handleEvaluate() {
-    if (designStatus === "calculating" || !frozenEnrollment) return;
+  const handleEvaluate = useCallback(async (expectedInputGeneration = inputGeneration) => {
+    if (
+      expectedInputGeneration !== inputGenerationRef.current ||
+      expectedInputGeneration !== inputGeneration
+    ) return;
+    if (designStatus === "calculating" || !frozenEnrollment ||
+      (getApiMode() === "live" && designStatus !== "success")) return;
+    // Manual and automatic evaluation consume the same pending stress intent.
+    // Cancel synchronously before START_EVALUATE changes this callback's identity.
+    cancelPendingStressEvaluation();
     evaluateAbortRef.current?.abort();
     const controller = new AbortController();
     evaluateAbortRef.current = controller;
-    const revision = requestRevision;
+    const revision = Math.max(requestRevision, nextRequestRevisionRef.current) + 1;
+    nextRequestRevisionRef.current = revision;
 
-    dispatch({ type: "START_EVALUATE" });
+    dispatch({
+      type: "START_EVALUATE",
+      requestRevision: revision,
+      expectedInputGeneration,
+    });
     try {
-      const response = await evaluateScenario(
-        {
-          planned_design: plannedDraft,
-          fixed_enrollment: frozenEnrollment,
-          stress_scenario: {
-            control_event_rate: stressBaseline,
-            dropout: { control: stressDropout, treatment: stressDropout },
-            effect_override: null,
-          },
-          simulation: { replicates: 10000, seed: 42 },
-          preset_id: presetId,
-          provenance_ledger: provenanceLedger,
-        },
-        controller.signal
-      );
+      const response = await evaluateScenario(buildStressEvaluationRequest(state), controller.signal);
       dispatch({ type: "EVALUATE_SUCCESS", response, requestRevision: revision });
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === "AbortError") return;
@@ -139,16 +182,45 @@ export default function Home() {
         requestRevision: revision,
       });
     }
-  }
+  }, [designStatus, frozenEnrollment, inputGeneration, requestRevision, state, cancelPendingStressEvaluation]);
+
+  useEffect(() => {
+    if (!stressEvaluationPendingRef.current || !frozenEnrollment || designStatus === "calculating" ||
+      (getApiMode() === "live" && designStatus !== "success")) return;
+    const expectedInputGeneration = inputGeneration;
+    let active = true;
+    const cancelTimer = scheduleDebounced(() => {
+      if (!active || !stressEvaluationPendingRef.current ||
+        expectedInputGeneration !== inputGenerationRef.current) return;
+      void handleEvaluate(expectedInputGeneration);
+    }, 350);
+    const cancel = () => {
+      // clearTimeout alone cannot reject a callback already queued for delivery.
+      active = false;
+      cancelTimer();
+    };
+    cancelStressDebounceRef.current = cancel;
+    return () => {
+      cancel();
+      if (cancelStressDebounceRef.current === cancel) cancelStressDebounceRef.current = null;
+    };
+  }, [stressBaseline, stressDropout, frozenEnrollment, designStatus, inputGeneration, handleEvaluate]);
 
   async function handleLoadGrid() {
+    const expectedInputGeneration = inputGeneration;
+    if (expectedInputGeneration !== inputGenerationRef.current) return;
     if (designStatus === "calculating" || !frozenEnrollment || !displayedGrid) return;
     gridAbortRef.current?.abort();
     const controller = new AbortController();
     gridAbortRef.current = controller;
-    const revision = requestRevision;
+    const revision = Math.max(requestRevision, nextRequestRevisionRef.current) + 1;
+    nextRequestRevisionRef.current = revision;
 
-    dispatch({ type: "START_GRID" });
+    dispatch({
+      type: "START_GRID",
+      requestRevision: revision,
+      expectedInputGeneration,
+    });
     try {
       const response = await getStressGrid(
         {
@@ -175,6 +247,11 @@ export default function Home() {
         requestRevision: revision,
       });
     }
+  }
+
+  function handleDownloadExport() {
+    const payload = buildWorkspaceExport(state);
+    downloadWorkspaceExport(payload);
   }
 
   return (
@@ -274,7 +351,7 @@ export default function Home() {
         stressDropout={stressDropout}
         onBaselineChange={handleStressBaselineChange}
         onDropoutChange={handleStressDropoutChange}
-        onEvaluate={handleEvaluate}
+        onEvaluate={() => { void handleEvaluate(); }}
         evaluateStatus={evaluateStatus}
         evaluateError={evaluateError}
         isCalculating={designStatus === "calculating"}
@@ -520,6 +597,18 @@ export default function Home() {
             ))}
           </tbody>
         </table>
+      </section>
+
+      <section aria-labelledby="export-heading">
+        <h2 id="export-heading">7. Export current results</h2>
+        <p>Downloads a canonical JSON snapshot with the active assumptions, frozen enrollment, current field provenance, and only results that match the current inputs.</p>
+        <button
+          type="button"
+          onClick={handleDownloadExport}
+          disabled={!frozenEnrollment || !hasCurrentExportableResults(state)}
+        >
+          Download current results (JSON)
+        </button>
       </section>
 
       <footer>

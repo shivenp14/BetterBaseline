@@ -4,8 +4,11 @@ import type { ExtendedCalculateRequest, ExtendedEvaluateRequest, ExtendedGridReq
 import { initializeWorkspaceState, workspaceReducer } from "../lib/workspace-state";
 
 const ledger = {
-  "/planned_design/control_event_rate": { source: "synthetic_preset" as const, description: "seed" },
-  "/stress_scenario/dropout/control": { source: "manual_user" as const, description: "edited" },
+  "/planned_design/control_event_rate": {
+    source: "manual_user" as const, description: "Edited one field", source_url: "https://example.org/protocol.pdf",
+    source_location: "Page 14, Table 2", retrieved_at: "2026-10-11T12:00:00Z", verified_by_user: true,
+  },
+  "/stress_scenario/dropout/control": { source: "synthetic_preset" as const, description: "seed" },
 };
 const assumptions = {
   model_version: "binary-v1" as const, control_event_rate: 0.2,
@@ -35,15 +38,18 @@ async function run() {
     if (String(input).endsWith("/design/calculate")) return response({
       model_version: "binary-v1", method: "cohen_h_normal_v1", p_treatment: 0.15,
       evaluable_n: { control: 903, treatment: 903 }, enrolled_n: { control: 1004, treatment: 1004 },
-      nominal_power_evaluable: 0.8, warnings: [], inputs_hash: "sha256:calc",
+      nominal_power_evaluable: 0.8, warnings: ["backend-calculation-warning"], diagnostics: [{
+        code: "CALC_DIAGNOSTIC", severity: "warning", field: "control_event_rate", method: "cohen_h_normal_v1", message: "Backend diagnostic",
+      }], inputs_hash: "sha256:calc", provenance: ledger,
     });
     if (String(input).endsWith("/scenarios/evaluate")) return response({
       model_version: "binary-v1", analytic: { method: "cohen_h_normal_v1", conditional_power_approx: 0.47,
         assumed_evaluable_n: { control: 713, treatment: 713 } },
       monte_carlo: { method: "pooled_two_proportion_z_v1", significant_two_sided_fraction: 0.2,
         significant_favorable_fraction: 0.18, mcse_two_sided: 0.004, mcse_favorable: 0.004,
-        invalid_test_fraction: 0, replicates: 10000, seed: 42 }, warnings: [],
-      metadata: { computed_at: "now", inputs_hash: "sha256:eval" }, provenance: ledger,
+        invalid_test_fraction: 0, replicates: 10000, seed: 42 }, warnings: ["backend-evaluation-warning"],
+      diagnostics: [{ code: "EVAL_DIAGNOSTIC", severity: "info", field: "simulation", method: "pooled_two_proportion_z_v1", message: "Backend evaluation diagnostic" }],
+      metadata: { computed_at: "now", inputs_hash: "sha256:eval", software_versions: { python: "3.12" }, fixed_enrollment: { control: 1004, treatment: 1004 } }, provenance: ledger,
     });
     if (!gridAvailable) return response({ detail: "Scenario grid endpoint implementation owned by Issue #66." }, 501);
     return response({
@@ -52,19 +58,29 @@ async function run() {
       invalid_mask: [[false, false, false], [false, false, false], [false, false, false]], target_power: 0.8,
       planned_point: { p_control: 0.2, dropout: 0.1, power: 0.8, is_safe: true, is_valid: true },
       selected_point: null, frontier_points: [{ p_control: 0.2, dropout: 0.15 }],
-      warnings: [], computed_at: "now", inputs_hash: "sha256:grid",
+      warnings: ["backend-grid-warning"], diagnostics: [{ code: "GRID_DIAGNOSTIC", severity: "warning", field: "grid", method: "cohen_h_normal_v1", message: "Backend grid diagnostic" }], computed_at: "now", inputs_hash: "sha256:grid",
+      fixed_enrollment: { control: 1004, treatment: 1004 }, below_target: [[false]], analytic_delta: 0.1,
+      software_versions: { python: "3.12" }, contour_segments: [], power_curve: [], invalid_cell_count: 0,
+      worst_case_power: 0.2, provenance: ledger,
     });
   }) as typeof fetch;
 
   const calcRequest: ExtendedCalculateRequest = { ...assumptions, preset_id: "fixture-id", provenance_ledger: ledger };
   const calculated = await calculateDesign(calcRequest);
   assert.equal(captured?.url, `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000"}/api/v1/design/calculate`);
-  assert.deepEqual(captured?.body, assumptions, "calculate sends only the canonical TrialAssumptions body");
+  assert.deepEqual(captured?.body, { ...assumptions, provenance: ledger }, "calculate sends canonical assumptions and the actual API provenance map");
   assert.equal(calculated.mock, false);
   assert.equal(calculated.execution?.mode, "backend");
   assert.deepEqual(calculated.provenance.field_provenance, ledger);
+  assert.equal(calculated.warnings[0], "backend-calculation-warning");
+  assert.equal(calculated.diagnostics?.[0].message, "Backend diagnostic");
+  assert.equal(calculated.provenance.field_provenance?.["/planned_design/control_event_rate"].source_location, "Page 14, Table 2");
+  assert.equal(calculated.provenance.field_provenance?.["/planned_design/control_event_rate"].verified_by_user, true);
   const calculateRevision = liveState.requestRevision;
-  liveState = workspaceReducer(liveState, { type: "START_CALCULATE", requestRevision: calculateRevision });
+  liveState = workspaceReducer(liveState, {
+    type: "START_CALCULATE", requestRevision: calculateRevision,
+    expectedInputGeneration: liveState.inputGeneration,
+  });
   liveState = workspaceReducer(liveState, {
     type: "CALCULATE_SUCCESS", response: calculated, requestRevision: calculateRevision,
   });
@@ -85,6 +101,8 @@ async function run() {
     stress_scenario: evalRequest.stress_scenario, simulation: { replicates: 10000, seed: 42 }, provenance: ledger,
   }, "evaluate maps the ledger into the backend's accepted provenance field and strips UI metadata");
   assert.deepEqual(evaluated.provenance.field_provenance, ledger);
+  assert.equal(evaluated.warnings[0], "backend-evaluation-warning");
+  assert.equal(evaluated.diagnostics?.[0].message, "Backend evaluation diagnostic");
   assert.equal(evaluated.mock, false);
 
   const gridRequest: ExtendedGridRequest = {
@@ -101,9 +119,16 @@ async function run() {
   assert.equal(gridBody.preset_id, undefined);
   gridAvailable = true;
   const liveGrid = await getStressGrid(gridRequest);
-  assert.deepEqual(liveGrid.planned_point, { baseline: 0.2, dropout: 0.1 });
+  assert.equal(liveGrid.planned_point.baseline, 0.2);
+  assert.equal((liveGrid.planned_point as unknown as { p_control: number }).p_control, 0.2,
+    "grid adapter retains canonical point coordinates for export");
+  assert.equal((liveGrid.planned_point as unknown as { power: number }).power, 0.8,
+    "grid adapter retains canonical point results for export");
+  assert.equal((liveGrid.frontier_points[0] as unknown as { p_control: number }).p_control, 0.2);
   assert.equal(liveGrid.selected_point, null, "missing backend selected point remains unavailable instead of falling back to planned point");
   assert.deepEqual(liveGrid.provenance.field_provenance, ledger, "successful live grid response keeps the full request ledger for result/export consumers");
+  assert.equal(liveGrid.warnings[0], "backend-grid-warning");
+  assert.equal(liveGrid.diagnostics?.[0].message, "Backend grid diagnostic");
   gridAvailable = false;
 
   globalThis.fetch = (async () => response({ error: { code: "INVALID_MODEL_INPUT", message: "ARR cannot exceed risk", field: "effect", recoverable: true } }, 422)) as typeof fetch;

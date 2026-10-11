@@ -464,6 +464,13 @@
           },
           "dropout": {
             "$ref": "#/components/schemas/ArmProportions"
+          },
+          "provenance": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FieldProvenance"
+            },
+            "type": "object",
+            "title": "Provenance"
           }
         },
         "type": "object",
@@ -518,6 +525,13 @@
             },
             "type": "array",
             "title": "Diagnostics"
+          },
+          "provenance": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FieldProvenance"
+            },
+            "type": "object",
+            "title": "Provenance"
           },
           "inputs_hash": {
             "type": "string",
@@ -893,13 +907,47 @@
               }
             ],
             "title": "Source Url"
+          },
+          "source_location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Location"
+          },
+          "verified_by_user": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified By User"
+          },
+          "is_observed_registry_result": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Observed Registry Result"
           }
         },
         "type": "object",
         "required": [
           "source"
         ],
-        "title": "FieldProvenance"
+        "title": "FieldProvenance",
+        "description": "Per-field source and audit metadata shared by all v1 routes and exports."
       },
       "GridAxisSpec": {
         "properties": {
