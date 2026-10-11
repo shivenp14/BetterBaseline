@@ -265,6 +265,77 @@
           }
         }
       }
+    },
+    "/api/v1/trials/{nct_id}": {
+      "get": {
+        "tags": [
+          "trials"
+        ],
+        "summary": "Lookup Trial",
+        "description": "Return cached metadata with null, unverified planning assumptions.\n\nSynchronous bounded transport runs in FastAPI's worker pool; no lookup is\nperformed at startup or by calculate/evaluate/grid endpoints.",
+        "operationId": "lookup_trial_api_v1_trials__nct_id__get",
+        "parameters": [
+          {
+            "name": "nct_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Nct Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
     }
   },
   "components": {
