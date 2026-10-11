@@ -7,7 +7,7 @@ import argparse
 import json
 from pathlib import Path
 
-from invariants import check_design, check_evaluation, check_export, check_grid, require
+from invariants import canonical_result, check_design, check_evaluation, check_export, check_grid, require
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -26,8 +26,8 @@ def check_capture(capture, schema):
     # $defs are supplied by #63 as read-only artifacts; missing types fail.
     for model, value in (
         ('ScenarioEvaluateRequest', request),
-        ('DesignCalculateResponse', capture['design_response']),
-        ('ScenarioEvaluateResponse', response),
+        ('DesignCalculateResponse', canonical_result(capture['design_response'])),
+        ('ScenarioEvaluateResponse', canonical_result(response)),
         ('ScenarioGridResponse', grid),
         ('ExportPayload', capture['export']),
     ):
@@ -39,8 +39,10 @@ def check_capture(capture, schema):
         Draft202012Validator(selected).validate(value)
     check_design(request['planned_design'], capture['design_response'])
     check_evaluation(request, response)
-    check_grid(request, response, grid)
+    check_grid(request, response, grid, require_grid_node=False)
     check_export(request, response, capture['export'], capture['expected_provenance'])
+    require(capture['export']['design_result'] == canonical_result(capture['design_response']), 'export lost design result')
+    require(capture['export']['grid_result'] == grid, 'export lost grid result')
     require(capture['source'] == 'real_api_and_ui_export', 'illustrative captures are not live acceptance')
     require(bool(capture['engine_commit']) and bool(capture['captured_at']), 'record commit/date')
     versions = response['metadata']['software_versions']

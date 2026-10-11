@@ -15,7 +15,8 @@ def fixture(name):
     mock = json.loads((folder / 'mock-response.json').read_text())
     manifest = json.loads((folder / 'manifest.json').read_text())
     # Explicitly hand-authored test witness. Never used as a production export.
-    provenance = {item['field']: deepcopy(item) for item in manifest['provenance']}
+    provenance = {item['field']: {'source': item['origin'], 'description': item.get('basis')}
+                  for item in manifest['provenance']}
     exported = dict(export_schema_version=1, planned_design=deepcopy(request['planned_design']),
                     fixed_enrollment=deepcopy(request['fixed_enrollment']),
                     stress_scenario=deepcopy(request['stress_scenario']),
@@ -128,7 +129,7 @@ class PipelineFixtureChecks(unittest.TestCase):
                 with self.assertRaises(AssertionError):
                     check_export(req, mock['point'], bad, provenance)
         bad = deepcopy(exported)
-        next(iter(bad['provenance'].values()))['origin'] = 'protocol_curated'
+        next(iter(bad['provenance'].values()))['source'] = 'protocol_curated'
         with self.assertRaisesRegex(AssertionError, 'relabeled'):
             check_export(req, mock['point'], bad, provenance)
 
