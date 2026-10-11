@@ -88,6 +88,16 @@ def test_export_payload_fixture(example_fixtures):
     exp = ExportPayload.model_validate(example_fixtures["export_payload"])
     assert exp.export_schema_version == 1
     assert "control_event_rate" in exp.provenance
+    assert exp.inputs_hash == example_fixtures["export_payload"]["inputs_hash"]
+
+
+def test_provenance_metadata_and_export_hash_are_in_frozen_schema(json_schema):
+    field_schema = json_schema["$defs"]["FieldProvenance"]["properties"]
+    assert {"source_location", "verified_by_user", "is_observed_registry_result"} <= set(field_schema)
+    assert "provenance" in json_schema["$defs"]["DesignCalculateRequest"]["properties"]
+    assert "provenance" in json_schema["$defs"]["DesignCalculateResponse"]["properties"]
+    export_schema = json_schema["$defs"]["ExportPayload"]
+    assert "inputs_hash" in export_schema["required"]
 
 
 def test_error_envelope_fixture(example_fixtures):

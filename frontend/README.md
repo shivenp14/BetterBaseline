@@ -39,21 +39,24 @@ workspace draft and per-field provenance immediately; only submitting
 “Calculate & Lock Design” replaces the frozen enrollment with the calculated
 counts. Recalculation invalidates pending evaluation/grid requests and rejects
 their late responses.
-`lib/api.ts` strips `preset_id` and the local `provenance_ledger` from calculate
-requests. Evaluate requests carry the ledger in the backend's accepted top-level
-`provenance` map; the adapter maps that returned map into
-`result.provenance.field_provenance`. Calculate responses have no backend provenance,
-so the adapter adds the request ledger for workspace and export consumers and marks
-the result as backend-executed. Grid axes are mapped from the frontend arrays to the
-backend `{min, max, steps}` schema and returned points are normalized to the UI shape
-while retaining the canonical backend fields needed by JSON export.
+`lib/api.ts` strips `preset_id` and sends the actual per-field ledger as the API's
+`provenance` map for calculate, evaluate, and grid requests. The adapter places the
+server-returned field records in `result.provenance.field_provenance`, preserving
+source location, verification state, diagnostics, warnings, methods, and hashes.
+Older responses without a provenance map fall back to the submitted ledger for
+backward compatibility. Grid axes are mapped from frontend arrays to the backend
+`{min, max, steps}` schema and returned points are normalized for the UI while
+retaining canonical backend fields for JSON export.
 
 After a stress slider or number field changes, the current evaluation is marked stale
 and one evaluation is sent after 350 ms without another edit. The calculated enrollment
 lock is included unchanged. Each request gets a distinct revision in addition to
 best-effort abort cancellation, so a late response cannot replace a newer result.
-“Download current results (JSON)” follows the backend `ExportPayload` shape, carries
-the latest field provenance, hashes, methods, and available software versions, and
+"Download current results (JSON)" follows the backend `ExportPayload` shape, carries
+the latest field provenance, and computes the canonical export-level `inputs_hash`
+over assumptions, enrollment, stress scenario, and normalized provenance. It keeps
+the full API responses nested, including their provenance, diagnostics, methods,
+warnings, timestamps, and hashes, along with available software versions. It
 includes only results whose status is current. Results that do not satisfy the
 canonical response shape (such as demo-only grids or evaluations without Monte Carlo
 output) and all mock/demo outputs are omitted rather than filled with fabricated
