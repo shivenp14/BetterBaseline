@@ -1,1 +1,0 @@
-"""Replaceable persistence adapters."""

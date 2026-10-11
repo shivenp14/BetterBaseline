@@ -1,1 +1,0 @@
-"""Shared TrialSync backend package."""
