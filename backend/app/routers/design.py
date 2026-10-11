@@ -1,10 +1,12 @@
 """Design calculation route."""
 
 import hashlib
+import json
 from typing import Any
 from fastapi import APIRouter, Request
 
 from ..cache import make_cache_key
+from ..data.provenance import normalize_provenance
 from ..schemas import (
     ArmCounts,
     DesignCalculateRequest,
@@ -13,6 +15,7 @@ from ..schemas import (
 )
 from ..services.compute import execute_guarded_computation
 from ..statistics.effect import resolve_treatment_risk
+from ..statistics.diagnostics import analytic_diagnostics
 from ..statistics.inputs import Dropout as StatDropout, Effect as StatEffect
 from ..statistics.sample_size import minimum_sample_size
 
@@ -37,7 +40,11 @@ router = APIRouter(
 
 
 def compute_inputs_hash(request: DesignCalculateRequest) -> str:
-    raw = request.model_dump_json(exclude_none=True)
+    values = request.model_dump(mode="json", exclude_none=True)
+    # Keep the historical digest for older clients that omit provenance.
+    if not values.get("provenance"):
+        values.pop("provenance", None)
+    raw = json.dumps(values, separators=(",", ":"))
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
 
@@ -98,6 +105,11 @@ def calculate_design(request: DesignCalculateRequest, http_request: Request) -> 
             f"Control event rate {request.control_event_rate} is near or outside common binary trial planning regimes (0.05 - 0.40)."
         )
 
+    diagnostics = analytic_diagnostics(
+        request.control_event_rate, p_treatment,
+        evaluable_n.control, evaluable_n.treatment, request.alpha,
+    )["diagnostics"]
+
     return DesignCalculateResponse(
         model_version="binary-v1",
         method="cohen_h_normal_v1",
@@ -106,5 +118,7 @@ def calculate_design(request: DesignCalculateRequest, http_request: Request) -> 
         enrolled_n=enrolled_n,
         nominal_power_evaluable=size_result.achieved_power,
         warnings=warnings,
+        diagnostics=diagnostics,
+        provenance=normalize_provenance(request.provenance),
         inputs_hash=compute_inputs_hash(request),
     )

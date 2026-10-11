@@ -39,13 +39,28 @@ workspace draft and per-field provenance immediately; only submitting
 “Calculate & Lock Design” replaces the frozen enrollment with the calculated
 counts. Recalculation invalidates pending evaluation/grid requests and rejects
 their late responses.
-`lib/api.ts` strips `preset_id` and the local `provenance_ledger` from calculate
-requests. Evaluate requests carry the ledger in the backend's accepted top-level
-`provenance` map; the adapter maps that returned map into
-`result.provenance.field_provenance`. Calculate responses have no backend provenance,
-so the adapter adds the request ledger for workspace and export consumers and marks
-the result as backend-executed. Grid axes are mapped from the frontend arrays to the
-backend `{min, max, steps}` schema and returned points are normalized to the UI shape.
+`lib/api.ts` strips `preset_id` and sends the actual per-field ledger as the API's
+`provenance` map for calculate, evaluate, and grid requests. The adapter places the
+server-returned field records in `result.provenance.field_provenance`, preserving
+source location, verification state, diagnostics, warnings, methods, and hashes.
+Older responses without a provenance map fall back to the submitted ledger for
+backward compatibility. Grid axes are mapped from frontend arrays to the backend
+`{min, max, steps}` schema and returned points are normalized for the UI while
+retaining canonical backend fields for JSON export.
+
+After a stress slider or number field changes, the current evaluation is marked stale
+and one evaluation is sent after 350 ms without another edit. The calculated enrollment
+lock is included unchanged. Each request gets a distinct revision in addition to
+best-effort abort cancellation, so a late response cannot replace a newer result.
+"Download current results (JSON)" follows the backend `ExportPayload` shape, carries
+the latest field provenance, and computes the canonical export-level `inputs_hash`
+over assumptions, enrollment, stress scenario, and normalized provenance. It keeps
+the full API responses nested, including their provenance, diagnostics, methods,
+warnings, timestamps, and hashes, along with available software versions. It
+includes only results whose status is current. Results that do not satisfy the
+canonical response shape (such as demo-only grids or evaluations without Monte Carlo
+output) and all mock/demo outputs are omitted rather than filled with fabricated
+values.
 
 The backend grid route is still the #66 scaffold and returns HTTP 501. Live mode
 displays that service error instead of substituting client-side power calculations.
@@ -66,8 +81,11 @@ entry point as CommonJS (the test uses the local TypeScript compiler):
 ```bash
 ./node_modules/.bin/tsc --strict --target ES2020 --module commonjs --moduleResolution node \
   --jsx react-jsx --esModuleInterop --skipLibCheck --rootDir . --outDir /private/tmp/bb-workspace-tests \
-  tests/workspace-state.test.ts lib/api.ts lib/workspace-state.ts
+  tests/workspace-state.test.ts tests/stress-debounce.test.ts tests/workspace-export.test.ts \
+  lib/api.ts lib/debounce.ts lib/workspace-export.ts lib/workspace-state.ts
 NEXT_PUBLIC_API_MODE=demo node /private/tmp/bb-workspace-tests/tests/workspace-state.test.js
+NEXT_PUBLIC_API_MODE=demo node /private/tmp/bb-workspace-tests/tests/stress-debounce.test.js
+NEXT_PUBLIC_API_MODE=demo node /private/tmp/bb-workspace-tests/tests/workspace-export.test.js
 ```
 
 Run adapter regressions and the real local service flow with:
@@ -76,11 +94,14 @@ Run adapter regressions and the real local service flow with:
 npm run test:backend-integration
 ```
 
-That command installs the locked backend/dev dependencies, starts a temporary
-Uvicorn service on a free localhost port, verifies calculate → freeze enrollment →
-edit stress → evaluate with seeded Monte Carlo and provenance, checks adapter payloads,
-and stops the temporary process on exit. It does not implement or claim a working
-backend grid calculation.
+By default, that command installs the locked backend/dev dependencies, starts a
+temporary Uvicorn service on a free localhost port, verifies calculate → freeze
+enrollment → edit stress → evaluate and grid with provenance, checks the current
+grid response shape, captures the actual downloaded export JSON, and validates it
+against the backend `ExportPayload` model. It stops the temporary process on exit.
+If a compatible Python 3.12 environment is already available, set
+`BACKEND_PYTHON=/path/to/python` to use its installed dependencies without running
+`uv sync`; the default locked `uv` path remains unchanged.
 
 The interface remains semantic, unstyled HTML with native controls and tables. Keep
 functional behavior, validation, loading/error/stale states, provenance, keyboard

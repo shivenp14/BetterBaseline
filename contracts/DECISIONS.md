@@ -23,7 +23,8 @@
    - In `/api/v1/scenarios/evaluate`, an invalid ARR scenario ($ARR \ge p_C$) returns a structured 422 error.
    - In `/api/v1/scenarios/grid`, points where $ARR \ge p_C$ are marked `is_valid: false`, `power: null`, and set to `true` in `invalid_mask` without failing the request.
 8. **Provenance Tracking:**
-   - Source provenance tags (`manual_user`, `synthetic_preset`, `protocol_curated`, `clinicaltrials_registry`) are preserved through `ExportPayload` with `export_schema_version = 1`.
+   - Source provenance tags (`manual_user`, `synthetic_preset`, `protocol_curated`, `clinicaltrials_registry`) and optional source location, user verification, URL, and registry-observation metadata are preserved through calculate/evaluate/grid and `ExportPayload` with `export_schema_version = 1`.
+   - Every `ExportPayload` carries a top-level `inputs_hash` over canonical planned assumptions, fixed enrollment, optional stress assumptions, and normalized provenance. Nested result hashes and method/warning/simulation data remain the values returned by their calculation routes.
 9. **Strict Integer Participant Counts:**
    - `ArmCounts` uses strict integer fields (`strict=True`), rejecting string coercion (`"903"`), floats (`903.0`), and boolean flags (`True`).
 10. **Finite Floating-Point Enforcement:**

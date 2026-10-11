@@ -1,0 +1,4071 @@
+{
+  "captured_at": "2026-10-11T13:08:05.223212+00:00",
+  "cases": [
+    {
+      "design_response": {
+        "diagnostics": [
+          {
+            "arm": null,
+            "code": "CONDITIONAL_POWER_ONLY",
+            "count_basis": null,
+            "expected_count": null,
+            "field": "interpretation",
+            "invalid_test_fraction": null,
+            "invalid_test_policy": null,
+            "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+            "method": "cohen_h_normal",
+            "outcome": null,
+            "replicates": null,
+            "severity": "info",
+            "threshold": null
+          }
+        ],
+        "enrolled_n": {
+          "control": 903,
+          "treatment": 903
+        },
+        "evaluable_n": {
+          "control": 903,
+          "treatment": 903
+        },
+        "inputs_hash": "09bfe0b8e4990005",
+        "method": "cohen_h_normal_v1",
+        "model_version": "binary-v1",
+        "nominal_power_evaluable": 0.8002861288461955,
+        "p_treatment": 0.15000000000000002,
+        "provenance": {},
+        "warnings": []
+      },
+      "oracle_enrolled_n": 903,
+      "oracle_evaluable_n": 903,
+      "planned_request": {
+        "allocation_ratio": 1,
+        "alpha": 0.05,
+        "control_event_rate": 0.2,
+        "dropout": {
+          "control": 0,
+          "treatment": 0
+        },
+        "effect": {
+          "kind": "relative_risk",
+          "value": 0.75
+        },
+        "model_version": "binary-v1",
+        "target_power": 0.8
+      },
+      "stress_checks": [
+        {
+          "absolute_error": 1.1102230246251565e-16,
+          "oracle_power": 0.8002861288461957,
+          "request": {
+            "fixed_enrollment": {
+              "control": 903,
+              "treatment": 903
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.2,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.75
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.2,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 903,
+                "treatment": 903
+              },
+              "conditional_power_approx": 0.8002861288461955,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:04.951225+00:00",
+              "fixed_enrollment": {
+                "control": 903,
+                "treatment": 903
+              },
+              "inputs_hash": "sha256:c97b9977062a57ad65de7c82adb32d98ad4c472df6658e8df6b6271d38f52b0c",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 5.551115123125783e-17,
+          "oracle_power": 0.469996573966428,
+          "request": {
+            "fixed_enrollment": {
+              "control": 903,
+              "treatment": 903
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.2,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.75
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.1,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 903,
+                "treatment": 903
+              },
+              "conditional_power_approx": 0.46999657396642797,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:04.959310+00:00",
+              "fixed_enrollment": {
+                "control": 903,
+                "treatment": 903
+              },
+              "inputs_hash": "sha256:1dd4a9bd4743395d8432f913a343930af63cf956ce43d74bbfaac87deb88db52",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 1.1102230246251565e-16,
+          "oracle_power": 0.5351313490059394,
+          "request": {
+            "fixed_enrollment": {
+              "control": 903,
+              "treatment": 903
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.2,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.75
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.15000000000000002,
+              "dropout": {
+                "control": 0.25,
+                "treatment": 0.25
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 677,
+                "treatment": 677
+              },
+              "conditional_power_approx": 0.5351313490059393,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:04.967184+00:00",
+              "fixed_enrollment": {
+                "control": 903,
+                "treatment": 903
+              },
+              "inputs_hash": "sha256:c3d5a78d997dae3d024833cd648d5545e5313e576713f2f158fe1191293c38af",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 5.551115123125783e-17,
+          "oracle_power": 0.4427149397445073,
+          "request": {
+            "fixed_enrollment": {
+              "control": 903,
+              "treatment": 903
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.2,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.75
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.2,
+              "dropout": {
+                "control": 0.58,
+                "treatment": 0.58
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 379,
+                "treatment": 379
+              },
+              "conditional_power_approx": 0.44271493974450726,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:04.973850+00:00",
+              "fixed_enrollment": {
+                "control": 903,
+                "treatment": 903
+              },
+              "inputs_hash": "sha256:84cb20e3a6205b31aa843698175a291442c31fafc126b9506eef56aa13ca2eb2",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "design_response": {
+        "diagnostics": [
+          {
+            "arm": null,
+            "code": "CONDITIONAL_POWER_ONLY",
+            "count_basis": null,
+            "expected_count": null,
+            "field": "interpretation",
+            "invalid_test_fraction": null,
+            "invalid_test_policy": null,
+            "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+            "method": "cohen_h_normal",
+            "outcome": null,
+            "replicates": null,
+            "severity": "info",
+            "threshold": null
+          }
+        ],
+        "enrolled_n": {
+          "control": 1004,
+          "treatment": 1004
+        },
+        "evaluable_n": {
+          "control": 903,
+          "treatment": 903
+        },
+        "inputs_hash": "37cc66c4aacf5b85",
+        "method": "cohen_h_normal_v1",
+        "model_version": "binary-v1",
+        "nominal_power_evaluable": 0.8002861288461955,
+        "p_treatment": 0.15000000000000002,
+        "provenance": {},
+        "warnings": [
+          "Dropout inflation represents expected retention, not guaranteed evaluable counts."
+        ]
+      },
+      "oracle_enrolled_n": 1004,
+      "oracle_evaluable_n": 903,
+      "planned_request": {
+        "allocation_ratio": 1,
+        "alpha": 0.05,
+        "control_event_rate": 0.2,
+        "dropout": {
+          "control": 0.1,
+          "treatment": 0.1
+        },
+        "effect": {
+          "kind": "relative_risk",
+          "value": 0.75
+        },
+        "model_version": "binary-v1",
+        "target_power": 0.8
+      },
+      "stress_checks": [
+        {
+          "absolute_error": 1.1102230246251565e-16,
+          "oracle_power": 0.8002861288461957,
+          "request": {
+            "fixed_enrollment": {
+              "control": 1004,
+              "treatment": 1004
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.2,
+              "dropout": {
+                "control": 0.1,
+                "treatment": 0.1
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.75
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.2,
+              "dropout": {
+                "control": 0.1,
+                "treatment": 0.1
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 903,
+                "treatment": 903
+              },
+              "conditional_power_approx": 0.8002861288461955,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:04.986888+00:00",
+              "fixed_enrollment": {
+                "control": 1004,
+                "treatment": 1004
+              },
+              "inputs_hash": "sha256:a48b59d1a2aa44f60ecd277de6e026398ceb57306dfd35ae856889caed14f7e9",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 0.0,
+          "oracle_power": 0.5108769949771077,
+          "request": {
+            "fixed_enrollment": {
+              "control": 1004,
+              "treatment": 1004
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.2,
+              "dropout": {
+                "control": 0.1,
+                "treatment": 0.1
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.75
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.1,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 1004,
+                "treatment": 1004
+              },
+              "conditional_power_approx": 0.5108769949771077,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:04.993861+00:00",
+              "fixed_enrollment": {
+                "control": 1004,
+                "treatment": 1004
+              },
+              "inputs_hash": "sha256:43bb9dbf0300a66865fae7d9ae0f3c1a55659a40d70bb3cba945da1dda603a78",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 1.1102230246251565e-16,
+          "oracle_power": 0.5792782869028875,
+          "request": {
+            "fixed_enrollment": {
+              "control": 1004,
+              "treatment": 1004
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.2,
+              "dropout": {
+                "control": 0.1,
+                "treatment": 0.1
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.75
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.15000000000000002,
+              "dropout": {
+                "control": 0.25,
+                "treatment": 0.25
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 753,
+                "treatment": 753
+              },
+              "conditional_power_approx": 0.5792782869028874,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.000609+00:00",
+              "fixed_enrollment": {
+                "control": 1004,
+                "treatment": 1004
+              },
+              "inputs_hash": "sha256:1876131f4ce9511f1551278a479fca784456287b9efaf7f7291d65adcba95b1e",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 1.1102230246251565e-16,
+          "oracle_power": 0.48157736930782113,
+          "request": {
+            "fixed_enrollment": {
+              "control": 1004,
+              "treatment": 1004
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.2,
+              "dropout": {
+                "control": 0.1,
+                "treatment": 0.1
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.75
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.2,
+              "dropout": {
+                "control": 0.58,
+                "treatment": 0.58
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 421,
+                "treatment": 421
+              },
+              "conditional_power_approx": 0.481577369307821,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.007269+00:00",
+              "fixed_enrollment": {
+                "control": 1004,
+                "treatment": 1004
+              },
+              "inputs_hash": "sha256:76a505b89e5295851b7892a64b2d2577d6755f98b0dbac269f8e94ee47fd6a72",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "design_response": {
+        "diagnostics": [
+          {
+            "arm": null,
+            "code": "CONDITIONAL_POWER_ONLY",
+            "count_basis": null,
+            "expected_count": null,
+            "field": "interpretation",
+            "invalid_test_fraction": null,
+            "invalid_test_policy": null,
+            "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+            "method": "cohen_h_normal",
+            "outcome": null,
+            "replicates": null,
+            "severity": "info",
+            "threshold": null
+          }
+        ],
+        "enrolled_n": {
+          "control": 1996,
+          "treatment": 1996
+        },
+        "evaluable_n": {
+          "control": 1996,
+          "treatment": 1996
+        },
+        "inputs_hash": "f67dc28c5e0c1711",
+        "method": "cohen_h_normal_v1",
+        "model_version": "binary-v1",
+        "nominal_power_evaluable": 0.8000668016329426,
+        "p_treatment": 0.07500000000000001,
+        "provenance": {},
+        "warnings": []
+      },
+      "oracle_enrolled_n": 1996,
+      "oracle_evaluable_n": 1996,
+      "planned_request": {
+        "allocation_ratio": 1,
+        "alpha": 0.05,
+        "control_event_rate": 0.1,
+        "dropout": {
+          "control": 0,
+          "treatment": 0
+        },
+        "effect": {
+          "kind": "relative_risk",
+          "value": 0.75
+        },
+        "model_version": "binary-v1",
+        "target_power": 0.8
+      },
+      "stress_checks": [
+        {
+          "absolute_error": 0.0,
+          "oracle_power": 0.8000668016329426,
+          "request": {
+            "fixed_enrollment": {
+              "control": 1996,
+              "treatment": 1996
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.1,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.75
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.1,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 1996,
+                "treatment": 1996
+              },
+              "conditional_power_approx": 0.8000668016329426,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.073416+00:00",
+              "fixed_enrollment": {
+                "control": 1996,
+                "treatment": 1996
+              },
+              "inputs_hash": "sha256:28658f30fe667954d08d47a69d97ca9e9fe0a6c75ad0bec12aefa02928cd8afb",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 1.1102230246251565e-16,
+          "oracle_power": 0.49027637166652965,
+          "request": {
+            "fixed_enrollment": {
+              "control": 1996,
+              "treatment": 1996
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.1,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.75
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.05,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 1996,
+                "treatment": 1996
+              },
+              "conditional_power_approx": 0.49027637166652954,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.078721+00:00",
+              "fixed_enrollment": {
+                "control": 1996,
+                "treatment": 1996
+              },
+              "inputs_hash": "sha256:15c7e2fba92cfa3ae4b505ffbb73184fd4e1693187b07a9dc5d229615df90270",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 1.1102230246251565e-16,
+          "oracle_power": 0.5464885981615895,
+          "request": {
+            "fixed_enrollment": {
+              "control": 1996,
+              "treatment": 1996
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.1,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.75
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.07500000000000001,
+              "dropout": {
+                "control": 0.25,
+                "treatment": 0.25
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 1497,
+                "treatment": 1497
+              },
+              "conditional_power_approx": 0.5464885981615893,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.083240+00:00",
+              "fixed_enrollment": {
+                "control": 1996,
+                "treatment": 1996
+              },
+              "inputs_hash": "sha256:40992ad1bcbf34dac64c00d2585a4808bfcd55289a7dfbbee31dc5647959e690",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 1.1102230246251565e-16,
+          "oracle_power": 0.44262346017837534,
+          "request": {
+            "fixed_enrollment": {
+              "control": 1996,
+              "treatment": 1996
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.1,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.75
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.1,
+              "dropout": {
+                "control": 0.58,
+                "treatment": 0.58
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 838,
+                "treatment": 838
+              },
+              "conditional_power_approx": 0.4426234601783752,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.087766+00:00",
+              "fixed_enrollment": {
+                "control": 1996,
+                "treatment": 1996
+              },
+              "inputs_hash": "sha256:2cb52d6e8a5de675f7e951bce0752f373de0cb76c54ba5328de122f1064def69",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "design_response": {
+        "diagnostics": [
+          {
+            "arm": null,
+            "code": "CONDITIONAL_POWER_ONLY",
+            "count_basis": null,
+            "expected_count": null,
+            "field": "interpretation",
+            "invalid_test_fraction": null,
+            "invalid_test_policy": null,
+            "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+            "method": "cohen_h_normal",
+            "outcome": null,
+            "replicates": null,
+            "severity": "info",
+            "threshold": null
+          }
+        ],
+        "enrolled_n": {
+          "control": 282,
+          "treatment": 282
+        },
+        "evaluable_n": {
+          "control": 225,
+          "treatment": 225
+        },
+        "inputs_hash": "f480f21d9b436caa",
+        "method": "cohen_h_normal_v1",
+        "model_version": "binary-v1",
+        "nominal_power_evaluable": 0.9003778981340556,
+        "p_treatment": 0.15,
+        "provenance": {},
+        "warnings": [
+          "Dropout inflation represents expected retention, not guaranteed evaluable counts."
+        ]
+      },
+      "oracle_enrolled_n": 282,
+      "oracle_evaluable_n": 225,
+      "planned_request": {
+        "allocation_ratio": 1,
+        "alpha": 0.01,
+        "control_event_rate": 0.3,
+        "dropout": {
+          "control": 0.2,
+          "treatment": 0.2
+        },
+        "effect": {
+          "kind": "relative_risk",
+          "value": 0.5
+        },
+        "model_version": "binary-v1",
+        "target_power": 0.9
+      },
+      "stress_checks": [
+        {
+          "absolute_error": 0.0,
+          "oracle_power": 0.9003778981340556,
+          "request": {
+            "fixed_enrollment": {
+              "control": 282,
+              "treatment": 282
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.01,
+              "control_event_rate": 0.3,
+              "dropout": {
+                "control": 0.2,
+                "treatment": 0.2
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.5
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.9
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.3,
+              "dropout": {
+                "control": 0.2,
+                "treatment": 0.2
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 225,
+                "treatment": 225
+              },
+              "conditional_power_approx": 0.9003778981340556,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.093698+00:00",
+              "fixed_enrollment": {
+                "control": 282,
+                "treatment": 282
+              },
+              "inputs_hash": "sha256:342d1f9b240a88cad6d6b0d02a25e4c005fdfbbcd364bcd11a1bc02490db4f1e",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 0.0,
+          "oracle_power": 0.6106419525300335,
+          "request": {
+            "fixed_enrollment": {
+              "control": 282,
+              "treatment": 282
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.01,
+              "control_event_rate": 0.3,
+              "dropout": {
+                "control": 0.2,
+                "treatment": 0.2
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.5
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.9
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.15,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 282,
+                "treatment": 282
+              },
+              "conditional_power_approx": 0.6106419525300335,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.097845+00:00",
+              "fixed_enrollment": {
+                "control": 282,
+                "treatment": 282
+              },
+              "inputs_hash": "sha256:9664bba4287a05441bafdaec0aa6f7cf53dbff45434d34e1f2bb3ffe98a58458",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 0.0,
+          "oracle_power": 0.7089279443437905,
+          "request": {
+            "fixed_enrollment": {
+              "control": 282,
+              "treatment": 282
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.01,
+              "control_event_rate": 0.3,
+              "dropout": {
+                "control": 0.2,
+                "treatment": 0.2
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.5
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.9
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.22499999999999998,
+              "dropout": {
+                "control": 0.25,
+                "treatment": 0.25
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 211,
+                "treatment": 211
+              },
+              "conditional_power_approx": 0.7089279443437905,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.102259+00:00",
+              "fixed_enrollment": {
+                "control": 282,
+                "treatment": 282
+              },
+              "inputs_hash": "sha256:ae565f018605e3245531971de0ce2ff43edbad7221adf112830dabb47c0dbb74",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 0.0,
+          "oracle_power": 0.5867494093449466,
+          "request": {
+            "fixed_enrollment": {
+              "control": 282,
+              "treatment": 282
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.01,
+              "control_event_rate": 0.3,
+              "dropout": {
+                "control": 0.2,
+                "treatment": 0.2
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.5
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.9
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.3,
+              "dropout": {
+                "control": 0.58,
+                "treatment": 0.58
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 118,
+                "treatment": 118
+              },
+              "conditional_power_approx": 0.5867494093449466,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.107007+00:00",
+              "fixed_enrollment": {
+                "control": 282,
+                "treatment": 282
+              },
+              "inputs_hash": "sha256:a2d507de49b5a865155cf55f44af847582a678c580688944ab7ed1b088db70c3",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "design_response": {
+        "diagnostics": [
+          {
+            "arm": null,
+            "code": "CONDITIONAL_POWER_ONLY",
+            "count_basis": null,
+            "expected_count": null,
+            "field": "interpretation",
+            "invalid_test_fraction": null,
+            "invalid_test_policy": null,
+            "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+            "method": "cohen_h_normal",
+            "outcome": null,
+            "replicates": null,
+            "severity": "info",
+            "threshold": null
+          }
+        ],
+        "enrolled_n": {
+          "control": 5976,
+          "treatment": 5976
+        },
+        "evaluable_n": {
+          "control": 4183,
+          "treatment": 4183
+        },
+        "inputs_hash": "aa0b5db32c686189",
+        "method": "cohen_h_normal_v1",
+        "model_version": "binary-v1",
+        "nominal_power_evaluable": 0.800082555374688,
+        "p_treatment": 0.037500000000000006,
+        "provenance": {},
+        "warnings": [
+          "Dropout inflation represents expected retention, not guaranteed evaluable counts."
+        ]
+      },
+      "oracle_enrolled_n": 5976,
+      "oracle_evaluable_n": 4183,
+      "planned_request": {
+        "allocation_ratio": 1,
+        "alpha": 0.05,
+        "control_event_rate": 0.05,
+        "dropout": {
+          "control": 0.3,
+          "treatment": 0.3
+        },
+        "effect": {
+          "kind": "relative_risk",
+          "value": 0.75
+        },
+        "model_version": "binary-v1",
+        "target_power": 0.8
+      },
+      "stress_checks": [
+        {
+          "absolute_error": 0.0,
+          "oracle_power": 0.800082555374688,
+          "request": {
+            "fixed_enrollment": {
+              "control": 5976,
+              "treatment": 5976
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.05,
+              "dropout": {
+                "control": 0.3,
+                "treatment": 0.3
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.75
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.05,
+              "dropout": {
+                "control": 0.3,
+                "treatment": 0.3
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 4183,
+                "treatment": 4183
+              },
+              "conditional_power_approx": 0.800082555374688,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.113014+00:00",
+              "fixed_enrollment": {
+                "control": 5976,
+                "treatment": 5976
+              },
+              "inputs_hash": "sha256:1658fa488723f0d17d8e1bc3cf31b6293f2881ea02151a5156430a7f816dd77c",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 0.0,
+          "oracle_power": 0.6486164325806145,
+          "request": {
+            "fixed_enrollment": {
+              "control": 5976,
+              "treatment": 5976
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.05,
+              "dropout": {
+                "control": 0.3,
+                "treatment": 0.3
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.75
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.025,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 5976,
+                "treatment": 5976
+              },
+              "conditional_power_approx": 0.6486164325806145,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.117168+00:00",
+              "fixed_enrollment": {
+                "control": 5976,
+                "treatment": 5976
+              },
+              "inputs_hash": "sha256:3a2abef45d5e96f10e9de4398903d22ed654a735821f034803ad7a65d7a11f6b",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 1.1102230246251565e-16,
+          "oracle_power": 0.7045639186837389,
+          "request": {
+            "fixed_enrollment": {
+              "control": 5976,
+              "treatment": 5976
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.05,
+              "dropout": {
+                "control": 0.3,
+                "treatment": 0.3
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.75
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.037500000000000006,
+              "dropout": {
+                "control": 0.25,
+                "treatment": 0.25
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 4482,
+                "treatment": 4482
+              },
+              "conditional_power_approx": 0.7045639186837388,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.121599+00:00",
+              "fixed_enrollment": {
+                "control": 5976,
+                "treatment": 5976
+              },
+              "inputs_hash": "sha256:00ce475480a29867dbba31d1b6a19f87feeac3a3e2700fff79ce018ba6b653fd",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 0.0,
+          "oracle_power": 0.5831899482711648,
+          "request": {
+            "fixed_enrollment": {
+              "control": 5976,
+              "treatment": 5976
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.05,
+              "dropout": {
+                "control": 0.3,
+                "treatment": 0.3
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.75
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.05,
+              "dropout": {
+                "control": 0.58,
+                "treatment": 0.58
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 2509,
+                "treatment": 2509
+              },
+              "conditional_power_approx": 0.5831899482711648,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.125991+00:00",
+              "fixed_enrollment": {
+                "control": 5976,
+                "treatment": 5976
+              },
+              "inputs_hash": "sha256:4695c530772fab58a8c5a32029835f3b92ffc100321ba89290822ef1732a0c70",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "design_response": {
+        "diagnostics": [
+          {
+            "arm": null,
+            "code": "CONDITIONAL_POWER_ONLY",
+            "count_basis": null,
+            "expected_count": null,
+            "field": "interpretation",
+            "invalid_test_fraction": null,
+            "invalid_test_policy": null,
+            "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+            "method": "cohen_h_normal",
+            "outcome": null,
+            "replicates": null,
+            "severity": "info",
+            "threshold": null
+          }
+        ],
+        "enrolled_n": {
+          "control": 903,
+          "treatment": 903
+        },
+        "evaluable_n": {
+          "control": 903,
+          "treatment": 903
+        },
+        "inputs_hash": "11406387f755ba74",
+        "method": "cohen_h_normal_v1",
+        "model_version": "binary-v1",
+        "nominal_power_evaluable": 0.8002861288461955,
+        "p_treatment": 0.15000000000000002,
+        "provenance": {},
+        "warnings": []
+      },
+      "oracle_enrolled_n": 903,
+      "oracle_evaluable_n": 903,
+      "planned_request": {
+        "allocation_ratio": 1,
+        "alpha": 0.05,
+        "control_event_rate": 0.2,
+        "dropout": {
+          "control": 0,
+          "treatment": 0
+        },
+        "effect": {
+          "kind": "absolute_risk_reduction",
+          "value": 0.05
+        },
+        "model_version": "binary-v1",
+        "target_power": 0.8
+      },
+      "stress_checks": [
+        {
+          "absolute_error": 1.1102230246251565e-16,
+          "oracle_power": 0.8002861288461957,
+          "request": {
+            "fixed_enrollment": {
+              "control": 903,
+              "treatment": 903
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.2,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect": {
+                "kind": "absolute_risk_reduction",
+                "value": 0.05
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.2,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 903,
+                "treatment": 903
+              },
+              "conditional_power_approx": 0.8002861288461955,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.131639+00:00",
+              "fixed_enrollment": {
+                "control": 903,
+                "treatment": 903
+              },
+              "inputs_hash": "sha256:a1f28b19bfc20c7892c5355edc5f5562b7e306506d502cda5cb5358b84afe9c2",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 0.0,
+          "oracle_power": 0.9834072481939462,
+          "request": {
+            "fixed_enrollment": {
+              "control": 903,
+              "treatment": 903
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.2,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect": {
+                "kind": "absolute_risk_reduction",
+                "value": 0.05
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.1,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 903,
+                "treatment": 903
+              },
+              "conditional_power_approx": 0.9834072481939462,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.135664+00:00",
+              "fixed_enrollment": {
+                "control": 903,
+                "treatment": 903
+              },
+              "inputs_hash": "sha256:6014765e210e5cd82c8a5070fce33c7752096f28d945493884ad401e7f735709",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 2.220446049250313e-16,
+          "oracle_power": 0.7980594806524542,
+          "request": {
+            "fixed_enrollment": {
+              "control": 903,
+              "treatment": 903
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.2,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect": {
+                "kind": "absolute_risk_reduction",
+                "value": 0.05
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.15000000000000002,
+              "dropout": {
+                "control": 0.25,
+                "treatment": 0.25
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 677,
+                "treatment": 677
+              },
+              "conditional_power_approx": 0.798059480652454,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.140252+00:00",
+              "fixed_enrollment": {
+                "control": 903,
+                "treatment": 903
+              },
+              "inputs_hash": "sha256:91eea4eb461a714914d4df08de22fe20351d0b790b1879298cb38d10c8d868a0",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 5.551115123125783e-17,
+          "oracle_power": 0.4427149397445073,
+          "request": {
+            "fixed_enrollment": {
+              "control": 903,
+              "treatment": 903
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.2,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect": {
+                "kind": "absolute_risk_reduction",
+                "value": 0.05
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.2,
+              "dropout": {
+                "control": 0.58,
+                "treatment": 0.58
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 379,
+                "treatment": 379
+              },
+              "conditional_power_approx": 0.44271493974450726,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.144892+00:00",
+              "fixed_enrollment": {
+                "control": 903,
+                "treatment": 903
+              },
+              "inputs_hash": "sha256:aa1aafe022c40f4e7d06ddfd50a211e8e4e5a560f938d4de53204cca268fb22e",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "design_response": {
+        "diagnostics": [
+          {
+            "arm": null,
+            "code": "CONDITIONAL_POWER_ONLY",
+            "count_basis": null,
+            "expected_count": null,
+            "field": "interpretation",
+            "invalid_test_fraction": null,
+            "invalid_test_policy": null,
+            "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+            "method": "cohen_h_normal",
+            "outcome": null,
+            "replicates": null,
+            "severity": "info",
+            "threshold": null
+          }
+        ],
+        "enrolled_n": {
+          "control": 6984,
+          "treatment": 6984
+        },
+        "evaluable_n": {
+          "control": 6076,
+          "treatment": 6076
+        },
+        "inputs_hash": "ede8b471cd5d8cdd",
+        "method": "cohen_h_normal_v1",
+        "model_version": "binary-v1",
+        "nominal_power_evaluable": 0.9000389224090981,
+        "p_treatment": 0.08,
+        "provenance": {},
+        "warnings": [
+          "Dropout inflation represents expected retention, not guaranteed evaluable counts."
+        ]
+      },
+      "oracle_enrolled_n": 6984,
+      "oracle_evaluable_n": 6076,
+      "planned_request": {
+        "allocation_ratio": 1,
+        "alpha": 0.01,
+        "control_event_rate": 0.1,
+        "dropout": {
+          "control": 0.13,
+          "treatment": 0.13
+        },
+        "effect": {
+          "kind": "absolute_risk_reduction",
+          "value": 0.02
+        },
+        "model_version": "binary-v1",
+        "target_power": 0.9
+      },
+      "stress_checks": [
+        {
+          "absolute_error": 0.0,
+          "oracle_power": 0.9000389224090981,
+          "request": {
+            "fixed_enrollment": {
+              "control": 6984,
+              "treatment": 6984
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.01,
+              "control_event_rate": 0.1,
+              "dropout": {
+                "control": 0.13,
+                "treatment": 0.13
+              },
+              "effect": {
+                "kind": "absolute_risk_reduction",
+                "value": 0.02
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.9
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.1,
+              "dropout": {
+                "control": 0.13,
+                "treatment": 0.13
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 6076,
+                "treatment": 6076
+              },
+              "conditional_power_approx": 0.9000389224090981,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.152314+00:00",
+              "fixed_enrollment": {
+                "control": 6984,
+                "treatment": 6984
+              },
+              "inputs_hash": "sha256:19d0bea8cef61133a774884daeaeb5bffb3e6651259c1a6f3d91783978318b9f",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 0.0,
+          "oracle_power": 0.9997695764044964,
+          "request": {
+            "fixed_enrollment": {
+              "control": 6984,
+              "treatment": 6984
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.01,
+              "control_event_rate": 0.1,
+              "dropout": {
+                "control": 0.13,
+                "treatment": 0.13
+              },
+              "effect": {
+                "kind": "absolute_risk_reduction",
+                "value": 0.02
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.9
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.05,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 6984,
+                "treatment": 6984
+              },
+              "conditional_power_approx": 0.9997695764044964,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.157030+00:00",
+              "fixed_enrollment": {
+                "control": 6984,
+                "treatment": 6984
+              },
+              "inputs_hash": "sha256:1ee976720293dd387592f79639f69b6707c05a500684c467e20d7edc485cc22f",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 0.0,
+          "oracle_power": 0.9438406864024269,
+          "request": {
+            "fixed_enrollment": {
+              "control": 6984,
+              "treatment": 6984
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.01,
+              "control_event_rate": 0.1,
+              "dropout": {
+                "control": 0.13,
+                "treatment": 0.13
+              },
+              "effect": {
+                "kind": "absolute_risk_reduction",
+                "value": 0.02
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.9
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.07500000000000001,
+              "dropout": {
+                "control": 0.25,
+                "treatment": 0.25
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 5238,
+                "treatment": 5238
+              },
+              "conditional_power_approx": 0.9438406864024269,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.161172+00:00",
+              "fixed_enrollment": {
+                "control": 6984,
+                "treatment": 6984
+              },
+              "inputs_hash": "sha256:c1e929c5eb4a458076631ffee4731cc98ef2635ffa71dbdfb84263d81caee59d",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 0.0,
+          "oracle_power": 0.5415562194363496,
+          "request": {
+            "fixed_enrollment": {
+              "control": 6984,
+              "treatment": 6984
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.01,
+              "control_event_rate": 0.1,
+              "dropout": {
+                "control": 0.13,
+                "treatment": 0.13
+              },
+              "effect": {
+                "kind": "absolute_risk_reduction",
+                "value": 0.02
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.9
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.1,
+              "dropout": {
+                "control": 0.58,
+                "treatment": 0.58
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 2933,
+                "treatment": 2933
+              },
+              "conditional_power_approx": 0.5415562194363496,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.165347+00:00",
+              "fixed_enrollment": {
+                "control": 6984,
+                "treatment": 6984
+              },
+              "inputs_hash": "sha256:b4c8164c31be5f020b326a66eed1551a16ff7925274d83cbf2b7c8c46fa37198",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "design_response": {
+        "diagnostics": [
+          {
+            "arm": null,
+            "code": "CONDITIONAL_POWER_ONLY",
+            "count_basis": null,
+            "expected_count": null,
+            "field": "interpretation",
+            "invalid_test_fraction": null,
+            "invalid_test_policy": null,
+            "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+            "method": "cohen_h_normal",
+            "outcome": null,
+            "replicates": null,
+            "severity": "info",
+            "threshold": null
+          }
+        ],
+        "enrolled_n": {
+          "control": 1093,
+          "treatment": 1093
+        },
+        "evaluable_n": {
+          "control": 983,
+          "treatment": 983
+        },
+        "inputs_hash": "557f1ee75088ffec",
+        "method": "cohen_h_normal_v1",
+        "model_version": "binary-v1",
+        "nominal_power_evaluable": 0.7001675796650229,
+        "p_treatment": 0.25,
+        "provenance": {},
+        "warnings": [
+          "Dropout inflation represents expected retention, not guaranteed evaluable counts."
+        ]
+      },
+      "oracle_enrolled_n": 1093,
+      "oracle_evaluable_n": 983,
+      "planned_request": {
+        "allocation_ratio": 1,
+        "alpha": 0.05,
+        "control_event_rate": 0.3,
+        "dropout": {
+          "control": 0.1,
+          "treatment": 0.1
+        },
+        "effect": {
+          "kind": "absolute_risk_reduction",
+          "value": 0.05
+        },
+        "model_version": "binary-v1",
+        "target_power": 0.7
+      },
+      "stress_checks": [
+        {
+          "absolute_error": 1.1102230246251565e-16,
+          "oracle_power": 0.700167579665023,
+          "request": {
+            "fixed_enrollment": {
+              "control": 1093,
+              "treatment": 1093
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.3,
+              "dropout": {
+                "control": 0.1,
+                "treatment": 0.1
+              },
+              "effect": {
+                "kind": "absolute_risk_reduction",
+                "value": 0.05
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.7
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.3,
+              "dropout": {
+                "control": 0.1,
+                "treatment": 0.1
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 983,
+                "treatment": 983
+              },
+              "conditional_power_approx": 0.7001675796650229,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.171966+00:00",
+              "fixed_enrollment": {
+                "control": 1093,
+                "treatment": 1093
+              },
+              "inputs_hash": "sha256:e57cf6a42bf8037ccd39e409d83eed6ede1f0493d77ddd121ff12c8e57886cab",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 1.1102230246251565e-16,
+          "oracle_power": 0.9441952987018217,
+          "request": {
+            "fixed_enrollment": {
+              "control": 1093,
+              "treatment": 1093
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.3,
+              "dropout": {
+                "control": 0.1,
+                "treatment": 0.1
+              },
+              "effect": {
+                "kind": "absolute_risk_reduction",
+                "value": 0.05
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.7
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.15,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 1093,
+                "treatment": 1093
+              },
+              "conditional_power_approx": 0.9441952987018216,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.176180+00:00",
+              "fixed_enrollment": {
+                "control": 1093,
+                "treatment": 1093
+              },
+              "inputs_hash": "sha256:b77fc44a081f8f96f01478fe758ba7b64cab3a1811cf311e1de2d1205449f874",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 1.1102230246251565e-16,
+          "oracle_power": 0.7170213804842932,
+          "request": {
+            "fixed_enrollment": {
+              "control": 1093,
+              "treatment": 1093
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.3,
+              "dropout": {
+                "control": 0.1,
+                "treatment": 0.1
+              },
+              "effect": {
+                "kind": "absolute_risk_reduction",
+                "value": 0.05
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.7
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.22499999999999998,
+              "dropout": {
+                "control": 0.25,
+                "treatment": 0.25
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 819,
+                "treatment": 819
+              },
+              "conditional_power_approx": 0.7170213804842931,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.180310+00:00",
+              "fixed_enrollment": {
+                "control": 1093,
+                "treatment": 1093
+              },
+              "inputs_hash": "sha256:7394d83555e97660d21824973c35336ec75f85968ff39f154af63fe7e67f9ae3",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 1.1102230246251565e-16,
+          "oracle_power": 0.39678554882967376,
+          "request": {
+            "fixed_enrollment": {
+              "control": 1093,
+              "treatment": 1093
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.3,
+              "dropout": {
+                "control": 0.1,
+                "treatment": 0.1
+              },
+              "effect": {
+                "kind": "absolute_risk_reduction",
+                "value": 0.05
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.7
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.3,
+              "dropout": {
+                "control": 0.58,
+                "treatment": 0.58
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 459,
+                "treatment": 459
+              },
+              "conditional_power_approx": 0.39678554882967365,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.184431+00:00",
+              "fixed_enrollment": {
+                "control": 1093,
+                "treatment": 1093
+              },
+              "inputs_hash": "sha256:c2d6f7a555a5e5911d76daabf6948cc13838dff897fd73d33cfdb753fb95825e",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "design_response": {
+        "diagnostics": [
+          {
+            "arm": null,
+            "code": "CONDITIONAL_POWER_ONLY",
+            "count_basis": null,
+            "expected_count": null,
+            "field": "interpretation",
+            "invalid_test_fraction": null,
+            "invalid_test_policy": null,
+            "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+            "method": "cohen_h_normal",
+            "outcome": null,
+            "replicates": null,
+            "severity": "info",
+            "threshold": null
+          },
+          {
+            "arm": "control",
+            "code": "NEAR_BOUNDARY_PROBABILITY",
+            "count_basis": null,
+            "expected_count": null,
+            "field": "p_control",
+            "invalid_test_fraction": null,
+            "invalid_test_policy": null,
+            "message": "Event probability near zero or one; the normal approximation may be unreliable. This heuristic does not reject the scenario.",
+            "method": "cohen_h_normal",
+            "outcome": null,
+            "replicates": null,
+            "severity": "warning",
+            "threshold": 0.01
+          },
+          {
+            "arm": "treatment",
+            "code": "NEAR_BOUNDARY_PROBABILITY",
+            "count_basis": null,
+            "expected_count": null,
+            "field": "p_treatment",
+            "invalid_test_fraction": null,
+            "invalid_test_policy": null,
+            "message": "Event probability near zero or one; the normal approximation may be unreliable. This heuristic does not reject the scenario.",
+            "method": "cohen_h_normal",
+            "outcome": null,
+            "replicates": null,
+            "severity": "warning",
+            "threshold": 0.01
+          }
+        ],
+        "enrolled_n": {
+          "control": 228565,
+          "treatment": 228565
+        },
+        "evaluable_n": {
+          "control": 45713,
+          "treatment": 45713
+        },
+        "inputs_hash": "84152fa90a7272cd",
+        "method": "cohen_h_normal_v1",
+        "model_version": "binary-v1",
+        "nominal_power_evaluable": 0.8000012442499785,
+        "p_treatment": 0.0005,
+        "provenance": {},
+        "warnings": [
+          "Dropout inflation represents expected retention, not guaranteed evaluable counts.",
+          "Control event rate 0.001 is near or outside common binary trial planning regimes (0.05 - 0.40)."
+        ]
+      },
+      "oracle_enrolled_n": 228565,
+      "oracle_evaluable_n": 45713,
+      "planned_request": {
+        "allocation_ratio": 1,
+        "alpha": 0.05,
+        "control_event_rate": 0.001,
+        "dropout": {
+          "control": 0.8,
+          "treatment": 0.8
+        },
+        "effect": {
+          "kind": "relative_risk",
+          "value": 0.5
+        },
+        "model_version": "binary-v1",
+        "target_power": 0.8
+      },
+      "stress_checks": [
+        {
+          "absolute_error": 1.1102230246251565e-16,
+          "oracle_power": 0.8000012442499786,
+          "request": {
+            "fixed_enrollment": {
+              "control": 228565,
+              "treatment": 228565
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.001,
+              "dropout": {
+                "control": 0.8,
+                "treatment": 0.8
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.5
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.001,
+              "dropout": {
+                "control": 0.8,
+                "treatment": 0.8
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 45713,
+                "treatment": 45713
+              },
+              "conditional_power_approx": 0.8000012442499785,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              },
+              {
+                "arm": "control",
+                "code": "NEAR_BOUNDARY_PROBABILITY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "p_control",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Event probability near zero or one; the normal approximation may be unreliable. This heuristic does not reject the scenario.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "warning",
+                "threshold": 0.01
+              },
+              {
+                "arm": "treatment",
+                "code": "NEAR_BOUNDARY_PROBABILITY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "p_treatment",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Event probability near zero or one; the normal approximation may be unreliable. This heuristic does not reject the scenario.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "warning",
+                "threshold": 0.01
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.190440+00:00",
+              "fixed_enrollment": {
+                "control": 228565,
+                "treatment": 228565
+              },
+              "inputs_hash": "sha256:bad1c4087efde69596923a97211c300ff3a3f7931a4380d9bd957e787c6f74ba",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Event probability near zero or one; the normal approximation may be unreliable. This heuristic does not reject the scenario.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 0.0,
+          "oracle_power": 0.9932238801014047,
+          "request": {
+            "fixed_enrollment": {
+              "control": 228565,
+              "treatment": 228565
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.001,
+              "dropout": {
+                "control": 0.8,
+                "treatment": 0.8
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.5
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.0005,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 228565,
+                "treatment": 228565
+              },
+              "conditional_power_approx": 0.9932238801014047,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              },
+              {
+                "arm": "control",
+                "code": "NEAR_BOUNDARY_PROBABILITY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "p_control",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Event probability near zero or one; the normal approximation may be unreliable. This heuristic does not reject the scenario.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "warning",
+                "threshold": 0.01
+              },
+              {
+                "arm": "treatment",
+                "code": "NEAR_BOUNDARY_PROBABILITY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "p_treatment",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Event probability near zero or one; the normal approximation may be unreliable. This heuristic does not reject the scenario.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "warning",
+                "threshold": 0.01
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.194701+00:00",
+              "fixed_enrollment": {
+                "control": 228565,
+                "treatment": 228565
+              },
+              "inputs_hash": "sha256:2243eb9a1ef8be0bee339118ea61dc0ed39a19f3341bf0d50a26b29c53f0b3d7",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Event probability near zero or one; the normal approximation may be unreliable. This heuristic does not reject the scenario.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 0.0,
+          "oracle_power": 0.9969092617206926,
+          "request": {
+            "fixed_enrollment": {
+              "control": 228565,
+              "treatment": 228565
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.001,
+              "dropout": {
+                "control": 0.8,
+                "treatment": 0.8
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.5
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.00075,
+              "dropout": {
+                "control": 0.25,
+                "treatment": 0.25
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 171423,
+                "treatment": 171423
+              },
+              "conditional_power_approx": 0.9969092617206926,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              },
+              {
+                "arm": "control",
+                "code": "NEAR_BOUNDARY_PROBABILITY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "p_control",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Event probability near zero or one; the normal approximation may be unreliable. This heuristic does not reject the scenario.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "warning",
+                "threshold": 0.01
+              },
+              {
+                "arm": "treatment",
+                "code": "NEAR_BOUNDARY_PROBABILITY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "p_treatment",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Event probability near zero or one; the normal approximation may be unreliable. This heuristic does not reject the scenario.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "warning",
+                "threshold": 0.01
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.198977+00:00",
+              "fixed_enrollment": {
+                "control": 228565,
+                "treatment": 228565
+              },
+              "inputs_hash": "sha256:3bae2425b3077cf0c76effb56cd38865495d5720784b1a39ce5f8363c942b286",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Event probability near zero or one; the normal approximation may be unreliable. This heuristic does not reject the scenario.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 0.0,
+          "oracle_power": 0.9821317898294328,
+          "request": {
+            "fixed_enrollment": {
+              "control": 228565,
+              "treatment": 228565
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.001,
+              "dropout": {
+                "control": 0.8,
+                "treatment": 0.8
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.5
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.001,
+              "dropout": {
+                "control": 0.58,
+                "treatment": 0.58
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 95997,
+                "treatment": 95997
+              },
+              "conditional_power_approx": 0.9821317898294328,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              },
+              {
+                "arm": "control",
+                "code": "NEAR_BOUNDARY_PROBABILITY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "p_control",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Event probability near zero or one; the normal approximation may be unreliable. This heuristic does not reject the scenario.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "warning",
+                "threshold": 0.01
+              },
+              {
+                "arm": "treatment",
+                "code": "NEAR_BOUNDARY_PROBABILITY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "p_treatment",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Event probability near zero or one; the normal approximation may be unreliable. This heuristic does not reject the scenario.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "warning",
+                "threshold": 0.01
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.203549+00:00",
+              "fixed_enrollment": {
+                "control": 228565,
+                "treatment": 228565
+              },
+              "inputs_hash": "sha256:4211e6757320057eb7b05ba17193507e4721963c874f8ff7380f730f82571a8e",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Event probability near zero or one; the normal approximation may be unreliable. This heuristic does not reject the scenario.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "design_response": {
+        "diagnostics": [
+          {
+            "arm": null,
+            "code": "CONDITIONAL_POWER_ONLY",
+            "count_basis": null,
+            "expected_count": null,
+            "field": "interpretation",
+            "invalid_test_fraction": null,
+            "invalid_test_policy": null,
+            "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+            "method": "cohen_h_normal",
+            "outcome": null,
+            "replicates": null,
+            "severity": "info",
+            "threshold": null
+          },
+          {
+            "arm": "control",
+            "code": "NEAR_BOUNDARY_PROBABILITY",
+            "count_basis": null,
+            "expected_count": null,
+            "field": "p_control",
+            "invalid_test_fraction": null,
+            "invalid_test_policy": null,
+            "message": "Event probability near zero or one; the normal approximation may be unreliable. This heuristic does not reject the scenario.",
+            "method": "cohen_h_normal",
+            "outcome": null,
+            "replicates": null,
+            "severity": "warning",
+            "threshold": 0.01
+          }
+        ],
+        "enrolled_n": {
+          "control": 3276,
+          "treatment": 3276
+        },
+        "evaluable_n": {
+          "control": 2293,
+          "treatment": 2293
+        },
+        "inputs_hash": "356c3ac72e45cc45",
+        "method": "cohen_h_normal_v1",
+        "model_version": "binary-v1",
+        "nominal_power_evaluable": 0.8000375330225363,
+        "p_treatment": 0.9801,
+        "provenance": {},
+        "warnings": [
+          "Dropout inflation represents expected retention, not guaranteed evaluable counts.",
+          "Control event rate 0.99 is near or outside common binary trial planning regimes (0.05 - 0.40)."
+        ]
+      },
+      "oracle_enrolled_n": 3276,
+      "oracle_evaluable_n": 2293,
+      "planned_request": {
+        "allocation_ratio": 1,
+        "alpha": 0.05,
+        "control_event_rate": 0.99,
+        "dropout": {
+          "control": 0.3,
+          "treatment": 0.3
+        },
+        "effect": {
+          "kind": "relative_risk",
+          "value": 0.99
+        },
+        "model_version": "binary-v1",
+        "target_power": 0.8
+      },
+      "stress_checks": [
+        {
+          "absolute_error": 1.1102230246251565e-16,
+          "oracle_power": 0.8000375330225364,
+          "request": {
+            "fixed_enrollment": {
+              "control": 3276,
+              "treatment": 3276
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.99,
+              "dropout": {
+                "control": 0.3,
+                "treatment": 0.3
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.99
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.99,
+              "dropout": {
+                "control": 0.3,
+                "treatment": 0.3
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 2293,
+                "treatment": 2293
+              },
+              "conditional_power_approx": 0.8000375330225363,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              },
+              {
+                "arm": "control",
+                "code": "NEAR_BOUNDARY_PROBABILITY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "p_control",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Event probability near zero or one; the normal approximation may be unreliable. This heuristic does not reject the scenario.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "warning",
+                "threshold": 0.01
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.209530+00:00",
+              "fixed_enrollment": {
+                "control": 3276,
+                "treatment": 3276
+              },
+              "inputs_hash": "sha256:bf5291d784f4c81844740f9556515d0fdfd97e9a165188cde15a2d6efdc611be",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Event probability near zero or one; the normal approximation may be unreliable. This heuristic does not reject the scenario.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 1.3877787807814457e-17,
+          "oracle_power": 0.06859008008477897,
+          "request": {
+            "fixed_enrollment": {
+              "control": 3276,
+              "treatment": 3276
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.99,
+              "dropout": {
+                "control": 0.3,
+                "treatment": 0.3
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.99
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.495,
+              "dropout": {
+                "control": 0,
+                "treatment": 0
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 3276,
+                "treatment": 3276
+              },
+              "conditional_power_approx": 0.06859008008477896,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.213965+00:00",
+              "fixed_enrollment": {
+                "control": 3276,
+                "treatment": 3276
+              },
+              "inputs_hash": "sha256:f29d149d11c2791a0c47587a05edf2fcabac2fcb78c308ada74d15bb20eb1939",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 6.938893903907228e-17,
+          "oracle_power": 0.09107826965024,
+          "request": {
+            "fixed_enrollment": {
+              "control": 3276,
+              "treatment": 3276
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.99,
+              "dropout": {
+                "control": 0.3,
+                "treatment": 0.3
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.99
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.7424999999999999,
+              "dropout": {
+                "control": 0.25,
+                "treatment": 0.25
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 2457,
+                "treatment": 2457
+              },
+              "conditional_power_approx": 0.09107826965023993,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.218375+00:00",
+              "fixed_enrollment": {
+                "control": 3276,
+                "treatment": 3276
+              },
+              "inputs_hash": "sha256:90f62dad076a4c967635605f5500193ea01fe413ba39a4dca5e755d65f79b260",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        },
+        {
+          "absolute_error": 0.0,
+          "oracle_power": 0.5830300828925553,
+          "request": {
+            "fixed_enrollment": {
+              "control": 3276,
+              "treatment": 3276
+            },
+            "planned_design": {
+              "allocation_ratio": 1,
+              "alpha": 0.05,
+              "control_event_rate": 0.99,
+              "dropout": {
+                "control": 0.3,
+                "treatment": 0.3
+              },
+              "effect": {
+                "kind": "relative_risk",
+                "value": 0.99
+              },
+              "model_version": "binary-v1",
+              "target_power": 0.8
+            },
+            "simulation": null,
+            "stress_scenario": {
+              "control_event_rate": 0.99,
+              "dropout": {
+                "control": 0.58,
+                "treatment": 0.58
+              },
+              "effect_override": null
+            }
+          },
+          "response": {
+            "analytic": {
+              "assumed_evaluable_n": {
+                "control": 1375,
+                "treatment": 1375
+              },
+              "conditional_power_approx": 0.5830300828925553,
+              "method": "cohen_h_normal_v1"
+            },
+            "diagnostics": [
+              {
+                "arm": null,
+                "code": "CONDITIONAL_POWER_ONLY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "interpretation",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "info",
+                "threshold": null
+              },
+              {
+                "arm": "control",
+                "code": "NEAR_BOUNDARY_PROBABILITY",
+                "count_basis": null,
+                "expected_count": null,
+                "field": "p_control",
+                "invalid_test_fraction": null,
+                "invalid_test_policy": null,
+                "message": "Event probability near zero or one; the normal approximation may be unreliable. This heuristic does not reject the scenario.",
+                "method": "cohen_h_normal",
+                "outcome": null,
+                "replicates": null,
+                "severity": "warning",
+                "threshold": 0.01
+              }
+            ],
+            "metadata": {
+              "computed_at": "2026-10-11T13:08:05.222568+00:00",
+              "fixed_enrollment": {
+                "control": 3276,
+                "treatment": 3276
+              },
+              "inputs_hash": "sha256:7e1fcf9172e17a369aa16503783b486ab616e5e3d4b153593fbd3f934e6ca311",
+              "software_versions": {
+                "numpy": "2.5.4",
+                "python": "3.12.13",
+                "scipy": "1.18.1",
+                "statsmodels": "0.15.0"
+              }
+            },
+            "model_version": "binary-v1",
+            "monte_carlo": null,
+            "provenance": {},
+            "warnings": [
+              "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+              "Event probability near zero or one; the normal approximation may be unreliable. This heuristic does not reject the scenario.",
+              "Analytic counts are floored expected retention, not actual simulated retained counts."
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "design_cases": 10,
+  "engine_commit": "8b181b0fbebc2da4b827bedca7c451b520a361a9",
+  "limitations": [
+    "Same mathematical approximation, not independent clinical evidence",
+    "This report excludes Monte Carlo; primitive calibration is recorded separately",
+    "Small prespecified matrix, not exhaustive edge-case validation"
+  ],
+  "oracle": "stdlib math.erfc/arcsine + statistics.NormalDist, independent of product/statsmodels",
+  "power_tolerance": 1e-10,
+  "scope": "analytic_http_only",
+  "software_versions": {
+    "numpy": "2.5.4",
+    "python": "3.12.13",
+    "scipy": "1.18.1",
+    "statsmodels": "0.15.0"
+  },
+  "source": "real_local_http",
+  "status": "passed",
+  "stress_cases": 40
+}

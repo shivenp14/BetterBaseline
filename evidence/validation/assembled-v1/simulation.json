@@ -1,0 +1,2467 @@
+{
+  "status": "pass",
+  "captured_at": "2026-10-11T13:08:08.580618+00:00",
+  "checkout_commit": "8b181b0fbebc2da4b827bedca7c451b520a361a9",
+  "simulation_source_sha256": "084c16f3834a99d9aa6c4e8dcd8d7e554e5cefbeb5644a1526b41169f6f3a229",
+  "command": [
+    "python",
+    "scripts/validation/validate_simulation.py",
+    "--output",
+    "/tmp/bb-complete-validation/simulation.json"
+  ],
+  "prespecified": {
+    "cases": [
+      {
+        "name": "regular_null",
+        "n": 5000,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      {
+        "name": "dropout_null",
+        "n": 5000,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.25,
+        "alpha": 0.01
+      },
+      {
+        "name": "baseline_collapse",
+        "n": 903,
+        "pc": 0.1,
+        "pt": 0.075,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      {
+        "name": "rare_null",
+        "n": 10,
+        "pc": 0.01,
+        "pt": 0.01,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      {
+        "name": "empty_arm_null",
+        "n": 1,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.9,
+        "alpha": 0.05
+      }
+    ],
+    "seeds": [
+      42,
+      31415,
+      27182
+    ],
+    "batches": [
+      25000,
+      100000
+    ],
+    "calibration": "5-sigma Wilson interval aggregated across seeds; sparse exact distribution",
+    "mcse_scaling_ratio": [
+      0.45,
+      0.55
+    ]
+  },
+  "limitations": [
+    "Primitive-level evidence, not HTTP or UI acceptance.",
+    "Replay shares NumPy PCG64/binomial sampling; scalar test and exact distribution are independent.",
+    "Null approximation checks apply only to the prespecified well-populated regimes.",
+    "MCSE is simulation-estimate uncertainty, not reduced clinical-trial variance.",
+    "No clinical utility, predictive accuracy or historical trial rescue claim."
+  ],
+  "summary": [
+    {
+      "name": "regular_null",
+      "reps_per_seed": 25000,
+      "total_replicates": 75000,
+      "fractions": {
+        "two_sided": 0.048133333333333334,
+        "favorable": 0.024093333333333335,
+        "invalid": 0.0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.044373693764347355,
+          0.052194116965409404
+        ],
+        "favorable": [
+          0.021448319823580447,
+          0.027055512232400894
+        ],
+        "invalid": [
+          0.0,
+          0.00033322225924691776
+        ]
+      },
+      "reference": {
+        "two_sided": 0.05,
+        "favorable": 0.025
+      }
+    },
+    {
+      "name": "regular_null",
+      "reps_per_seed": 100000,
+      "total_replicates": 300000,
+      "fractions": {
+        "two_sided": 0.050216666666666666,
+        "favorable": 0.025263333333333332,
+        "invalid": 0.0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.04826024155438706,
+          0.05224804942136496
+        ],
+        "favorable": [
+          0.023869892719218067,
+          0.026735890132210973
+        ],
+        "invalid": [
+          0.0,
+          8.332638946754436e-05
+        ]
+      },
+      "reference": {
+        "two_sided": 0.05,
+        "favorable": 0.025
+      }
+    },
+    {
+      "name": "dropout_null",
+      "reps_per_seed": 25000,
+      "total_replicates": 75000,
+      "fractions": {
+        "two_sided": 0.009986666666666666,
+        "favorable": 0.004973333333333333,
+        "invalid": 0.0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.008327531937431517,
+          0.01197236809589071
+        ],
+        "favorable": [
+          0.003843608425804436,
+          0.006432966049370505
+        ],
+        "invalid": [
+          0.0,
+          0.00033322225924691776
+        ]
+      },
+      "reference": {
+        "two_sided": 0.01,
+        "favorable": 0.005
+      }
+    },
+    {
+      "name": "dropout_null",
+      "reps_per_seed": 100000,
+      "total_replicates": 300000,
+      "fractions": {
+        "two_sided": 0.01007,
+        "favorable": 0.005103333333333333,
+        "invalid": 0.0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.009198511846225093,
+          0.011023136349758576
+        ],
+        "favorable": [
+          0.004492825356532573,
+          0.005796317214919803
+        ],
+        "invalid": [
+          0.0,
+          8.332638946754436e-05
+        ]
+      },
+      "reference": {
+        "two_sided": 0.01,
+        "favorable": 0.005
+      }
+    },
+    {
+      "name": "baseline_collapse",
+      "reps_per_seed": 25000,
+      "total_replicates": 75000,
+      "fractions": {
+        "two_sided": 0.46976,
+        "favorable": 0.46973333333333334,
+        "invalid": 0.0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.46065959099418685,
+          0.4788805622880524
+        ],
+        "favorable": [
+          0.4606329627112999,
+          0.4788538750094599
+        ],
+        "invalid": [
+          0.0,
+          0.00033322225924691776
+        ]
+      },
+      "reference": {}
+    },
+    {
+      "name": "baseline_collapse",
+      "reps_per_seed": 100000,
+      "total_replicates": 300000,
+      "fractions": {
+        "two_sided": 0.47028,
+        "favorable": 0.4702233333333333,
+        "invalid": 0.0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.4657263813010851,
+          0.4748385716195047
+        ],
+        "favorable": [
+          0.4656697501842481,
+          0.47478187884666584
+        ],
+        "invalid": [
+          0.0,
+          8.332638946754436e-05
+        ]
+      },
+      "reference": {}
+    },
+    {
+      "name": "rare_null",
+      "reps_per_seed": 25000,
+      "total_replicates": 75000,
+      "fractions": {
+        "two_sided": 2.6666666666666667e-05,
+        "favorable": 1.3333333333333333e-05,
+        "invalid": 0.8170266666666667
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          1.847914754258016e-06,
+          0.00038468990597216655
+        ],
+        "favorable": [
+          4.94506655896571e-07,
+          0.0003593855333307745
+        ],
+        "invalid": [
+          0.8098622786190852,
+          0.8239797740300319
+        ]
+      },
+      "reference": {
+        "two_sided": 3.619873646089907e-06,
+        "favorable": 1.8099368230449536e-06,
+        "invalid": 0.8179069375972308
+      }
+    },
+    {
+      "name": "rare_null",
+      "reps_per_seed": 100000,
+      "total_replicates": 300000,
+      "fractions": {
+        "two_sided": 0.0,
+        "favorable": 0.0,
+        "invalid": 0.8185666666666667
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.0,
+          8.332638946754436e-05
+        ],
+        "favorable": [
+          0.0,
+          8.332638946754436e-05
+        ],
+        "invalid": [
+          0.8150221752942115,
+          0.8220580680188456
+        ]
+      },
+      "reference": {
+        "two_sided": 3.619873646089907e-06,
+        "favorable": 1.8099368230449536e-06,
+        "invalid": 0.8179069375972308
+      }
+    },
+    {
+      "name": "empty_arm_null",
+      "reps_per_seed": 25000,
+      "total_replicates": 75000,
+      "fractions": {
+        "two_sided": 0.0,
+        "favorable": 0.0,
+        "invalid": 0.9968
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.0,
+          0.00033322225924691776
+        ],
+        "favorable": [
+          0.0,
+          0.00033322225924691776
+        ],
+        "invalid": [
+          0.9955902788935435,
+          0.997678631469669
+        ]
+      },
+      "reference": {
+        "two_sided": 0.0,
+        "favorable": 0.0,
+        "invalid": 0.9967999999999999
+      }
+    },
+    {
+      "name": "empty_arm_null",
+      "reps_per_seed": 100000,
+      "total_replicates": 300000,
+      "fractions": {
+        "two_sided": 0.0,
+        "favorable": 0.0,
+        "invalid": 0.9966633333333333
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.0,
+          8.332638946754436e-05
+        ],
+        "favorable": [
+          0.0,
+          8.332638946754436e-05
+        ],
+        "invalid": [
+          0.9960939165275614,
+          0.99714997981441
+        ]
+      },
+      "reference": {
+        "two_sided": 0.0,
+        "favorable": 0.0,
+        "invalid": 0.9967999999999999
+      }
+    }
+  ],
+  "mcse_scaling": [
+    {
+      "name": "regular_null",
+      "fraction": "two_sided",
+      "mcse_ratio_4x_replicates": 0.5101468256439288,
+      "small_mcse": 0.0007815925243207448,
+      "large_mcse": 0.0003987269452292532
+    },
+    {
+      "name": "regular_null",
+      "fraction": "favorable",
+      "mcse_ratio_4x_replicates": 0.5116893702964407,
+      "small_mcse": 0.0005599148104515212,
+      "large_mcse": 0.00028650245677958985
+    },
+    {
+      "name": "dropout_null",
+      "fraction": "two_sided",
+      "mcse_ratio_4x_replicates": 0.5020606494594096,
+      "small_mcse": 0.00036307819461846975,
+      "large_mcse": 0.00018228727419469887
+    },
+    {
+      "name": "dropout_null",
+      "fraction": "favorable",
+      "mcse_ratio_4x_replicates": 0.5064596097703753,
+      "small_mcse": 0.00025686830059750825,
+      "large_mcse": 0.00013009341928299349
+    },
+    {
+      "name": "baseline_collapse",
+      "fraction": "two_sided",
+      "mcse_ratio_4x_replicates": 0.5000312926876939,
+      "small_mcse": 0.0018223996722270704,
+      "large_mcse": 0.0009112568638973316
+    },
+    {
+      "name": "baseline_collapse",
+      "fraction": "favorable",
+      "mcse_ratio_4x_replicates": 0.500029528565656,
+      "small_mcse": 0.001822393769702874,
+      "large_mcse": 0.0009112506975255167
+    }
+  ],
+  "runs": [
+    {
+      "case": {
+        "name": "regular_null",
+        "n": 5000,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 5000,
+        "n_t": 5000,
+        "p_c": 0.2,
+        "p_t": 0.2,
+        "d_c": 0.0,
+        "d_t": 0.0,
+        "alpha": 0.05,
+        "reps": 25000,
+        "seed": 42
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.04996,
+        "significant_favorable_fraction": 0.02516,
+        "mcse_two_sided": 0.0013778824100771443,
+        "mcse_favorable": 0.0009904943089185318,
+        "invalid_test_fraction": 0.0,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 5000.0,
+        "mean_retained_treatment": 5000.0,
+        "mean_control_events": 999.93844,
+        "mean_treatment_events": 999.94028,
+        "replicates": 25000,
+        "seed": 42,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 1249,
+        "favorable": 629,
+        "invalid": 0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.043508959035971226,
+          0.0573102217832096
+        ],
+        "favorable": [
+          0.020661690832698122,
+          0.03060704043603315
+        ],
+        "invalid": [
+          0.0,
+          0.0009990009990009992
+        ]
+      },
+      "exact": null
+    },
+    {
+      "case": {
+        "name": "regular_null",
+        "n": 5000,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 5000,
+        "n_t": 5000,
+        "p_c": 0.2,
+        "p_t": 0.2,
+        "d_c": 0.0,
+        "d_t": 0.0,
+        "alpha": 0.05,
+        "reps": 25000,
+        "seed": 31415
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.04604,
+        "significant_favorable_fraction": 0.0226,
+        "mcse_two_sided": 0.0013254481264840204,
+        "mcse_favorable": 0.0009399838296481487,
+        "invalid_test_fraction": 0.0,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 5000.0,
+        "mean_retained_treatment": 5000.0,
+        "mean_control_events": 999.96792,
+        "mean_treatment_events": 999.98552,
+        "replicates": 25000,
+        "seed": 31415,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 1151,
+        "favorable": 565,
+        "invalid": 0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.03985407051612901,
+          0.05313294247088398
+        ],
+        "favorable": [
+          0.018355204274572115,
+          0.02779864187927404
+        ],
+        "invalid": [
+          0.0,
+          0.0009990009990009992
+        ]
+      },
+      "exact": null
+    },
+    {
+      "case": {
+        "name": "regular_null",
+        "n": 5000,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 5000,
+        "n_t": 5000,
+        "p_c": 0.2,
+        "p_t": 0.2,
+        "d_c": 0.0,
+        "d_t": 0.0,
+        "alpha": 0.05,
+        "reps": 25000,
+        "seed": 27182
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.0484,
+        "significant_favorable_fraction": 0.02452,
+        "mcse_two_sided": 0.0013573126390039989,
+        "mcse_favorable": 0.0009781363831286515,
+        "invalid_test_fraction": 0.0,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 5000.0,
+        "mean_retained_treatment": 5000.0,
+        "mean_control_events": 999.9518,
+        "mean_treatment_events": 999.97316,
+        "replicates": 25000,
+        "seed": 27182,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 1210,
+        "favorable": 613,
+        "invalid": 0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.042052989993243174,
+          0.05564930770905454
+        ],
+        "favorable": [
+          0.020083741973077298,
+          0.0299062680169327
+        ],
+        "invalid": [
+          0.0,
+          0.0009990009990009992
+        ]
+      },
+      "exact": null
+    },
+    {
+      "case": {
+        "name": "regular_null",
+        "n": 5000,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 5000,
+        "n_t": 5000,
+        "p_c": 0.2,
+        "p_t": 0.2,
+        "d_c": 0.0,
+        "d_t": 0.0,
+        "alpha": 0.05,
+        "reps": 100000,
+        "seed": 42
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.05054,
+        "significant_favorable_fraction": 0.02513,
+        "mcse_two_sided": 0.0006927171746102446,
+        "mcse_favorable": 0.0004949594235894494,
+        "invalid_test_fraction": 0.0,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 5000.0,
+        "mean_retained_treatment": 5000.0,
+        "mean_control_events": 999.86814,
+        "mean_treatment_events": 999.96096,
+        "replicates": 100000,
+        "seed": 42,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 5054,
+        "favorable": 2513,
+        "invalid": 0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.04718736241002657,
+          0.05411731142151554
+        ],
+        "favorable": [
+          0.02277135522965719,
+          0.027726020426428785
+        ],
+        "invalid": [
+          0.0,
+          0.0002499375156210947
+        ]
+      },
+      "exact": null
+    },
+    {
+      "case": {
+        "name": "regular_null",
+        "n": 5000,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 5000,
+        "n_t": 5000,
+        "p_c": 0.2,
+        "p_t": 0.2,
+        "d_c": 0.0,
+        "d_t": 0.0,
+        "alpha": 0.05,
+        "reps": 100000,
+        "seed": 31415
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.04982,
+        "significant_favorable_fraction": 0.02538,
+        "mcse_two_sided": 0.0006880259268370634,
+        "mcse_favorable": 0.0004973515416684661,
+        "invalid_test_fraction": 0.0,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 5000.0,
+        "mean_retained_treatment": 5000.0,
+        "mean_control_events": 999.83245,
+        "mean_treatment_events": 999.91396,
+        "replicates": 100000,
+        "seed": 31415,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 4982,
+        "favorable": 2538,
+        "invalid": 0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.04649097738056771,
+          0.053374056360996895
+        ],
+        "favorable": [
+          0.02300935029506347,
+          0.02798790039226469
+        ],
+        "invalid": [
+          0.0,
+          0.0002499375156210947
+        ]
+      },
+      "exact": null
+    },
+    {
+      "case": {
+        "name": "regular_null",
+        "n": 5000,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 5000,
+        "n_t": 5000,
+        "p_c": 0.2,
+        "p_t": 0.2,
+        "d_c": 0.0,
+        "d_t": 0.0,
+        "alpha": 0.05,
+        "reps": 100000,
+        "seed": 27182
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.05029,
+        "significant_favorable_fraction": 0.02528,
+        "mcse_two_sided": 0.0006910927282210398,
+        "mcse_favorable": 0.0004963962288333786,
+        "invalid_test_fraction": 0.0,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 5000.0,
+        "mean_retained_treatment": 5000.0,
+        "mean_control_events": 999.9347,
+        "mean_treatment_events": 999.89017,
+        "replicates": 100000,
+        "seed": 27182,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 5029,
+        "favorable": 2528,
+        "invalid": 0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.046945539800891105,
+          0.05385925899940882
+        ],
+        "favorable": [
+          0.0229141446260342,
+          0.02788315604879709
+        ],
+        "invalid": [
+          0.0,
+          0.0002499375156210947
+        ]
+      },
+      "exact": null
+    },
+    {
+      "case": {
+        "name": "dropout_null",
+        "n": 5000,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.25,
+        "alpha": 0.01
+      },
+      "request": {
+        "n_c": 5000,
+        "n_t": 5000,
+        "p_c": 0.2,
+        "p_t": 0.2,
+        "d_c": 0.25,
+        "d_t": 0.25,
+        "alpha": 0.01,
+        "reps": 25000,
+        "seed": 42
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.0094,
+        "significant_favorable_fraction": 0.00464,
+        "mcse_two_sided": 0.0006102995985579542,
+        "mcse_favorable": 0.0004298125358804697,
+        "invalid_test_fraction": 0.0,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 3749.93904,
+        "mean_retained_treatment": 3750.2058,
+        "mean_control_events": 749.91128,
+        "mean_treatment_events": 749.99072,
+        "replicates": 25000,
+        "seed": 42,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 235,
+        "favorable": 116,
+        "invalid": 0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.006801008828842844,
+          0.012979210951376939
+        ],
+        "favorable": [
+          0.002930608333772842,
+          0.00733912193595743
+        ],
+        "invalid": [
+          0.0,
+          0.0009990009990009992
+        ]
+      },
+      "exact": null
+    },
+    {
+      "case": {
+        "name": "dropout_null",
+        "n": 5000,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.25,
+        "alpha": 0.01
+      },
+      "request": {
+        "n_c": 5000,
+        "n_t": 5000,
+        "p_c": 0.2,
+        "p_t": 0.2,
+        "d_c": 0.25,
+        "d_t": 0.25,
+        "alpha": 0.01,
+        "reps": 25000,
+        "seed": 31415
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.01008,
+        "significant_favorable_fraction": 0.00516,
+        "mcse_two_sided": 0.0006317719082073847,
+        "mcse_favorable": 0.0004531390250243296,
+        "invalid_test_fraction": 0.0,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 3750.06968,
+        "mean_retained_treatment": 3750.12416,
+        "mean_control_events": 749.95636,
+        "mean_treatment_events": 749.91072,
+        "replicates": 25000,
+        "seed": 31415,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 252,
+        "favorable": 129,
+        "invalid": 0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.007374439574589066,
+          0.013764421564272076
+        ],
+        "favorable": [
+          0.0033364535559475025,
+          0.007972237752743807
+        ],
+        "invalid": [
+          0.0,
+          0.0009990009990009992
+        ]
+      },
+      "exact": null
+    },
+    {
+      "case": {
+        "name": "dropout_null",
+        "n": 5000,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.25,
+        "alpha": 0.01
+      },
+      "request": {
+        "n_c": 5000,
+        "n_t": 5000,
+        "p_c": 0.2,
+        "p_t": 0.2,
+        "d_c": 0.25,
+        "d_t": 0.25,
+        "alpha": 0.01,
+        "reps": 25000,
+        "seed": 27182
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.01048,
+        "significant_favorable_fraction": 0.00512,
+        "mcse_two_sided": 0.0006440549541770485,
+        "mcse_favorable": 0.0004513883294902517,
+        "invalid_test_fraction": 0.0,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 3750.23316,
+        "mean_retained_treatment": 3750.07348,
+        "mean_control_events": 750.11792,
+        "mean_treatment_events": 750.02696,
+        "replicates": 25000,
+        "seed": 27182,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 262,
+        "favorable": 128,
+        "invalid": 0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.007713426404763198,
+          0.014224635533298745
+        ],
+        "favorable": [
+          0.003305032016772563,
+          0.007923739211998668
+        ],
+        "invalid": [
+          0.0,
+          0.0009990009990009992
+        ]
+      },
+      "exact": null
+    },
+    {
+      "case": {
+        "name": "dropout_null",
+        "n": 5000,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.25,
+        "alpha": 0.01
+      },
+      "request": {
+        "n_c": 5000,
+        "n_t": 5000,
+        "p_c": 0.2,
+        "p_t": 0.2,
+        "d_c": 0.25,
+        "d_t": 0.25,
+        "alpha": 0.01,
+        "reps": 100000,
+        "seed": 42
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.01049,
+        "significant_favorable_fraction": 0.00527,
+        "mcse_two_sided": 0.00032217945154835683,
+        "mcse_favorable": 0.00022895910333507163,
+        "invalid_test_fraction": 0.0,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 3750.04664,
+        "mean_retained_treatment": 3750.0175,
+        "mean_control_events": 749.95152,
+        "mean_treatment_events": 750.07492,
+        "replicates": 100000,
+        "seed": 42,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 1049,
+        "favorable": 527,
+        "invalid": 0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.008997010986338927,
+          0.012227682840204434
+        ],
+        "favorable": [
+          0.004242339755891227,
+          0.006544963418315221
+        ],
+        "invalid": [
+          0.0,
+          0.0002499375156210947
+        ]
+      },
+      "exact": null
+    },
+    {
+      "case": {
+        "name": "dropout_null",
+        "n": 5000,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.25,
+        "alpha": 0.01
+      },
+      "request": {
+        "n_c": 5000,
+        "n_t": 5000,
+        "p_c": 0.2,
+        "p_t": 0.2,
+        "d_c": 0.25,
+        "d_t": 0.25,
+        "alpha": 0.01,
+        "reps": 100000,
+        "seed": 31415
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.00968,
+        "significant_favorable_fraction": 0.00497,
+        "mcse_two_sided": 0.00030961746720752043,
+        "mcse_favorable": 0.00022238028464771783,
+        "invalid_test_fraction": 0.0,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 3750.10999,
+        "mean_retained_treatment": 3750.20125,
+        "mean_control_events": 749.89676,
+        "mean_treatment_events": 750.15338,
+        "replicates": 100000,
+        "seed": 31415,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 968,
+        "favorable": 497,
+        "invalid": 0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.008249811859912436,
+          0.011355286865406232
+        ],
+        "favorable": [
+          0.003975100609971971,
+          0.006212352526743849
+        ],
+        "invalid": [
+          0.0,
+          0.0002499375156210947
+        ]
+      },
+      "exact": null
+    },
+    {
+      "case": {
+        "name": "dropout_null",
+        "n": 5000,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.25,
+        "alpha": 0.01
+      },
+      "request": {
+        "n_c": 5000,
+        "n_t": 5000,
+        "p_c": 0.2,
+        "p_t": 0.2,
+        "d_c": 0.25,
+        "d_t": 0.25,
+        "alpha": 0.01,
+        "reps": 100000,
+        "seed": 27182
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.01004,
+        "significant_favorable_fraction": 0.00507,
+        "mcse_two_sided": 0.00031526494254832714,
+        "mcse_favorable": 0.00022459508231481825,
+        "invalid_test_fraction": 0.0,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 3750.08216,
+        "mean_retained_treatment": 3750.03615,
+        "mean_control_events": 749.96027,
+        "mean_treatment_events": 749.99361,
+        "replicates": 100000,
+        "seed": 27182,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 1004,
+        "favorable": 507,
+        "invalid": 0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.00858158150992951,
+          0.011743337260377913
+        ],
+        "favorable": [
+          0.00406407302286301,
+          0.006323330126349686
+        ],
+        "invalid": [
+          0.0,
+          0.0002499375156210947
+        ]
+      },
+      "exact": null
+    },
+    {
+      "case": {
+        "name": "baseline_collapse",
+        "n": 903,
+        "pc": 0.1,
+        "pt": 0.075,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 903,
+        "n_t": 903,
+        "p_c": 0.1,
+        "p_t": 0.075,
+        "d_c": 0.0,
+        "d_t": 0.0,
+        "alpha": 0.05,
+        "reps": 25000,
+        "seed": 42
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.4678,
+        "significant_favorable_fraction": 0.46776,
+        "mcse_two_sided": 0.003155713294962012,
+        "mcse_favorable": 0.003155696958834926,
+        "invalid_test_fraction": 0.0,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 903.0,
+        "mean_retained_treatment": 903.0,
+        "mean_control_events": 90.25284,
+        "mean_treatment_events": 67.75692,
+        "replicates": 25000,
+        "seed": 42,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 11695,
+        "favorable": 11694,
+        "invalid": 0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.45206145192185254,
+          0.48360288374248317
+        ],
+        "favorable": [
+          0.45202157343999017,
+          0.4835628421444256
+        ],
+        "invalid": [
+          0.0,
+          0.0009990009990009992
+        ]
+      },
+      "exact": null
+    },
+    {
+      "case": {
+        "name": "baseline_collapse",
+        "n": 903,
+        "pc": 0.1,
+        "pt": 0.075,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 903,
+        "n_t": 903,
+        "p_c": 0.1,
+        "p_t": 0.075,
+        "d_c": 0.0,
+        "d_t": 0.0,
+        "alpha": 0.05,
+        "reps": 25000,
+        "seed": 31415
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.46584,
+        "significant_favorable_fraction": 0.46584,
+        "mcse_two_sided": 0.0031548888690411904,
+        "mcse_favorable": 0.0031548888690411904,
+        "invalid_test_fraction": 0.0,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 903.0,
+        "mean_retained_treatment": 903.0,
+        "mean_control_events": 90.29784,
+        "mean_treatment_events": 67.70636,
+        "replicates": 25000,
+        "seed": 31415,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 11646,
+        "favorable": 11646,
+        "invalid": 0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.4501075259088387,
+          0.48164072583941314
+        ],
+        "favorable": [
+          0.4501075259088387,
+          0.48164072583941314
+        ],
+        "invalid": [
+          0.0,
+          0.0009990009990009992
+        ]
+      },
+      "exact": null
+    },
+    {
+      "case": {
+        "name": "baseline_collapse",
+        "n": 903,
+        "pc": 0.1,
+        "pt": 0.075,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 903,
+        "n_t": 903,
+        "p_c": 0.1,
+        "p_t": 0.075,
+        "d_c": 0.0,
+        "d_t": 0.0,
+        "alpha": 0.05,
+        "reps": 25000,
+        "seed": 27182
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.47564,
+        "significant_favorable_fraction": 0.4756,
+        "mcse_two_sided": 0.003158522378581478,
+        "mcse_favorable": 0.003158510028478618,
+        "invalid_test_fraction": 0.0,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 903.0,
+        "mean_retained_treatment": 903.0,
+        "mean_control_events": 90.31304,
+        "mean_treatment_events": 67.61408,
+        "replicates": 25000,
+        "seed": 27182,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 11891,
+        "favorable": 11890,
+        "invalid": 0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.45987959540066364,
+          0.49144907592800785
+        ],
+        "favorable": [
+          0.45983969701863436,
+          0.49140905423011705
+        ],
+        "invalid": [
+          0.0,
+          0.0009990009990009992
+        ]
+      },
+      "exact": null
+    },
+    {
+      "case": {
+        "name": "baseline_collapse",
+        "n": 903,
+        "pc": 0.1,
+        "pt": 0.075,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 903,
+        "n_t": 903,
+        "p_c": 0.1,
+        "p_t": 0.075,
+        "d_c": 0.0,
+        "d_t": 0.0,
+        "alpha": 0.05,
+        "reps": 100000,
+        "seed": 42
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.47169,
+        "significant_favorable_fraction": 0.47164,
+        "mcse_two_sided": 0.0015786023688693744,
+        "mcse_favorable": 0.0015785933941328907,
+        "invalid_test_fraction": 0.0,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 903.0,
+        "mean_retained_treatment": 903.0,
+        "mean_control_events": 90.31708,
+        "mean_treatment_events": 67.65823,
+        "replicates": 100000,
+        "seed": 42,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 47169,
+        "favorable": 47164,
+        "invalid": 0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.4638050471563134,
+          0.47958910430582097
+        ],
+        "favorable": [
+          0.46375510451003116,
+          0.4795390719458548
+        ],
+        "invalid": [
+          0.0,
+          0.0002499375156210947
+        ]
+      },
+      "exact": null
+    },
+    {
+      "case": {
+        "name": "baseline_collapse",
+        "n": 903,
+        "pc": 0.1,
+        "pt": 0.075,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 903,
+        "n_t": 903,
+        "p_c": 0.1,
+        "p_t": 0.075,
+        "d_c": 0.0,
+        "d_t": 0.0,
+        "alpha": 0.05,
+        "reps": 100000,
+        "seed": 31415
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.46778,
+        "significant_favorable_fraction": 0.4677,
+        "mcse_two_sided": 0.0015778525647220656,
+        "mcse_favorable": 0.0015778362082294853,
+        "invalid_test_fraction": 0.0,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 903.0,
+        "mean_retained_treatment": 903.0,
+        "mean_control_events": 90.24769,
+        "mean_treatment_events": 67.73353,
+        "replicates": 100000,
+        "seed": 31415,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 46778,
+        "favorable": 46770,
+        "invalid": 0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.4598997720255629,
+          0.47567633394794356
+        ],
+        "favorable": [
+          0.4598198737723255,
+          0.47559627219118344
+        ],
+        "invalid": [
+          0.0,
+          0.0002499375156210947
+        ]
+      },
+      "exact": null
+    },
+    {
+      "case": {
+        "name": "baseline_collapse",
+        "n": 903,
+        "pc": 0.1,
+        "pt": 0.075,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 903,
+        "n_t": 903,
+        "p_c": 0.1,
+        "p_t": 0.075,
+        "d_c": 0.0,
+        "d_t": 0.0,
+        "alpha": 0.05,
+        "reps": 100000,
+        "seed": 27182
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.47137,
+        "significant_favorable_fraction": 0.47133,
+        "mcse_two_sided": 0.0015785446560043841,
+        "mcse_favorable": 0.0015785373961360561,
+        "invalid_test_fraction": 0.0,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 903.0,
+        "mean_retained_treatment": 903.0,
+        "mean_control_events": 90.29297,
+        "mean_treatment_events": 67.69453,
+        "replicates": 100000,
+        "seed": 27182,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 47137,
+        "favorable": 47133,
+        "invalid": 0
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.4634854155923483,
+          0.4792688958297961
+        ],
+        "favorable": [
+          0.4634454618755676,
+          0.479228869541578
+        ],
+        "invalid": [
+          0.0,
+          0.0002499375156210947
+        ]
+      },
+      "exact": null
+    },
+    {
+      "case": {
+        "name": "rare_null",
+        "n": 10,
+        "pc": 0.01,
+        "pt": 0.01,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 10,
+        "n_t": 10,
+        "p_c": 0.01,
+        "p_t": 0.01,
+        "d_c": 0.0,
+        "d_t": 0.0,
+        "alpha": 0.05,
+        "reps": 25000,
+        "seed": 42
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.0,
+        "significant_favorable_fraction": 0.0,
+        "mcse_two_sided": 0.0,
+        "mcse_favorable": 0.0,
+        "invalid_test_fraction": 0.817,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 10.0,
+        "mean_retained_treatment": 10.0,
+        "mean_control_events": 0.10016,
+        "mean_treatment_events": 0.10148,
+        "replicates": 25000,
+        "seed": 42,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations.",
+          "Undefined tests count as nonrejections over all replicates.",
+          "Control expected events or nonevents below 5; pooled-z approximation may be unreliable.",
+          "Treatment expected events or nonevents below 5; pooled-z approximation may be unreliable."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 0,
+        "favorable": 0,
+        "invalid": 20425
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.0,
+          0.0009990009990009992
+        ],
+        "favorable": [
+          0.0,
+          0.0009990009990009992
+        ],
+        "invalid": [
+          0.8044578544554618,
+          0.8289087789111714
+        ]
+      },
+      "exact": {
+        "two_sided": 3.619873646089907e-06,
+        "favorable": 1.8099368230449536e-06,
+        "invalid": 0.8179069375972308
+      }
+    },
+    {
+      "case": {
+        "name": "rare_null",
+        "n": 10,
+        "pc": 0.01,
+        "pt": 0.01,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 10,
+        "n_t": 10,
+        "p_c": 0.01,
+        "p_t": 0.01,
+        "d_c": 0.0,
+        "d_t": 0.0,
+        "alpha": 0.05,
+        "reps": 25000,
+        "seed": 31415
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.0,
+        "significant_favorable_fraction": 0.0,
+        "mcse_two_sided": 0.0,
+        "mcse_favorable": 0.0,
+        "invalid_test_fraction": 0.82068,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 10.0,
+        "mean_retained_treatment": 10.0,
+        "mean_control_events": 0.1008,
+        "mean_treatment_events": 0.09556,
+        "replicates": 25000,
+        "seed": 31415,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations.",
+          "Undefined tests count as nonrejections over all replicates.",
+          "Control expected events or nonevents below 5; pooled-z approximation may be unreliable.",
+          "Treatment expected events or nonevents below 5; pooled-z approximation may be unreliable."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 0,
+        "favorable": 0,
+        "invalid": 20517
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.0,
+          0.0009990009990009992
+        ],
+        "favorable": [
+          0.0,
+          0.0009990009990009992
+        ],
+        "invalid": [
+          0.8082303390368563,
+          0.8324889416824245
+        ]
+      },
+      "exact": {
+        "two_sided": 3.619873646089907e-06,
+        "favorable": 1.8099368230449536e-06,
+        "invalid": 0.8179069375972308
+      }
+    },
+    {
+      "case": {
+        "name": "rare_null",
+        "n": 10,
+        "pc": 0.01,
+        "pt": 0.01,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 10,
+        "n_t": 10,
+        "p_c": 0.01,
+        "p_t": 0.01,
+        "d_c": 0.0,
+        "d_t": 0.0,
+        "alpha": 0.05,
+        "reps": 25000,
+        "seed": 27182
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 8e-05,
+        "significant_favorable_fraction": 4e-05,
+        "mcse_two_sided": 5.6566279707967366e-05,
+        "mcse_favorable": 3.9999199991999836e-05,
+        "invalid_test_fraction": 0.8134,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 10.0,
+        "mean_retained_treatment": 10.0,
+        "mean_control_events": 0.1042,
+        "mean_treatment_events": 0.10064,
+        "replicates": 25000,
+        "seed": 27182,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations.",
+          "Undefined tests count as nonrejections over all replicates.",
+          "Control expected events or nonevents below 5; pooled-z approximation may be unreliable.",
+          "Treatment expected events or nonevents below 5; pooled-z approximation may be unreliable."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 2,
+        "favorable": 1,
+        "invalid": 20335
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          5.543762096100308e-06,
+          0.0011532973967450589
+        ],
+        "favorable": [
+          1.4835213299740219e-06,
+          0.0010774375575911051
+        ],
+        "invalid": [
+          0.8007691683824651,
+          0.8254046577913612
+        ]
+      },
+      "exact": {
+        "two_sided": 3.619873646089907e-06,
+        "favorable": 1.8099368230449536e-06,
+        "invalid": 0.8179069375972308
+      }
+    },
+    {
+      "case": {
+        "name": "rare_null",
+        "n": 10,
+        "pc": 0.01,
+        "pt": 0.01,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 10,
+        "n_t": 10,
+        "p_c": 0.01,
+        "p_t": 0.01,
+        "d_c": 0.0,
+        "d_t": 0.0,
+        "alpha": 0.05,
+        "reps": 100000,
+        "seed": 42
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.0,
+        "significant_favorable_fraction": 0.0,
+        "mcse_two_sided": 0.0,
+        "mcse_favorable": 0.0,
+        "invalid_test_fraction": 0.81826,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 10.0,
+        "mean_retained_treatment": 10.0,
+        "mean_control_events": 0.09939,
+        "mean_treatment_events": 0.09981,
+        "replicates": 100000,
+        "seed": 42,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations.",
+          "Undefined tests count as nonrejections over all replicates.",
+          "Control expected events or nonevents below 5; pooled-z approximation may be unreliable.",
+          "Treatment expected events or nonevents below 5; pooled-z approximation may be unreliable."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 0,
+        "favorable": 0,
+        "invalid": 81826
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.0,
+          0.0002499375156210947
+        ],
+        "favorable": [
+          0.0,
+          0.0002499375156210947
+        ],
+        "invalid": [
+          0.8120833507837258,
+          0.824277558988831
+        ]
+      },
+      "exact": {
+        "two_sided": 3.619873646089907e-06,
+        "favorable": 1.8099368230449536e-06,
+        "invalid": 0.8179069375972308
+      }
+    },
+    {
+      "case": {
+        "name": "rare_null",
+        "n": 10,
+        "pc": 0.01,
+        "pt": 0.01,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 10,
+        "n_t": 10,
+        "p_c": 0.01,
+        "p_t": 0.01,
+        "d_c": 0.0,
+        "d_t": 0.0,
+        "alpha": 0.05,
+        "reps": 100000,
+        "seed": 31415
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.0,
+        "significant_favorable_fraction": 0.0,
+        "mcse_two_sided": 0.0,
+        "mcse_favorable": 0.0,
+        "invalid_test_fraction": 0.8176,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 10.0,
+        "mean_retained_treatment": 10.0,
+        "mean_control_events": 0.09906,
+        "mean_treatment_events": 0.10167,
+        "replicates": 100000,
+        "seed": 31415,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations.",
+          "Undefined tests count as nonrejections over all replicates.",
+          "Control expected events or nonevents below 5; pooled-z approximation may be unreliable.",
+          "Treatment expected events or nonevents below 5; pooled-z approximation may be unreliable."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 0,
+        "favorable": 0,
+        "invalid": 81760
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.0,
+          0.0002499375156210947
+        ],
+        "favorable": [
+          0.0,
+          0.0002499375156210947
+        ],
+        "invalid": [
+          0.811414922268301,
+          0.8236263174217763
+        ]
+      },
+      "exact": {
+        "two_sided": 3.619873646089907e-06,
+        "favorable": 1.8099368230449536e-06,
+        "invalid": 0.8179069375972308
+      }
+    },
+    {
+      "case": {
+        "name": "rare_null",
+        "n": 10,
+        "pc": 0.01,
+        "pt": 0.01,
+        "dropout": 0.0,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 10,
+        "n_t": 10,
+        "p_c": 0.01,
+        "p_t": 0.01,
+        "d_c": 0.0,
+        "d_t": 0.0,
+        "alpha": 0.05,
+        "reps": 100000,
+        "seed": 27182
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.0,
+        "significant_favorable_fraction": 0.0,
+        "mcse_two_sided": 0.0,
+        "mcse_favorable": 0.0,
+        "invalid_test_fraction": 0.81984,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 10.0,
+        "mean_retained_treatment": 10.0,
+        "mean_control_events": 0.09854,
+        "mean_treatment_events": 0.09905,
+        "replicates": 100000,
+        "seed": 27182,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations.",
+          "Undefined tests count as nonrejections over all replicates.",
+          "Control expected events or nonevents below 5; pooled-z approximation may be unreliable.",
+          "Treatment expected events or nonevents below 5; pooled-z approximation may be unreliable."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 0,
+        "favorable": 0,
+        "invalid": 81984
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.0,
+          0.0002499375156210947
+        ],
+        "favorable": [
+          0.0,
+          0.0002499375156210947
+        ],
+        "invalid": [
+          0.8136836502790286,
+          0.825836469690979
+        ]
+      },
+      "exact": {
+        "two_sided": 3.619873646089907e-06,
+        "favorable": 1.8099368230449536e-06,
+        "invalid": 0.8179069375972308
+      }
+    },
+    {
+      "case": {
+        "name": "empty_arm_null",
+        "n": 1,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.9,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 1,
+        "n_t": 1,
+        "p_c": 0.2,
+        "p_t": 0.2,
+        "d_c": 0.9,
+        "d_t": 0.9,
+        "alpha": 0.05,
+        "reps": 25000,
+        "seed": 42
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.0,
+        "significant_favorable_fraction": 0.0,
+        "mcse_two_sided": 0.0,
+        "mcse_favorable": 0.0,
+        "invalid_test_fraction": 0.99636,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 0.09904,
+        "mean_retained_treatment": 0.10052,
+        "mean_control_events": 0.01968,
+        "mean_treatment_events": 0.0196,
+        "replicates": 25000,
+        "seed": 42,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations.",
+          "Undefined tests count as nonrejections over all replicates.",
+          "Control expected events or nonevents below 5; pooled-z approximation may be unreliable.",
+          "Treatment expected events or nonevents below 5; pooled-z approximation may be unreliable."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 0,
+        "favorable": 0,
+        "invalid": 24909
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.0,
+          0.0009990009990009992
+        ],
+        "favorable": [
+          0.0,
+          0.0009990009990009992
+        ],
+        "invalid": [
+          0.9938971563233263,
+          0.9978311154049455
+        ]
+      },
+      "exact": {
+        "two_sided": 0.0,
+        "favorable": 0.0,
+        "invalid": 0.9967999999999999
+      }
+    },
+    {
+      "case": {
+        "name": "empty_arm_null",
+        "n": 1,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.9,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 1,
+        "n_t": 1,
+        "p_c": 0.2,
+        "p_t": 0.2,
+        "d_c": 0.9,
+        "d_t": 0.9,
+        "alpha": 0.05,
+        "reps": 25000,
+        "seed": 31415
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.0,
+        "significant_favorable_fraction": 0.0,
+        "mcse_two_sided": 0.0,
+        "mcse_favorable": 0.0,
+        "invalid_test_fraction": 0.99696,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 0.09996,
+        "mean_retained_treatment": 0.10068,
+        "mean_control_events": 0.01976,
+        "mean_treatment_events": 0.01876,
+        "replicates": 25000,
+        "seed": 31415,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations.",
+          "Undefined tests count as nonrejections over all replicates.",
+          "Control expected events or nonevents below 5; pooled-z approximation may be unreliable.",
+          "Treatment expected events or nonevents below 5; pooled-z approximation may be unreliable."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 0,
+        "favorable": 0,
+        "invalid": 24924
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.0,
+          0.0009990009990009992
+        ],
+        "favorable": [
+          0.0,
+          0.0009990009990009992
+        ],
+        "invalid": [
+          0.994654059546754,
+          0.9982730133803189
+        ]
+      },
+      "exact": {
+        "two_sided": 0.0,
+        "favorable": 0.0,
+        "invalid": 0.9967999999999999
+      }
+    },
+    {
+      "case": {
+        "name": "empty_arm_null",
+        "n": 1,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.9,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 1,
+        "n_t": 1,
+        "p_c": 0.2,
+        "p_t": 0.2,
+        "d_c": 0.9,
+        "d_t": 0.9,
+        "alpha": 0.05,
+        "reps": 25000,
+        "seed": 27182
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.0,
+        "significant_favorable_fraction": 0.0,
+        "mcse_two_sided": 0.0,
+        "mcse_favorable": 0.0,
+        "invalid_test_fraction": 0.99708,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 0.10088,
+        "mean_retained_treatment": 0.09956,
+        "mean_control_events": 0.02148,
+        "mean_treatment_events": 0.02012,
+        "replicates": 25000,
+        "seed": 27182,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations.",
+          "Undefined tests count as nonrejections over all replicates.",
+          "Control expected events or nonevents below 5; pooled-z approximation may be unreliable.",
+          "Treatment expected events or nonevents below 5; pooled-z approximation may be unreliable."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 0,
+        "favorable": 0,
+        "invalid": 24927
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.0,
+          0.0009990009990009992
+        ],
+        "favorable": [
+          0.0,
+          0.0009990009990009992
+        ],
+        "invalid": [
+          0.9948071395429213,
+          0.998359693623912
+        ]
+      },
+      "exact": {
+        "two_sided": 0.0,
+        "favorable": 0.0,
+        "invalid": 0.9967999999999999
+      }
+    },
+    {
+      "case": {
+        "name": "empty_arm_null",
+        "n": 1,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.9,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 1,
+        "n_t": 1,
+        "p_c": 0.2,
+        "p_t": 0.2,
+        "d_c": 0.9,
+        "d_t": 0.9,
+        "alpha": 0.05,
+        "reps": 100000,
+        "seed": 42
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.0,
+        "significant_favorable_fraction": 0.0,
+        "mcse_two_sided": 0.0,
+        "mcse_favorable": 0.0,
+        "invalid_test_fraction": 0.99671,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 0.10043,
+        "mean_retained_treatment": 0.10068,
+        "mean_control_events": 0.02036,
+        "mean_treatment_events": 0.01991,
+        "replicates": 100000,
+        "seed": 42,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations.",
+          "Undefined tests count as nonrejections over all replicates.",
+          "Control expected events or nonevents below 5; pooled-z approximation may be unreliable.",
+          "Treatment expected events or nonevents below 5; pooled-z approximation may be unreliable."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 0,
+        "favorable": 0,
+        "invalid": 99671
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.0,
+          0.0002499375156210947
+        ],
+        "favorable": [
+          0.0,
+          0.0002499375156210947
+        ],
+        "invalid": [
+          0.995672069414352,
+          0.9974996376588795
+        ]
+      },
+      "exact": {
+        "two_sided": 0.0,
+        "favorable": 0.0,
+        "invalid": 0.9967999999999999
+      }
+    },
+    {
+      "case": {
+        "name": "empty_arm_null",
+        "n": 1,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.9,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 1,
+        "n_t": 1,
+        "p_c": 0.2,
+        "p_t": 0.2,
+        "d_c": 0.9,
+        "d_t": 0.9,
+        "alpha": 0.05,
+        "reps": 100000,
+        "seed": 31415
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.0,
+        "significant_favorable_fraction": 0.0,
+        "mcse_two_sided": 0.0,
+        "mcse_favorable": 0.0,
+        "invalid_test_fraction": 0.99653,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 0.09924,
+        "mean_retained_treatment": 0.10132,
+        "mean_control_events": 0.02019,
+        "mean_treatment_events": 0.02054,
+        "replicates": 100000,
+        "seed": 31415,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations.",
+          "Undefined tests count as nonrejections over all replicates.",
+          "Control expected events or nonevents below 5; pooled-z approximation may be unreliable.",
+          "Treatment expected events or nonevents below 5; pooled-z approximation may be unreliable."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 0,
+        "favorable": 0,
+        "invalid": 99653
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.0,
+          0.0002499375156210947
+        ],
+        "favorable": [
+          0.0,
+          0.0002499375156210947
+        ],
+        "invalid": [
+          0.9954679886775799,
+          0.9973438083731574
+        ]
+      },
+      "exact": {
+        "two_sided": 0.0,
+        "favorable": 0.0,
+        "invalid": 0.9967999999999999
+      }
+    },
+    {
+      "case": {
+        "name": "empty_arm_null",
+        "n": 1,
+        "pc": 0.2,
+        "pt": 0.2,
+        "dropout": 0.9,
+        "alpha": 0.05
+      },
+      "request": {
+        "n_c": 1,
+        "n_t": 1,
+        "p_c": 0.2,
+        "p_t": 0.2,
+        "d_c": 0.9,
+        "d_t": 0.9,
+        "alpha": 0.05,
+        "reps": 100000,
+        "seed": 27182
+      },
+      "result": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.0,
+        "significant_favorable_fraction": 0.0,
+        "mcse_two_sided": 0.0,
+        "mcse_favorable": 0.0,
+        "invalid_test_fraction": 0.99675,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 0.10142,
+        "mean_retained_treatment": 0.10045,
+        "mean_control_events": 0.01992,
+        "mean_treatment_events": 0.02093,
+        "replicates": 100000,
+        "seed": 27182,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.13",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        },
+        "warnings": [
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations.",
+          "Undefined tests count as nonrejections over all replicates.",
+          "Control expected events or nonevents below 5; pooled-z approximation may be unreliable.",
+          "Treatment expected events or nonevents below 5; pooled-z approximation may be unreliable."
+        ]
+      },
+      "oracle_counts": {
+        "two_sided": 0,
+        "favorable": 0,
+        "invalid": 99675
+      },
+      "wilson_5sigma": {
+        "two_sided": [
+          0.0,
+          0.0002499375156210947
+        ],
+        "favorable": [
+          0.0,
+          0.0002499375156210947
+        ],
+        "invalid": [
+          0.9957175089160059,
+          0.9975341781622246
+        ]
+      },
+      "exact": {
+        "two_sided": 0.0,
+        "favorable": 0.0,
+        "invalid": 0.9967999999999999
+      }
+    }
+  ]
+}
