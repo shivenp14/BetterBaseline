@@ -1,0 +1,33 @@
+{
+  "planned_design": {
+    "model_version": "binary-v1",
+    "control_event_rate": 0.2,
+    "effect": {
+      "kind": "relative_risk",
+      "value": 0.75
+    },
+    "alpha": 0.05,
+    "target_power": 0.8,
+    "allocation_ratio": 1.0,
+    "dropout": {
+      "control": 0.0,
+      "treatment": 0.0
+    }
+  },
+  "fixed_enrollment": {
+    "control": 903,
+    "treatment": 903
+  },
+  "stress_scenario": {
+    "control_event_rate": 0.1,
+    "dropout": {
+      "control": 0.0,
+      "treatment": 0.0
+    },
+    "effect_override": null
+  },
+  "simulation": {
+    "replicates": 10000,
+    "seed": 42
+  }
+}
