@@ -121,6 +121,7 @@ class DesignCalculateResponse(BaseModel):
     enrolled_n: ArmCounts
     nominal_power_evaluable: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
     warnings: List[str] = Field(default_factory=list)
+    diagnostics: List["StatisticalDiagnostic"] = Field(default_factory=list)
     inputs_hash: str
 
 
@@ -170,11 +171,32 @@ class ScenarioMetadata(BaseModel):
     inputs_hash: str
 
 
+class StatisticalDiagnostic(BaseModel):
+    """Stable, machine-readable description of a statistical limit or warning."""
+    code: str
+    severity: Literal["info", "warning", "error"]
+    field: str
+    method: str
+    message: str
+    arm: Optional[Literal["control", "treatment"]] = None
+    outcome: Optional[Literal["events", "non_events"]] = None
+    expected_count: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
+    threshold: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
+    count_basis: Optional[Literal["evaluable_count", "expected_random_retention"]] = None
+    invalid_test_fraction: Optional[float] = Field(default=None, ge=0, le=1, allow_inf_nan=False)
+    replicates: Optional[int] = Field(default=None, ge=1)
+    invalid_test_policy: Optional[Literal["nonrejection_over_all_replicates"]] = None
+
+
+DesignCalculateResponse.model_rebuild()
+
+
 class ScenarioEvaluateResponse(BaseModel):
     model_version: ModelVersion = "binary-v1"
     analytic: AnalyticEvaluation
     monte_carlo: MonteCarloEvaluation
     warnings: List[str] = Field(default_factory=list)
+    diagnostics: List[StatisticalDiagnostic] = Field(default_factory=list)
     metadata: ScenarioMetadata
 
 
@@ -314,6 +336,7 @@ class ScenarioGridResponse(BaseModel):
     invalid_cell_count: int = Field(ge=0)
     worst_case_power: Optional[float] = Field(default=None, ge=0.0, le=1.0, allow_inf_nan=False)
     warnings: List[str] = Field(default_factory=list)
+    diagnostics: List[StatisticalDiagnostic] = Field(default_factory=list)
     computed_at: str
     inputs_hash: str
 

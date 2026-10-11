@@ -1,7 +1,9 @@
 """#66 real registered API acceptance; run PYTHONPATH=backend python -m pytest backend/tests/test_api_grid.py."""
 from dataclasses import replace
 from datetime import datetime
+import json
 import math
+from pathlib import Path
 import unittest
 from unittest.mock import patch
 
@@ -62,6 +64,11 @@ class GridApiTests(unittest.TestCase):
         self.assertEqual(result['method'], 'cohen_h_normal_v1')
         self.assertTrue(datetime.fromisoformat(result['computed_at']).tzinfo)
         self.assertEqual(set(result['software_versions']), {'python', 'numpy', 'scipy', 'statsmodels'})
+        diagnostic = next(item for item in result['diagnostics']
+                          if item['code'] == 'CONDITIONAL_POWER_ONLY')
+        self.assertEqual(diagnostic['field'], 'interpretation')
+        self.assertEqual(diagnostic['method'], 'cohen_h_normal')
+        self.assertEqual(diagnostic['severity'], 'info')
 
     def test_default_selected_point_and_curve_use_zero_dropout(self):
         body = payload()
@@ -200,7 +207,14 @@ class GridApiTests(unittest.TestCase):
         self.assertIn('expected_evaluable_n', point['properties'])
         self.assertIn('analytic_delta', props)
         self.assertIn('software_versions', props)
+        self.assertIn('$ref', props['diagnostics']['items'])
+        diagnostic = schema['components']['schemas'][props['diagnostics']['items']['$ref'].split('/')[-1]]
+        self.assertTrue({'code', 'field', 'method', 'severity'} <= set(diagnostic['properties']))
         self.assertIn('422', operation['responses'])
+
+    def test_openapi_snapshot_matches_registered_app(self):
+        snapshot_path = Path(__file__).resolve().parents[2] / 'contracts' / 'openapi.snapshot.json'
+        self.assertEqual(json.loads(snapshot_path.read_text()), self.client.get('/openapi.json').json())
 
     def test_all_invalid_arr_domain_keeps_valid_off_grid_comparison(self):
         body = payload()

@@ -17,6 +17,22 @@ export interface FixedEnrollment {
   treatment: number;
 }
 
+export interface StatisticalDiagnostic {
+  code: string;
+  severity: "info" | "warning" | "error";
+  field: string;
+  method: string;
+  message: string;
+  arm?: "control" | "treatment" | null;
+  outcome?: "events" | "non_events" | null;
+  expected_count?: number | null;
+  threshold?: number | null;
+  count_basis?: "evaluable_count" | "expected_random_retention" | null;
+  invalid_test_fraction?: number | null;
+  replicates?: number | null;
+  invalid_test_policy?: "nonrejection_over_all_replicates" | null;
+}
+
 export interface CalculateRequest extends TrialAssumptions {
   /** UI metadata only; stripped by the adapter before HTTP transport. */
   preset_id: string;
@@ -35,6 +51,7 @@ export interface CalculateResponse {
   enrolled_n: FixedEnrollment;
   nominal_power_evaluable: number;
   warnings: string[];
+  diagnostics?: StatisticalDiagnostic[];
   inputs_hash: string;
   provenance: Provenance;
   execution?: ExecutionInfo;
@@ -78,6 +95,7 @@ export interface EvaluateResponse {
     seed: number;
   } | null;
   warnings: string[];
+  diagnostics?: StatisticalDiagnostic[];
   metadata: { computed_at: string; inputs_hash: string };
   provenance: Provenance;
   execution?: ExecutionInfo;
@@ -117,6 +135,7 @@ export interface GridResponse {
   selected_point: GridPoint | null;
   frontier_points: GridPoint[];
   warnings: string[];
+  diagnostics?: StatisticalDiagnostic[];
   computed_at: string;
   inputs_hash: string;
   provenance: Provenance;
