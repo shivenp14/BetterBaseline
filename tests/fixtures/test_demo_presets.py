@@ -295,12 +295,16 @@ class DemoPresetTests(unittest.TestCase):
         spec.loader.exec_module(generator)
         expected = {
             "engine_commit": "fc12dd0",
-            "grid": {"selected_point": {"power": .47}, "power": [[.47]]},
+            "grid": {"selected_point": {"power": .47}, "power": [[.47]], "frontier_points": [{"p_control": .2}]},
             "point": {"monte_carlo": {"significant_two_sided_fraction": .5, "mcse_two_sided": .005}},
         }
         rounding_only = {
             "engine_commit": "fc12dd0",
-            "grid": {"selected_point": {"power": .47 + 2e-13}, "power": [[.47 - 2e-13]]},
+            "grid": {
+                "selected_point": {"power": .47 + 2e-13},
+                "power": [[.47 - 2e-13]],
+                "frontier_points": [{"p_control": .2 + 1e-13}],
+            },
             "point": {"monte_carlo": {"significant_two_sided_fraction": .5, "mcse_two_sided": .005 + 5e-16}},
         }
         changed_seeded_result = {
@@ -310,7 +314,11 @@ class DemoPresetTests(unittest.TestCase):
         changed_provenance = {**rounding_only, "engine_commit": "incorrect"}
         outside_tolerance = {
             "engine_commit": "fc12dd0",
-            "grid": {"selected_point": {"power": .47 + 2e-12}, "power": [[.47]]},
+            "grid": {
+                "selected_point": {"power": .47 + 2e-12},
+                "power": [[.47]],
+                "frontier_points": [{"p_control": .2}],
+            },
             "point": expected["point"],
         }
         self.assertTrue(generator._matches_snapshot(expected, rounding_only))

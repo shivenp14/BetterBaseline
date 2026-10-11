@@ -215,6 +215,8 @@ def _is_platform_sensitive_float(pointer: str) -> bool:
             return True
         if parts[2] == "power_curve" and parts[3].isdigit() and parts[4] in {"p_control", "power"}:
             return True
+        if parts[2] == "frontier_points" and parts[3].isdigit() and parts[4] in {"p_control", "dropout", "power"}:
+            return True
     if (
         len(parts) == 4
         and parts[:2] == ["", "grid"]
