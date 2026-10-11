@@ -95,3 +95,26 @@ This PR starts #110's intake and execution plan only. There are no historical
 measurements, selected sponsor claims, completed chart, downloaded export,
 successful case rerun or scientific signoff. Those deliverables remain gated by
 the handoffs above. Product code, model semantics and #108's ledger are untouched.
+
+## Current handoff status (2026-10-11 UTC)
+
+#67/#76 and #82 are merged. The refreshed predecessor PRs now provide complete
+production offline/export acceptance (#94/#100), optional metadata registration
+(#102), and measured independent numerical evidence (#121). Their review and
+merge sequence remains #94 → #100 → #102 → #121 → this PR.
+
+The remaining scientific input is #108's reviewer-approved case selection and
+source ledger. It is still open and no approved case is available on main.
+AERIFY's recurrent exacerbation rates, RESPECT's event-time analysis and STICH's
+survival endpoint cannot be entered as binary risks or faithfully reconstructed
+with this model from the discussion screenshots. No original planning values,
+source-review signoff or compatible primary endpoint have been supplied by that
+handoff. Unknown fields in the intake remain null.
+
+This PR therefore remains a draft. Once #108 delivers its case or explicitly
+approved evidence-gap conclusion, adapt the worksheet to that ledger, execute
+real sensitivity/candidate-enrollment comparisons, download a matching UI export,
+and publish the side-by-side table/chart with conditional sponsor language.
+Final acceptance also needs #118/#78's assembled E2E run and predecessor reviews.
+Closing #76 resolves the assembly/export blocker; it does not supply historical
+clinical evidence or authorize inventing source assumptions.
