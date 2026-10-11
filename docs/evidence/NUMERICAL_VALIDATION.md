@@ -1,8 +1,9 @@
-# Independent numerical evidence — #109 draft
+# Independent numerical evidence (#109)
 
-Measured checks cover the shipped analytic model and the supported simulation
-primitive. They do not complete #109 or validate clinical utility or regulatory
-use. Final integration/provenance/export and #82's method handoff remain pending.
+Measured checks cover the assembled analytic model and supported simulation
+primitive. #60/#68/#82 are merged; #100 supplies final API/export acceptance in
+the preceding stack. This numerical evidence does not establish clinical utility
+or regulatory validation.
 
 ## Oracle and prescribed checks
 
@@ -126,3 +127,24 @@ it is a documented approximation limitation, not evidence that a trial failed.
 Measured MCSE ratios with four times the replicates range .5000–.5117 in the
 well-populated cases (prespecified acceptance .45–.55). More simulation improves
 precision of the estimated detection fraction; it does not reduce trial variance.
+
+
+## Final assembled application evidence
+
+[evidence/validation/assembled-v1](../../evidence/validation/assembled-v1/) records
+a clean run against checkout 8b181b0fbebc2da4b827bedca7c451b520a361a9, including
+merged #67/#76, the preceding integration stack and optional registry registration.
+Ten exact minimal-N/dropout planning checks, forty fixed-enrollment HTTP stress
+cases and thirty seeded simulation/calibration runs pass in locked Python 3.12.13.
+The independent scalar rejection rule matches all counts and both MCSEs; sparse
+limitations and the shared random-stream lineage remain as documented above.
+
+An additional established-package validator uses statsmodels 0.15.0
+`NormalIndPower.power` and `proportion_effectsize` without importing any product
+module. It verifies fifty captured planning/stress powers and all minimal design
+counts against a prespecified 1e-10 tolerance. See established.json for measured
+errors. This supplements the standard-library oracle with an established
+implementation of the same approximation; it is not a separate clinical model.
+The one-command runner and validation workflow execute this comparison too.
+Raw measured reports are preserved rather than hand-edited or replacing the
+earlier evidence. Scientific review remains required before merging #121.

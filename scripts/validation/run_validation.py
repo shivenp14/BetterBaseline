@@ -47,6 +47,7 @@ def main():
                 time.sleep(.1)
             for filename, extra, report in (
                 ("validate_analytic_http.py", ["--base-url", base, "--engine-commit", commit], "analytic.json"),
+                ("validate_established.py", ["--input", str(output / "analytic.json")], "established.json"),
                 ("validate_simulation.py", [], "simulation.json"),
             ):
                 with (output / (filename + ".log")).open("w") as validator_log:
@@ -55,9 +56,12 @@ def main():
                                    stdout=validator_log, stderr=validator_log, check=True)
             analytic = json.loads((output / "analytic.json").read_text())
             simulation = json.loads((output / "simulation.json").read_text())
+            established = json.loads((output / "established.json").read_text())
             print(json.dumps({"status": "pass", "checkout_commit": commit,
                               "analytic_designs": analytic["design_cases"], "stress_cases": analytic["stress_cases"],
                               "simulation_runs": len(simulation["runs"]), "evidence_directory": str(output)}))
+            print(json.dumps({"established_package_comparisons": established["comparisons"],
+                              "maximum_absolute_error": established["maximum_absolute_error"]}))
         finally:
             server.terminate()
             try:
