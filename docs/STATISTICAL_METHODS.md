@@ -238,14 +238,14 @@ complete response, including its original computation timestamp.
 
 | Workload | Condition | Median (ms) | p95 (ms) |
 |---|---|---:|---:|
-| Design | cache-cold | 2.100 | 3.100 |
-| Design | cache-warm | 2.100 | 2.900 |
-| 6×4 production grid | cache-cold | 7.300 | 7.800 |
-| 6×4 production grid | cache-warm | 4.550 | 5.000 |
-| Seed 42 / 10,000 replicates | cache-cold | 6.300 | 7.200 |
-| Seed 42 / 10,000 replicates | cache-warm | 1.800 | 2.100 |
-| 31×21 benchmark page | cache-cold | 13.250 | 14.700 |
-| 31×21 benchmark page | cache-warm | 4.850 | 5.900 |
+| Design | cache-cold | 2.200 | 2.900 |
+| Design | cache-warm | 1.950 | 2.600 |
+| 6×4 production grid | cache-cold | 7.500 | 8.900 |
+| 6×4 production grid | cache-warm | 4.600 | 5.000 |
+| Seed 42 / 10,000 replicates | cache-cold | 6.500 | 7.100 |
+| Seed 42 / 10,000 replicates | cache-warm | 1.900 | 2.800 |
+| 31×21 benchmark page | cache-cold | 13.000 | 15.100 |
+| 31×21 benchmark page | cache-warm | 4.900 | 5.700 |
 
 [Raw timings, results and cache witnesses](../scripts/benchmarks/reports/live/browser.json).
 
