@@ -2,9 +2,11 @@
 
 import { useId } from "react";
 import { GridDataTable } from "./GridDataTable";
+import type { WorkspaceState } from "../lib/workspace-contracts";
+import type { GridResponse, FixedEnrollment, StatisticalDiagnostic } from "../lib/contracts";
 
 export interface HeatmapPoint { baseline: number; dropout: number }
-/** Proposed local handoff only: adapt to #72/#66 contracts before #76 wiring. */
+/** Presentational identity populated by workspaceHeatmapProps from #72 state. */
 export interface HeatmapContext {
   inputsHash: string;
   designHash: string;
@@ -26,6 +28,8 @@ export interface HeatmapSnapshot extends HeatmapContext {
   frontierSegments: readonly (readonly HeatmapPoint[])[];
   illustrative: boolean;
   warnings: readonly string[];
+  diagnostics?: readonly StatisticalDiagnostic[];
+  selectedPower?: number | null;
 }
 export interface StressHeatmapProps {
   current: HeatmapContext;
@@ -65,6 +69,14 @@ export function heatmapProblem(current: HeatmapContext, result: HeatmapSnapshot 
   const inDomain = (point: HeatmapPoint) => probability(point.baseline) && dropout(point.dropout)
     && point.baseline >= result.xBaseline[0] && point.baseline <= result.xBaseline.at(-1)!
     && point.dropout >= result.yDropout[0] && point.dropout <= result.yDropout.at(-1)!;
+  if (result.selectedPower !== undefined && result.selectedPower !== null
+    && (!Number.isFinite(result.selectedPower) || result.selectedPower < 0 || result.selectedPower > 1)) {
+    return "Invalid selected analytic power.";
+  }
+  const selectedRow = result.yDropout.indexOf(result.selectedPoint.dropout);
+  const selectedColumn = result.xBaseline.indexOf(result.selectedPoint.baseline);
+  if (result.selectedPower !== undefined && selectedRow >= 0 && selectedColumn >= 0
+    && result.power[selectedRow][selectedColumn] !== result.selectedPower) return "Selected point disagrees with the analytic grid.";
   if (!inDomain(result.selectedPoint) || result.frontierSegments.some(segment => segment.length < 2 || segment.some(point => !inDomain(point)))) {
     return "Invalid selected point or frontier domain.";
   }
@@ -110,8 +122,9 @@ export function StressHeatmap({ current, result, status, error, onSelectPoint }:
   const xs = cellEdges(result.xBaseline), ys = cellEdges(result.yDropout);
   const x = (v: number) => left + (v - xs[0]) / (xs.at(-1)! - xs[0]) * (right - left);
   const y = (v: number) => bottom - (v - ys[0]) / (ys.at(-1)! - ys[0]) * (bottom - top);
-  const selectedValid = result.effectKind !== "absolute_risk_reduction" || result.selectedPoint.baseline > result.effectValue;
-  const selectedCell = result.invalidMask.some((row, r) => row.some((invalid, c) => invalid
+  const selectedValid = result.selectedPower !== null
+    && (result.effectKind !== "absolute_risk_reduction" || result.selectedPoint.baseline > result.effectValue);
+  const selectedCell = result.selectedPower === undefined && result.invalidMask.some((row, r) => row.some((invalid, c) => invalid
     && result.selectedPoint.baseline >= xs[c] && result.selectedPoint.baseline <= xs[c + 1]
     && result.selectedPoint.dropout >= ys[r] && result.selectedPoint.dropout <= ys[r + 1]));
   return <section aria-labelledby={`${id}-heading`}>
@@ -131,7 +144,7 @@ export function StressHeatmap({ current, result, status, error, onSelectPoint }:
         {result.power.map((row, r) => row.map((power, c) => <g key={`${r}-${c}`} data-cell={`${r}-${c}`} data-baseline={result.xBaseline[c]} data-dropout={result.yDropout[r]} data-power={power === null ? "null" : power}
           role={onSelectPoint ? "button" : undefined} tabIndex={onSelectPoint && power !== null ? 0 : undefined}
           aria-disabled={onSelectPoint ? power === null : undefined}
-          aria-label={`Baseline ${percent(result.xBaseline[c])}, dropout ${percent(result.yDropout[r])}: ${power === null ? "Invalid scenario; ARR requires baseline greater than ARR" : `power ${percent(power)}`}`}
+          aria-label={`Baseline ${percent(result.xBaseline[c])}, dropout ${percent(result.yDropout[r])}: ${power === null ? "Invalid scenario; ARR requires baseline greater than ARR and retained counts must support the analytic test" : `power ${percent(power)}`}`}
           onClick={() => selectGridCell(result, r, c, onSelectPoint)}
           onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); selectGridCell(result, r, c, onSelectPoint); } }}>
           <rect x={x(xs[c])} y={y(ys[r + 1])} width={x(xs[c + 1]) - x(xs[c])} height={y(ys[r]) - y(ys[r + 1])}
@@ -153,9 +166,81 @@ export function StressHeatmap({ current, result, status, error, onSelectPoint }:
         Dashed: supplied {percent(result.targetPower)} target frontier; segments never join across invalid cells.
         Circle: selected stress point. Use the native selection buttons below with click, Enter or Space.</figcaption>
     </figure>
-    {!selectedValid || selectedCell ? <p role="status">Selected scenario is invalid; no simulation selection is emitted. ARR requires baseline greater than ARR so treatment risk stays positive.</p> : null}
+    {!selectedValid || selectedCell ? <p role="status">Selected scenario is invalid; no simulation selection is emitted. ARR requires baseline greater than ARR so treatment risk stays positive; expected retained counts must also support the analytic test.</p> : null}
     {result.warnings.map((warning, i) => <p key={i}>Warning: {warning}</p>)}
+    {result.diagnostics?.map((diagnostic, i) => <p key={i}>
+      {diagnostic.severity}: {diagnostic.code} ({diagnostic.field}, {diagnostic.method}): {diagnostic.message}
+    </p>)}
     <GridDataTable result={result} onSelectPoint={onSelectPoint} />
     <p>Inputs hash: {result.inputsHash}. Design hash: {result.designHash}.</p>
   </section>;
+}
+
+
+/** #66 wire response before #76's coordinate-only API normalization. A flat
+ * frontier_points list is intentionally unused: only supplied edges connect.
+ */
+export interface HeatmapApiResponse extends Pick<GridResponse,
+  "method" | "grid_label" | "inputs_hash" | "x_baseline" | "y_dropout" |
+  "power" | "invalid_mask" | "target_power" | "warnings" | "diagnostics"> {
+  fixed_enrollment: FixedEnrollment;
+  selected_point: { p_control: number; dropout: number; power: number | null; is_valid: boolean } | null;
+  contour_segments: readonly {
+    start: { p_control: number; dropout: number };
+    end: { p_control: number; dropout: number };
+  }[];
+}
+
+function workspaceIdentity(state: WorkspaceState): string {
+  return JSON.stringify([state.requestRevision, state.calculatedDesign?.inputs_hash,
+    state.plannedDraft, state.frozenEnrollment, state.stressBaseline,
+    state.stressDropout, state.provenanceLedger]);
+}
+
+/** Pure #72/#66 handoff for #76. Capture a detached requestState at request
+ * start; preserve raw grid/contour data before the shared API normalizes points.
+ * Does no fetching, power calculation, contour synthesis or matrix transposition.
+ */
+export function workspaceHeatmapProps(currentState: WorkspaceState,
+  completed: { requestState: WorkspaceState; response: HeatmapApiResponse } | null): StressHeatmapProps {
+  const captured = completed?.requestState, raw = completed?.response;
+  const fresh = captured && workspaceIdentity(currentState) === workspaceIdentity(captured);
+  function context(state: WorkspaceState, inputsHash: string): HeatmapContext {
+    return { inputsHash, designHash: state.calculatedDesign?.inputs_hash ?? "",
+      fixedEnrollment: state.frozenEnrollment ?? { control: 0, treatment: 0 },
+      effectKind: state.plannedDraft.effect.kind, effectValue: state.plannedDraft.effect.value,
+      targetPower: state.plannedDraft.target_power,
+      selectedPoint: { baseline: state.stressBaseline, dropout: state.stressDropout } };
+  }
+  const current = context(currentState, raw ? (fresh ? raw.inputs_hash : `stale:${raw.inputs_hash}`) : "");
+  if (currentState.designStatus === "calculating" || currentState.gridStatus === "loading") {
+    return { current, result: null, status: "loading" };
+  }
+  if (currentState.gridStatus === "error") {
+    return { current, result: null, status: "error", error: currentState.gridError ?? "Grid request failed." };
+  }
+  if (!captured || !raw || !captured.calculatedDesign || !captured.frozenEnrollment) {
+    return { current, result: null, status: "idle" };
+  }
+  const expected = context(captured, raw.inputs_hash);
+  if (!raw.selected_point || raw.selected_point.power === undefined || !raw.fixed_enrollment
+      || !Array.isArray(raw.contour_segments) || !Array.isArray(raw.power) || !Array.isArray(raw.invalid_mask)
+      || raw.target_power !== expected.targetPower
+      || raw.fixed_enrollment.control !== expected.fixedEnrollment.control
+      || raw.fixed_enrollment.treatment !== expected.fixedEnrollment.treatment
+      || raw.selected_point.p_control !== expected.selectedPoint.baseline
+      || raw.selected_point.dropout !== expected.selectedPoint.dropout
+      || raw.selected_point.is_valid !== (raw.selected_point.power !== null)) {
+    return { current, result: null, status: "error", error: "Analytic grid disagrees with its captured workspace request or lacks segmented contours." };
+  }
+  const point = (p: { p_control: number; dropout: number }): HeatmapPoint => ({ baseline: p.p_control, dropout: p.dropout });
+  const result: HeatmapSnapshot = { ...expected, method: raw.method, gridLabel: raw.grid_label,
+    xBaseline: raw.x_baseline, yDropout: raw.y_dropout, power: raw.power,
+    invalidMask: raw.invalid_mask, selectedPoint: point(raw.selected_point), selectedPower: raw.selected_point.power,
+    frontierSegments: raw.contour_segments.map(edge => [point(edge.start), point(edge.end)]),
+    warnings: raw.warnings, diagnostics: raw.diagnostics, illustrative: false };
+  if (currentState.designStatus !== "success" || currentState.gridStatus !== "success") {
+    current.inputsHash = `stale:${raw.inputs_hash}`;
+  }
+  return { current, result, status: "ready" };
 }

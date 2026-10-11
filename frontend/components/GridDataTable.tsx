@@ -29,7 +29,7 @@ export function GridDataTable({ result, onSelectPoint }: {
         {row.map((power, c) => {
           const selected = result.selectedPoint.baseline === result.xBaseline[c] && result.selectedPoint.dropout === result.yDropout[r];
           return <td key={result.xBaseline[c]}>
-            {power === null ? "Invalid scenario (null). ARR requires baseline greater than ARR; unavailable cells cannot be simulated." : `${percent(power)} (${power} fraction)`}
+            {power === null ? "Invalid scenario (null). ARR requires baseline greater than ARR; expected retained counts must support the analytic test. Unavailable cells cannot be simulated." : `${percent(power)} (${power} fraction)`}
             {selected ? " — selected" : ""}
             {onSelectPoint ? <button type="button" disabled={power === null} aria-pressed={selected}
               onClick={() => selectGridCell(result, r, c, onSelectPoint)}>

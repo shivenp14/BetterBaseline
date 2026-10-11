@@ -20,7 +20,9 @@ require.extensions[".tsx"] = (module, filename) => {
   });
   module._compile(result.outputText, filename);
 };
-const { StressHeatmap, heatmapProblem, frontierEdgeAllowed, selectGridCell } = require("../components/StressHeatmap.tsx");
+require.extensions[".ts"] = require.extensions[".tsx"];
+const { initializeWorkspaceState } = require("../lib/workspace-state.ts");
+const { StressHeatmap, heatmapProblem, frontierEdgeAllowed, selectGridCell, workspaceHeatmapProps } = require("../components/StressHeatmap.tsx");
 const { GridDataTable, gridCsv } = require("../components/GridDataTable.tsx");
 function props() {
  const current = { inputsHash: "fixture", designHash: "design", fixedEnrollment: {control:100,treatment:100}, effectKind:"absolute_risk_reduction", effectValue:.1,targetPower:.8,selectedPoint:{baseline:.2,dropout:.4} };
@@ -71,4 +73,80 @@ test("reject malformed masks, shape, powers, ARR, domain and counts",()=>{
 test("CSV escapes metadata and render-only components contain no CSS or requests",()=>{
  const p=props();p.result.inputsHash='fixture,"quoted"';const before=structuredClone(p.result);assert.ok(gridCsv(p.result).includes('"fixture,""quoted"""'));assert.deepEqual(p.result,before);
  for(const name of ["StressHeatmap.tsx","GridDataTable.tsx"]){const source=fs.readFileSync(path.join(__dirname,"../components",name),"utf8");assert.doesNotMatch(source,/className=|style=|fetch\(|axios|Math\.asin/);}
+});
+
+function handoff() {
+ const state=initializeWorkspaceState("baseline-collapse-v1");
+ state.plannedDraft.effect={kind:"absolute_risk_reduction",value:.1};
+ state.calculatedDesign={inputs_hash:"design",enrolled_n:{control:100,treatment:100}};
+ state.frozenEnrollment={control:100,treatment:100};state.designStatus="success";state.gridStatus="success";
+ state.stressBaseline=.2;state.stressDropout=.4;
+ const p=props().result,point=p=>({p_control:p.baseline,dropout:p.dropout});
+ const response={method:p.method,grid_label:p.gridLabel,inputs_hash:p.inputsHash,
+ fixed_enrollment:p.fixedEnrollment,target_power:p.targetPower,x_baseline:p.xBaseline,y_dropout:p.yDropout,
+ power:p.power,invalid_mask:p.invalidMask,selected_point:{...point(p.selectedPoint),power:.5,is_valid:true},
+ contour_segments:p.frontierSegments.map(([a,b])=>({start:point(a),end:point(b)})),
+ frontier_points:[{p_control:.05,dropout:0},{p_control:.4,dropout:.4}],warnings:p.warnings,
+ diagnostics:[{code:"SPARSE_COUNTS",severity:"warning",field:"selected_point",method:p.method,message:"Expected counts are sparse."}]};
+ return {state,completed:{requestState:structuredClone(state),response}};
+}
+test("merged workspace preserves matrix, mask, independent contours and diagnostics",()=>{
+ const {state,completed}=handoff(),before=structuredClone(completed),p=workspaceHeatmapProps(state,completed);
+ assert.equal(heatmapProblem(p.current,p.result),null);assert.deepEqual(p.result.power,completed.response.power);
+ assert.deepEqual(p.result.invalidMask,completed.response.invalid_mask);assert.deepEqual(p.result.frontierSegments,props().result.frontierSegments);
+ const html=render(p);assert.equal((html.match(/data-frontier-segment=/g)||[]).length,2);assert.match(html,/Expected counts are sparse/);
+ assert.deepEqual(completed,before);
+});
+test("workspace edits, revisions, provenance and statuses suppress late grids and downloads",()=>{
+ for(const mutate of [s=>s.requestRevision++,s=>s.plannedDraft.alpha=.01,s=>s.plannedDraft.effect.value=.05,
+ s=>s.stressBaseline=.3,s=>s.stressDropout=.2,s=>s.provenanceLedger.changed={source:"manual_user"},
+ s=>s.frozenEnrollment.control++,s=>s.calculatedDesign.inputs_hash="new",s=>s.gridStatus="stale",s=>s.designStatus="idle"]){
+ const {state,completed}=handoff();mutate(state);const html=render(workspaceHeatmapProps(state,completed));
+ assert.ok(!html.includes("<svg"));assert.ok(!html.includes("download="));}
+ for(const status of ["loading","error"]){const {state,completed}=handoff();state.gridStatus=status;state.gridError="Backend failed";
+ const p=workspaceHeatmapProps(state,completed);assert.equal(p.status,status);assert.ok(!render(p).includes("<table"));}
+ assert.equal(workspaceHeatmapProps(handoff().state,null).status,"idle");
+});
+test("requires raw segmented contours and selected-point contract; flat frontier is never connected",()=>{
+ for(const mutate of [r=>delete r.contour_segments,r=>delete r.selected_point.power,r=>r.selected_point.is_valid=false,
+ r=>r.selected_point.dropout=.2,r=>r.fixed_enrollment.control++,r=>r.target_power=.9]){
+ const {state,completed}=handoff();mutate(completed.response);assert.equal(workspaceHeatmapProps(state,completed).status,"error");}
+ const {state,completed}=handoff();completed.response.contour_segments=[];
+ assert.ok(!render(workspaceHeatmapProps(state,completed)).includes("data-frontier-segment="));
+ completed.response.selected_point.power=null;completed.response.selected_point.is_valid=false;
+ assert.ok(!render(workspaceHeatmapProps(state,completed)).includes('data-marker="selected"'));
+});
+
+// Explicit live gate: fresh HTTP calculation failures fail without a fixture fallback.
+if(process.env.BETTERBASELINE_HEATMAP_API){
+ test("fresh real API RR and ARR grids render through merged workspace handoff",async()=>{
+ const post=async(route,body)=>{const r=await fetch(process.env.BETTERBASELINE_HEATMAP_API+route,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const t=await r.text();assert.equal(r.status,200,t);return JSON.parse(t);};
+ for(const effect of [{kind:"relative_risk",value:.75},{kind:"absolute_risk_reduction",value:.1}]){
+ const {state}=handoff();state.plannedDraft.effect=effect;state.stressBaseline=.2;state.stressDropout=.13;
+ state.calculatedDesign=await post("/api/v1/design/calculate",state.plannedDraft);state.frozenEnrollment=state.calculatedDesign.enrolled_n;
+ const requestState=structuredClone(state),response=await post("/api/v1/scenarios/grid",{
+ planned_design:state.plannedDraft,fixed_enrollment:state.frozenEnrollment,x_baseline:{min:.05,max:.35,steps:3},
+ y_dropout:{min:0,max:.4,steps:2},selected_scenario:{control_event_rate:.2,dropout:{control:.13,treatment:.13},effect_override:null}});
+ const p=workspaceHeatmapProps(state,{requestState,response});assert.equal(heatmapProblem(p.current,p.result),null);
+ assert.deepEqual(p.result.power,response.power);assert.deepEqual(p.result.invalidMask,response.invalid_mask);
+ assert.equal(p.result.frontierSegments.length,response.contour_segments.length);
+ const html=render(p);assert.equal((html.match(/data-cell=/g)||[]).length,6);
+ assert.match(html,/data-marker="selected" data-baseline="0.2" data-dropout="0.13"/);
+ const calls=[];selectGridCell(p.result,0,1,q=>calls.push(q));assert.deepEqual(calls,[{baseline:response.x_baseline[1],dropout:0}]);
+ if(effect.kind==="absolute_risk_reduction"){assert.equal(response.power[0][0],null);assert.match(gridCsv(p.result),/0.05,0,null,true/);}
+ const edited=structuredClone(state);edited.stressDropout=.2;assert.ok(!render(workspaceHeatmapProps(edited,{requestState,response})).includes("<svg"));
+ console.log(JSON.stringify({scope:"live_heatmap_handoff",effect,hash:response.inputs_hash,power:response.power,contours:response.contour_segments.length,frozen:state.frozenEnrollment}));
+ }
+ });
+}
+
+test("exact selected API power controls off-grid marker validity and rejects inconsistent powers",()=>{
+ const {state,completed}=handoff();
+ state.stressBaseline=completed.requestState.stressBaseline=.11;
+ completed.response.selected_point={p_control:.11,dropout:.4,power:.2,is_valid:true};
+ const p=workspaceHeatmapProps(state,completed);assert.equal(heatmapProblem(p.current,p.result),null);
+ assert.match(render(p),/data-marker="selected" data-baseline="0.11"/);
+ for(const power of [NaN,1.1,-.1]){p.result.selectedPower=power;assert.ok(heatmapProblem(p.current,p.result));}
+ const exact=handoff();exact.completed.response.selected_point.power=.7;
+ const bad=workspaceHeatmapProps(exact.state,exact.completed);assert.match(heatmapProblem(bad.current,bad.result),/disagrees/);
 });
