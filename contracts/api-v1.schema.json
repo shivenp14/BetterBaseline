@@ -246,6 +246,13 @@
         "inputs_hash": {
           "title": "Inputs Hash",
           "type": "string"
+        },
+        "diagnostics": {
+          "items": {
+            "$ref": "#/$defs/StatisticalDiagnostic"
+          },
+          "title": "Diagnostics",
+          "type": "array"
         }
       },
       "required": [
@@ -743,6 +750,13 @@
         },
         "metadata": {
           "$ref": "#/$defs/ScenarioMetadata"
+        },
+        "diagnostics": {
+          "items": {
+            "$ref": "#/$defs/StatisticalDiagnostic"
+          },
+          "title": "Diagnostics",
+          "type": "array"
         }
       },
       "required": [
@@ -943,6 +957,13 @@
         "inputs_hash": {
           "title": "Inputs Hash",
           "type": "string"
+        },
+        "diagnostics": {
+          "items": {
+            "$ref": "#/$defs/StatisticalDiagnostic"
+          },
+          "title": "Diagnostics",
+          "type": "array"
         }
       },
       "required": [
@@ -1116,6 +1137,159 @@
         "effect"
       ],
       "title": "TrialAssumptions",
+      "type": "object"
+    },
+    "StatisticalDiagnostic": {
+      "description": "Stable, machine-readable description of a statistical limit or warning.",
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "info",
+            "warning",
+            "error"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "field": {
+          "title": "Field",
+          "type": "string"
+        },
+        "method": {
+          "title": "Method",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "arm": {
+          "anyOf": [
+            {
+              "enum": [
+                "control",
+                "treatment"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Arm"
+        },
+        "outcome": {
+          "anyOf": [
+            {
+              "enum": [
+                "events",
+                "non_events"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Outcome"
+        },
+        "expected_count": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expected Count"
+        },
+        "threshold": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Threshold"
+        },
+        "count_basis": {
+          "anyOf": [
+            {
+              "enum": [
+                "evaluable_count",
+                "expected_random_retention"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Count Basis"
+        },
+        "invalid_test_fraction": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Invalid Test Fraction"
+        },
+        "replicates": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replicates"
+        },
+        "invalid_test_policy": {
+          "anyOf": [
+            {
+              "const": "nonrejection_over_all_replicates",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Invalid Test Policy"
+        }
+      },
+      "required": [
+        "code",
+        "severity",
+        "field",
+        "method",
+        "message"
+      ],
+      "title": "StatisticalDiagnostic",
       "type": "object"
     }
   },

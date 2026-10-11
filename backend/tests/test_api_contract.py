@@ -63,6 +63,9 @@ def test_design_calculate_reference_scenario(client: TestClient) -> None:
     assert data["enrolled_n"] == {"control": 1004, "treatment": 1004}
     assert data["nominal_power_evaluable"] >= 0.80
     assert data["nominal_power_evaluable"] == pytest.approx(0.80, abs=0.01)
+    assert data["diagnostics"]
+    assert all({"code", "field", "method", "severity"} <= set(item) for item in data["diagnostics"])
+    assert any(item["method"] == "cohen_h_normal" for item in data["diagnostics"])
     assert "inputs_hash" in data and len(data["inputs_hash"]) > 0
     assert (
         "Dropout inflation represents expected retention, not guaranteed evaluable counts."
@@ -276,6 +279,18 @@ def test_openapi_documents_error_envelope_for_422() -> None:
     assert "ErrorDetail" in schemas
     assert "HTTPValidationError" not in schemas
     assert "ValidationError" not in schemas
+
+
+def test_openapi_documents_payload_and_saturation_errors_for_compute_routes() -> None:
+    schema = app.openapi()
+    for endpoint in ["/api/v1/design/calculate", "/api/v1/scenarios/evaluate"]:
+        responses = schema["paths"][endpoint]["post"]["responses"]
+        for status_code in ("413", "429"):
+            response = responses[status_code]
+            assert response["content"]["application/json"]["schema"]["$ref"] == (
+                "#/components/schemas/ErrorEnvelope"
+            )
+        assert responses["429"]["headers"]["Retry-After"]["schema"]["type"] == "integer"
 
 
 def test_design_calculate_routes_through_compute_helper(client: TestClient) -> None:

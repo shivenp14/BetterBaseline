@@ -268,6 +268,37 @@ class ScenarioEvaluationAPITests(unittest.TestCase):
         self.assertEqual(result["analytic"]["assumed_evaluable_n"], {"control": 0, "treatment": 0})
         self.assertGreater(result["monte_carlo"]["mean_retained_control"], 0)
         self.assertGreater(result["monte_carlo"]["invalid_test_fraction"], .95)
+        records = result["diagnostics"]
+        self.assertTrue(all({"code", "field", "method", "severity"} <= set(record) for record in records))
+        analytic = next(record for record in records if record["code"] == "ZERO_EVALUABLE_COUNT")
+        self.assertEqual(analytic["field"], "n_control_evaluable")
+        self.assertEqual(analytic["method"], "cohen_h_normal")
+        invalid_code = ("ALL_SIMULATED_TESTS_INVALID" if result["monte_carlo"]["invalid_test_fraction"] == 1
+                        else "INVALID_SIMULATED_TESTS")
+        simulated = next(record for record in records if record["code"] == invalid_code)
+        self.assertEqual(simulated["field"], "invalid_test_fraction")
+        self.assertEqual(simulated["method"], "pooled_two_proportion_z_v1")
+        self.assertEqual(simulated["invalid_test_fraction"], result["monte_carlo"]["invalid_test_fraction"])
+        self.assertEqual(simulated["replicates"], result["monte_carlo"]["replicates"])
+        self.assertEqual(simulated["count_basis"], None)
+        json.dumps(records, allow_nan=False)
+
+    def test_rare_event_diagnostics_keep_analytic_and_simulation_count_bases(self):
+        payload = request_payload(enrolled=100, baseline=.01)
+        payload["simulation"]["replicates"] = 1000
+        result = self.evaluate(payload)
+        records = result["diagnostics"]
+        analytic = [record for record in records if record["code"] == "LOW_EXPECTED_COUNT"
+                    and record["method"] == "cohen_h_normal"]
+        simulated = [record for record in records if record["code"] == "LOW_EXPECTED_COUNT"
+                     and record["method"] == "pooled_two_proportion_z_v1"]
+        self.assertTrue(analytic)
+        self.assertTrue(simulated)
+        self.assertTrue(all(record["field"] in {"p_control", "p_treatment"} for record in analytic))
+        self.assertTrue(all(record["count_basis"] == "evaluable_count" for record in analytic))
+        self.assertTrue(all(record["count_basis"] == "expected_random_retention" for record in simulated))
+        self.assertTrue(any(record["code"] == "NEAR_BOUNDARY_PROBABILITY" for record in records))
+        json.dumps(result, allow_nan=False)
 
     def test_decimal_floor_boundary_and_metadata_fixed_enrollment(self):
         payload = request_payload(enrolled=50, dropout=.58)
