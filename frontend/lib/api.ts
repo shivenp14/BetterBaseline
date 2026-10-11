@@ -52,7 +52,13 @@ function backendResult<T extends { mock: boolean; execution?: { mode: "backend" 
 }
 
 async function readResponse<T>(response: Response): Promise<T> {
-  const body = await response.json().catch(() => null) as Record<string, unknown> | null;
+  let body: Record<string, unknown> | null;
+  try {
+    body = await response.json() as Record<string, unknown>;
+  } catch (failure) {
+    if (failure instanceof Error && failure.name === "AbortError") throw failure;
+    body = null;
+  }
   if (!response.ok) {
     const envelope = body?.error as { code?: string; message?: string; field?: string; recoverable?: boolean } | undefined;
     const detail = typeof body?.detail === "string" ? body.detail : undefined;

@@ -13,7 +13,7 @@ import { getApiMode } from "./api";
 
 export type WorkspaceAction =
   | { type: "LOAD_PRESET"; presetId: string }
-  | { type: "UPDATE_PLANNED_FIELD"; fieldPointer: string; update: Partial<TrialAssumptions> }
+  | { type: "UPDATE_PLANNED_FIELD"; fieldPointer: string; fieldPointers?: string[]; update: Partial<TrialAssumptions> }
   | { type: "START_CALCULATE"; requestRevision: number }
   | { type: "CALCULATE_SUCCESS"; response: CalculateResponse; requestRevision: number }
   | { type: "CALCULATE_ERROR"; error: string; requestRevision: number }
@@ -100,7 +100,10 @@ export function workspaceReducer(
         ...state.plannedDraft,
         ...action.update,
       };
-      const nextProvenance = markFieldManual(state.provenanceLedger, action.fieldPointer);
+      const nextProvenance = (action.fieldPointers ?? [action.fieldPointer]).reduce(
+        (ledger, pointer) => markFieldManual(ledger, pointer),
+        state.provenanceLedger
+      );
       return {
         ...state,
         plannedDraft: nextPlanned,
@@ -117,9 +120,17 @@ export function workspaceReducer(
     case "START_CALCULATE": {
       return {
         ...state,
+        // Calculation invalidates prior evaluation/grid requests even when the
+        // assumptions did not change. Bump the shared revision so their late
+        // completions cannot overwrite results for the newly locked design.
+        requestRevision: action.requestRevision,
         designStatus: "calculating",
         designError: null,
         activeCalculateRevision: action.requestRevision,
+        evaluateStatus: state.evaluateStatus === "evaluating" ? "stale" : state.evaluateStatus,
+        evaluateError: null,
+        gridStatus: state.gridStatus === "loading" ? "stale" : state.gridStatus,
+        gridError: null,
       };
     }
 
@@ -133,6 +144,9 @@ export function workspaceReducer(
       }
       return {
         ...state,
+        // Results started against the previously locked enrollment must not
+        // remain current after this calculation replaces that enrollment.
+        requestRevision: action.requestRevision + 1,
         calculatedDesign: action.response,
         frozenEnrollment: action.response.enrolled_n,
         designStatus: "success",
@@ -203,6 +217,7 @@ export function workspaceReducer(
     }
 
     case "START_EVALUATE": {
+      if (state.designStatus === "calculating") return state;
       return {
         ...state,
         evaluateStatus: "evaluating",
@@ -235,6 +250,7 @@ export function workspaceReducer(
     }
 
     case "START_GRID": {
+      if (state.designStatus === "calculating") return state;
       return {
         ...state,
         gridStatus: "loading",

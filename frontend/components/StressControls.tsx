@@ -12,6 +12,7 @@ interface StressControlsProps {
   onEvaluate?: () => void;
   evaluateStatus: "idle" | "evaluating" | "stale" | "success" | "error";
   evaluateError: string | null;
+  isCalculating?: boolean;
 }
 
 export function StressControls({
@@ -23,6 +24,7 @@ export function StressControls({
   onEvaluate,
   evaluateStatus,
   evaluateError,
+  isCalculating = false,
 }: StressControlsProps) {
   const controlN = frozenEnrollment?.control ?? 0;
   const treatmentN = frozenEnrollment?.treatment ?? 0;
@@ -122,7 +124,7 @@ export function StressControls({
           <button
             type="button"
             onClick={onEvaluate}
-            disabled={evaluateStatus === "evaluating" || !frozenEnrollment}
+            disabled={isCalculating || evaluateStatus === "evaluating" || !frozenEnrollment}
           >
             {evaluateStatus === "evaluating" ? "Evaluating Stress..." : "Evaluate Stress Scenario"}
           </button>

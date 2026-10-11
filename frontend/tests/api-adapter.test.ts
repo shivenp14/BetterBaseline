@@ -113,6 +113,20 @@ async function run() {
   const preAborted = new AbortController(); preAborted.abort();
   await assert.rejects(calculateDesign(calcRequest, preAborted.signal), (error: Error) => error.name === "AbortError");
   assert.equal(fetchCalls, 0, "pre-aborted request must not reach fetch");
+  globalThis.fetch = (async () => ({
+    ok: true,
+    status: 200,
+    json: () => Promise.reject(new DOMException("Body read aborted", "AbortError")),
+  } as Response)) as typeof fetch;
+  await assert.rejects(calculateDesign(calcRequest), (error: Error) => error.name === "AbortError",
+    "an abort while consuming a response body remains a cancellation");
+  globalThis.fetch = (async () => ({
+    ok: true,
+    status: 200,
+    json: () => Promise.reject(new SyntaxError("Malformed JSON")),
+  } as Response)) as typeof fetch;
+  await assert.rejects(calculateDesign(calcRequest), /empty or invalid JSON response/,
+    "malformed JSON retains the normal invalid-response error");
   globalThis.fetch = ((_input, init) => new Promise((_resolve, reject) => {
     init?.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), { once: true });
   })) as typeof fetch;

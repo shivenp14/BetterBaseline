@@ -10,6 +10,8 @@ import {
 } from "../lib/api";
 import { solveMinimumN } from "../lib/statistical-engine";
 import type { CalculateResponse } from "../lib/contracts";
+import { planningValuesToRequest, validatePlanningDraft } from "../lib/validation";
+import { plannedFieldUpdateAction } from "../lib/workspace-planning";
 
 function testPresetLoading() {
   const state = initializeWorkspaceState("baseline-collapse-v1");
@@ -103,6 +105,122 @@ function testRecalculateLocksNewEnrollment() {
   assert.strictEqual(state.designStatus, "success");
   assert.strictEqual(state.displayedInputsHash, "sha256:new-test-hash");
   console.log("✔ Recalculate locks new enrollment test passed");
+}
+
+async function testPlanningFormEditsUpdateDraftAndLockOnCalculate() {
+  let state = initializeWorkspaceState("baseline-collapse-v1");
+  const originalEnrollment = state.frozenEnrollment;
+  const draft = {
+    controlPercent: "25", effectKind: "absolute_risk_reduction" as const,
+    relativeRisk: "0.75", reductionPoints: "4", targetPercent: "90",
+    alphaPercent: "2.5", dropoutPercent: "15",
+  };
+  const invalidState = workspaceReducer(state, plannedFieldUpdateAction(
+    { ...draft, controlPercent: "not a number" }, "controlPercent", state.presetId
+  ));
+  assert.equal(invalidState.plannedDraft.control_event_rate, state.plannedDraft.control_event_rate,
+    "invalid form text does not enter the numeric workspace draft");
+  assert.equal(invalidState.provenanceLedger["/planned_design/control_event_rate"]?.source, "manual_user");
+  assert.equal(invalidState.displayedInputsHash, null, "invalid edits still mark displayed results stale");
+
+  const validation = validatePlanningDraft(draft);
+  assert.equal(validation.valid, true, "valid form entries pass the same validation used on submit");
+  if (!validation.valid) throw new Error("Expected valid planning draft");
+  const plannedRequest = planningValuesToRequest(validation.values, state.presetId);
+
+  for (const field of ["controlPercent", "effectKind", "targetPercent", "alphaPercent", "dropoutPercent"] as const) {
+    state = workspaceReducer(state, plannedFieldUpdateAction(draft, field, state.presetId));
+  }
+
+  assert.deepEqual(state.plannedDraft, {
+    model_version: plannedRequest.model_version,
+    allocation_ratio: plannedRequest.allocation_ratio,
+    control_event_rate: 0.25,
+    effect: { kind: "absolute_risk_reduction", value: 0.04 },
+    alpha: 0.025,
+    target_power: 0.9,
+    dropout: { control: 0.15, treatment: 0.15 },
+  });
+  assert.equal(state.evaluateStatus, "stale");
+  assert.equal(state.gridStatus, "stale");
+  for (const pointer of [
+    "/planned_design/control_event_rate", "/planned_design/effect/kind", "/planned_design/effect/value",
+    "/planned_design/target_power", "/planned_design/alpha",
+    "/planned_design/dropout/control", "/planned_design/dropout/treatment",
+  ]) assert.equal(state.provenanceLedger[pointer]?.source, "manual_user", `${pointer} is recorded as a manual edit`);
+  assert.deepEqual(state.frozenEnrollment, originalEnrollment, "editing assumptions does not silently change locked enrollment");
+
+  const calculated = await calculateDesign({ ...plannedRequest, provenance_ledger: state.provenanceLedger });
+  const calculationRevision = state.requestRevision + 1;
+  state = workspaceReducer(state, { type: "START_CALCULATE", requestRevision: calculationRevision });
+  state = workspaceReducer(state, { type: "CALCULATE_SUCCESS", response: calculated, requestRevision: calculationRevision });
+  assert.equal(state.designStatus, "success");
+  assert.deepEqual(state.frozenEnrollment, calculated.enrolled_n, "explicit Calculate locks the newly computed enrollment");
+  assert.notDeepEqual(state.frozenEnrollment, originalEnrollment, "changed planning entries produce a new enrollment lock");
+}
+
+function testRecalculationInvalidatesPendingEvaluationAndGrid() {
+  let state = initializeWorkspaceState("baseline-collapse-v1");
+  const oldRevision = state.requestRevision;
+  state = workspaceReducer(state, { type: "START_EVALUATE" });
+  state = workspaceReducer(state, { type: "START_GRID" });
+  assert.equal(state.evaluateStatus, "evaluating");
+  assert.equal(state.gridStatus, "loading");
+
+  const calculationRevision = oldRevision + 1;
+  state = workspaceReducer(state, { type: "START_CALCULATE", requestRevision: calculationRevision });
+  assert.equal(state.evaluateStatus, "stale", "aborted evaluation is retryable after recalculation starts");
+  assert.equal(state.gridStatus, "stale", "aborted grid is retryable after recalculation starts");
+  state = workspaceReducer(state, {
+    type: "CALCULATE_ERROR", error: "calculation failed", requestRevision: calculationRevision,
+  });
+  assert.equal(state.designStatus, "error");
+  assert.equal(state.evaluateStatus, "stale", "failed recalculation leaves evaluation retryable");
+  assert.equal(state.gridStatus, "stale", "failed recalculation leaves grid retryable");
+
+  state = workspaceReducer(state, { type: "START_EVALUATE" });
+  state = workspaceReducer(state, { type: "START_GRID" });
+  assert.equal(state.evaluateStatus, "evaluating", "evaluation can retry after calculation failure");
+  assert.equal(state.gridStatus, "loading", "grid can retry after calculation failure");
+
+  const afterStart = state;
+  const oldEvaluation = initializeWorkspaceState().evaluateResult!;
+  const oldGrid = initializeWorkspaceState().gridResult!;
+  state = workspaceReducer(state, { type: "EVALUATE_SUCCESS", response: oldEvaluation, requestRevision: oldRevision });
+  state = workspaceReducer(state, { type: "GRID_SUCCESS", response: oldGrid, requestRevision: oldRevision });
+  state = workspaceReducer(state, { type: "EVALUATE_ERROR", error: "late eval", requestRevision: oldRevision });
+  state = workspaceReducer(state, { type: "GRID_ERROR", error: "late grid", requestRevision: oldRevision });
+  assert.equal(state, afterStart, "late same-input evaluation/grid completions cannot overwrite the recalculation state");
+
+  let successful = initializeWorkspaceState("baseline-collapse-v1");
+  successful = workspaceReducer(successful, { type: "START_EVALUATE" });
+  successful = workspaceReducer(successful, { type: "START_GRID" });
+  const successfulRevision = successful.requestRevision + 1;
+  successful = workspaceReducer(successful, { type: "START_CALCULATE", requestRevision: successfulRevision });
+  // A direct/stale callback cannot start new work against the old enrollment
+  // while the calculation is pending.
+  const calculatingState = successful;
+  successful = workspaceReducer(successful, { type: "START_EVALUATE" });
+  successful = workspaceReducer(successful, { type: "START_GRID" });
+  assert.equal(successful, calculatingState, "evaluation and grid starts are ignored during calculation");
+  const pendingRevision = successful.requestRevision;
+  successful = workspaceReducer(successful, {
+    type: "CALCULATE_SUCCESS", response: initializeWorkspaceState().calculatedDesign!,
+    requestRevision: successfulRevision,
+  });
+  const lockedDesignState = successful;
+  successful = workspaceReducer(successful, {
+    type: "EVALUATE_SUCCESS", response: oldEvaluation, requestRevision: pendingRevision,
+  });
+  successful = workspaceReducer(successful, {
+    type: "GRID_SUCCESS", response: oldGrid, requestRevision: pendingRevision,
+  });
+  assert.equal(successful, lockedDesignState, "pending calculation results cannot replace results after the new design locks");
+
+  successful = workspaceReducer(successful, { type: "START_EVALUATE" });
+  successful = workspaceReducer(successful, { type: "START_GRID" });
+  assert.equal(successful.evaluateStatus, "evaluating", "evaluation can retry after calculation success");
+  assert.equal(successful.gridStatus, "loading", "grid can retry after calculation success");
 }
 
 function testSwitchingPresetResetsStateAndProvenance() {
@@ -439,6 +557,8 @@ async function runAll() {
   testPresetLoading();
   testStressAdjustmentPreservesFrozenEnrollment();
   testRecalculateLocksNewEnrollment();
+  await testPlanningFormEditsUpdateDraftAndLockOnCalculate();
+  testRecalculationInvalidatesPendingEvaluationAndGrid();
   testSwitchingPresetResetsStateAndProvenance();
   testRejectOutdatedLateResponses();
   await testLiveEvaluationCalculatesDifferentAssumptions();

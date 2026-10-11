@@ -33,6 +33,12 @@ the default localhost and 127.0.0.1 frontend origins through `ALLOWED_ORIGINS`.
 ## API and provenance boundary
 
 `lib/contracts.ts` describes the backend numerical schema plus UI-only metadata.
+The planning assumptions form validates the user's RR/ARR, baseline risk, alpha,
+power, and symmetric dropout entries before calculation. Valid edits update the
+workspace draft and per-field provenance immediately; only submitting
+“Calculate & Lock Design” replaces the frozen enrollment with the calculated
+counts. Recalculation invalidates pending evaluation/grid requests and rejects
+their late responses.
 `lib/api.ts` strips `preset_id` and the local `provenance_ledger` from calculate
 requests. Evaluate requests carry the ledger in the backend's accepted top-level
 `provenance` map; the adapter maps that returned map into

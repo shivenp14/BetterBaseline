@@ -1,12 +1,17 @@
 "use client";
 
-import { useReducer, useRef } from "react";
+import { useReducer, useRef, useState } from "react";
 import { calculateDesign, evaluateScenario, getApiMode, getStressGrid } from "@/lib/api";
+import type { CalculateRequest } from "@/lib/contracts";
+import { getPresetById } from "@/lib/presets";
+import { plannedFieldUpdateAction } from "@/lib/workspace-planning";
+import type { DraftField, PlanningDraft } from "@/lib/validation";
 import {
   initializeWorkspaceState,
   workspaceReducer,
 } from "@/lib/workspace-state";
 import { PresetSelector } from "@/components/PresetSelector";
+import { DesignForm } from "@/components/DesignForm";
 import { StressControls } from "@/components/StressControls";
 
 function percent(value: number, digits = 0): string {
@@ -17,6 +22,7 @@ export default function Home() {
   const [state, dispatch] = useReducer(workspaceReducer, undefined, () =>
     initializeWorkspaceState("baseline-collapse-v1")
   );
+  const [formResetKey, setFormResetKey] = useState(0);
 
   const calculateAbortRef = useRef<AbortController | null>(null);
   const evaluateAbortRef = useRef<AbortController | null>(null);
@@ -60,6 +66,7 @@ export default function Home() {
   function handleResetPreset() {
     abortAllPending();
     dispatch({ type: "RESET_TO_PRESET" });
+    setFormResetKey((key) => key + 1);
   }
 
   function handleStressBaselineChange(val: number) {
@@ -72,20 +79,20 @@ export default function Home() {
     dispatch({ type: "UPDATE_STRESS_DROPOUT", dropout: val });
   }
 
-  async function handleCalculate() {
+  function handlePlannedDraftChange(draft: PlanningDraft, changedField: DraftField) {
+    dispatch(plannedFieldUpdateAction(draft, changedField, presetId));
+  }
+
+  async function handleCalculate(request: CalculateRequest) {
     abortAllPending();
     const controller = new AbortController();
     calculateAbortRef.current = controller;
-    const revision = requestRevision;
+    const revision = requestRevision + 1;
 
     dispatch({ type: "START_CALCULATE", requestRevision: revision });
     try {
       const response = await calculateDesign(
-        {
-          ...plannedDraft,
-          preset_id: presetId,
-          provenance_ledger: provenanceLedger,
-        },
+        { ...request, provenance_ledger: provenanceLedger },
         controller.signal
       );
       dispatch({ type: "CALCULATE_SUCCESS", response, requestRevision: revision });
@@ -100,7 +107,7 @@ export default function Home() {
   }
 
   async function handleEvaluate() {
-    if (!frozenEnrollment) return;
+    if (designStatus === "calculating" || !frozenEnrollment) return;
     evaluateAbortRef.current?.abort();
     const controller = new AbortController();
     evaluateAbortRef.current = controller;
@@ -135,7 +142,7 @@ export default function Home() {
   }
 
   async function handleLoadGrid() {
-    if (!frozenEnrollment || !displayedGrid) return;
+    if (designStatus === "calculating" || !frozenEnrollment || !displayedGrid) return;
     gridAbortRef.current?.abort();
     const controller = new AbortController();
     gridAbortRef.current = controller;
@@ -192,6 +199,16 @@ export default function Home() {
           Binary undesirable event, two arms, equal 1:1 allocation, symmetric
           dropout.
         </p>
+        <DesignForm
+          key={`${presetId}:${formResetKey}`}
+          initialAssumptions={getPresetById(presetId).planned_design}
+          presetId={presetId}
+          onCalculate={handleCalculate}
+          onDraftChange={handlePlannedDraftChange}
+          isCalculating={designStatus === "calculating"}
+          error={designError}
+          submitLabel={getApiMode() === "demo" ? "Calculate & Lock Design (demo)" : "Calculate & Lock Design"}
+        />
         <ul>
           <li>
             Planned control event risk:{" "}
@@ -237,17 +254,6 @@ export default function Home() {
           <p>Method label: {displayedDesign.method}. {designStatus === "success" ? displayedDesign.execution?.label : "Preset fixture or stale result — run a fresh calculation for current assumptions."}</p>
         )}
 
-        <button
-          type="button"
-          onClick={handleCalculate}
-          disabled={designStatus === "calculating"}
-        >
-          {designStatus === "calculating"
-            ? "Calculating..."
-            : getApiMode() === "demo" ? "Calculate & Lock Design (demo)" : "Calculate & Lock Design"}
-        </button>
-
-        {designError && <p role="alert"><strong>Calculation failed:</strong> {designError}</p>}
         {displayedDesign && (displayedDesign.execution?.mode === "demo" || designStatus !== "success") && (
           <p role="status"><strong>Demo/stale result.</strong> This preset fixture is not a fresh calculation. {displayedDesign.execution?.label}</p>
         )}
@@ -271,6 +277,7 @@ export default function Home() {
         onEvaluate={handleEvaluate}
         evaluateStatus={evaluateStatus}
         evaluateError={evaluateError}
+        isCalculating={designStatus === "calculating"}
       />
 
       {/* Power by baseline risk table */}
@@ -365,7 +372,7 @@ export default function Home() {
           <button
             type="button"
             onClick={handleLoadGrid}
-            disabled={gridStatus === "loading"}
+            disabled={designStatus === "calculating" || gridStatus === "loading"}
           >
             {gridStatus === "loading"
               ? "Loading Grid..."
