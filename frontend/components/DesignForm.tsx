@@ -3,7 +3,7 @@
 import { useId, useRef, useState, type FormEvent } from "react";
 import type { CalculateRequest, TrialAssumptions } from "../lib/contracts";
 import {
-  assumptionsToDraft, planningValuesToRequest, validatePlanningDraft,
+  assumptionsToDraft, isDraftField, isEffectKind, planningValuesToRequest, validatePlanningDraft,
   type DraftField, type FieldErrors, type PlanningDraft,
 } from "../lib/validation";
 
@@ -17,13 +17,28 @@ export interface DesignFormProps {
   error?: string | null;
 }
 
-/** Initial assumptions apply on mount. Parent remounts with a new key on preset reset. */
-export function DesignForm({ initialAssumptions, presetId, onCalculate, onDraftChange,
-  isCalculating = false, error = null }: DesignFormProps) {
+/** Semantic initial-value or preset changes reset drafts; equivalent rerenders preserve edits. */
+export function DesignForm(props: DesignFormProps) {
+  let initialDraft: PlanningDraft;
+  try {
+    initialDraft = assumptionsToDraft(props.initialAssumptions);
+  } catch (failure) {
+    if (!(failure instanceof RangeError)) throw failure;
+    return <section aria-label="Planning assumptions">
+      <h2>Planning assumptions</h2>
+      <p role="alert">Cannot initialize this planned design: {failure.message}. Supply supported assumptions to continue.</p>
+    </section>;
+  }
+  const resetKey = JSON.stringify([props.presetId, initialDraft]);
+  return <DesignFormFields key={resetKey} {...props} initialDraft={initialDraft} />;
+}
+
+function DesignFormFields({ initialDraft, presetId, onCalculate, onDraftChange,
+  isCalculating = false, error = null }: DesignFormProps & { initialDraft: PlanningDraft }) {
   const id = useId();
   const form = useRef<HTMLFormElement>(null);
   const submitting = useRef(false);
-  const [draft, setDraft] = useState(() => assumptionsToDraft(initialAssumptions));
+  const [draft, setDraft] = useState(initialDraft);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitted, setSubmitted] = useState(false);
   const [pending, setPending] = useState(false);
@@ -31,7 +46,9 @@ export function DesignForm({ initialAssumptions, presetId, onCalculate, onDraftC
   const busy = pending || isCalculating;
 
   function change(field: DraftField, value: string) {
-    const next = { ...draft, [field]: value } as PlanningDraft;
+    if (field === "effectKind" && !isEffectKind(value)) return;
+    const next: PlanningDraft = field === "effectKind" && isEffectKind(value)
+      ? { ...draft, effectKind: value } : { ...draft, [field]: value };
     setDraft(next);
     setCallbackError(null);
     if (submitted) setErrors(validatePlanningDraft(next).errors);
@@ -45,8 +62,11 @@ export function DesignForm({ initialAssumptions, presetId, onCalculate, onDraftC
     setSubmitted(true);
     setErrors(result.errors);
     if (!result.valid) {
-      const first = Array.from(form.current?.elements ?? []).find((element) =>
-        element instanceof HTMLElement && result.errors[element.getAttribute("name") as DraftField]);
+      const first = Array.from(form.current?.elements ?? []).find((element) => {
+        if (!(element instanceof HTMLElement)) return false;
+        const name = element.getAttribute("name");
+        return isDraftField(name) && Boolean(result.errors[name]);
+      });
       if (first instanceof HTMLElement) first.focus();
       return;
     }
@@ -97,7 +117,7 @@ export function DesignForm({ initialAssumptions, presetId, onCalculate, onDraftC
           {errors.effectKind && <p id={`${id}-effect-error`}>{errors.effectKind}</p>}
         </div>
         {draft.effectKind === "relative_risk"
-          ? input("relativeRisk", "Relative risk (decimal ratio)", "For example, 0.75. Enter a ratio greater than 0 and below 1.")
+          ? input("relativeRisk", "Relative risk (decimal ratio)", "For example, 0.75. The current binary-v1 adverse-endpoint contract supports risk reduction only: enter a ratio greater than 0 and below 1.")
           : input("reductionPoints", "Absolute risk reduction (percentage points)", "For example, 5 means a reduction of 5 percentage points. It must be smaller than the control endpoint risk.")}
         {input("targetPercent", "Target power (%)")}
         {input("alphaPercent", "Two-sided alpha (%)")}

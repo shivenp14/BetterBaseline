@@ -68,6 +68,19 @@ try {
   await page.getByRole("button", { name: "Calculate design", exact: true }).waitFor();
   assert.equal(await page.getByRole("cell", { name: "903", exact: true }).count(), 4);
   assert.ok(await page.getByRole("alert").count() > 0);
+  // Parent synchronization needs no externally supplied remount key.
+  await field("Control endpoint risk (%)").fill("27.");
+  await page.getByRole("button", { name: "Equivalent parent rerender", exact: true }).click();
+  assert.equal(await field("Control endpoint risk (%)").inputValue(), "27.");
+  await page.getByRole("button", { name: "Change preset", exact: true }).click();
+  assert.equal(await field("Control endpoint risk (%)").inputValue(), "29");
+  await page.getByRole("button", { name: "Update initial assumptions", exact: true }).click();
+  assert.equal(await field("Control endpoint risk (%)").inputValue(), "31");
+  await page.getByRole("button", { name: "Unsupported preset", exact: true }).click();
+  await page.getByText("Cannot initialize this planned design", { exact: false }).waitFor();
+  assert.equal(await page.getByRole("button", { name: "Calculate design", exact: true }).count(), 0);
+  await page.getByRole("button", { name: "Restore supported preset", exact: true }).click();
+  assert.equal(await field("Control endpoint risk (%)").inputValue(), "20");
   assert.deepEqual(failures, []);
-  console.log("PASS: keyboard validation/focus, ARR rejection, unit payload, fresh 903/1004, changed dropout, stale/failure states, pending duplicate guard.");
+  console.log("PASS: keyboard validation/focus, ARR rejection, unit payload, fresh 903/1004, stale/failure states, duplicate guard, preset/assumption resets, equivalent rerenders, unsupported-input recovery.");
 } finally { await browser.close(); }

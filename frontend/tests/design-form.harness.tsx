@@ -13,6 +13,8 @@ const assumptions: TrialAssumptions = {
 };
 
 export default function DesignFormHarness() {
+  const [initialAssumptions, setInitialAssumptions] = useState(assumptions);
+  const [presetId, setPresetId] = useState("manual-test");
   const [result, setResult] = useState<DesignSummaryResult | null>(null);
   const [stale, setStale] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +42,12 @@ export default function DesignFormHarness() {
     } finally { setPending(false); }
   }
   return <main>
-    <DesignForm initialAssumptions={assumptions} presetId="manual-test" onCalculate={calculate}
+    <button onClick={() => { setPresetId("other-preset"); setInitialAssumptions({ ...assumptions, control_event_rate: .29 }); }}>Change preset</button>
+    <button onClick={() => setInitialAssumptions({ ...initialAssumptions, control_event_rate: .31 })}>Update initial assumptions</button>
+    <button onClick={() => setInitialAssumptions({ ...initialAssumptions, effect: { ...initialAssumptions.effect }, dropout: { ...initialAssumptions.dropout } })}>Equivalent parent rerender</button>
+    <button onClick={() => setInitialAssumptions({ ...assumptions, dropout: { control: .1, treatment: .2 } })}>Unsupported preset</button>
+    <button onClick={() => setInitialAssumptions(assumptions)}>Restore supported preset</button>
+    <DesignForm initialAssumptions={initialAssumptions} presetId={presetId} onCalculate={calculate}
       onDraftChange={() => setStale(true)} isCalculating={pending} error={error} />
     <DesignSummary result={result} isStale={stale} isCalculating={pending} error={error} />
     <output aria-label="Calculation calls">{calls}</output>

@@ -88,6 +88,31 @@ test("fraction drafts round-trip without display rounding", () => {
   }
 });
 
+test("percentage drafts scale decimal strings without floating-point noise", () => {
+  for (const [value, expected] of [[.29, "29"], [.58, "58"], [.07, "7"],
+    [.123456789, "12.3456789"], [1e-7, "0.00001"], [2.9e-8, "0.0000029"]]) {
+    const draft = planningValuesToDraft({ controlRisk: value,
+      effect: { kind: "relative_risk", value: .75 }, targetPower: .8, alpha: .05, dropout: value });
+    assert.equal(draft.controlPercent, expected);
+    assert.equal(draft.dropoutPercent, expected);
+    const roundTrip = validatePlanningDraft(draft);
+    assert.equal(roundTrip.valid, true);
+    assert.ok(Math.abs(roundTrip.values.controlRisk - value) <= Number.EPSILON * value);
+  }
+  const draft = planningValuesToDraft({ controlRisk: .29,
+    effect: { kind: "absolute_risk_reduction", value: .029 }, targetPower: .58, alpha: .07, dropout: 0 });
+  assert.equal(draft.reductionPoints, "2.9");
+  assert.equal(draft.targetPercent, "58");
+  assert.equal(draft.alphaPercent, "7");
+  assert.equal(draft.dropoutPercent, "0");
+});
+
+test("RR null/increased risk remains outside the current backend contract", () => {
+  for (const relativeRisk of ["1", "1.25", "2"]) {
+    assert.equal(validatePlanningDraft({ ...fixture, relativeRisk }).valid, false);
+  }
+});
+
 test("invalid initial assumptions are rejected", () => {
   assert.throws(() => planningValuesToDraft({ controlRisk: 20, effect: { kind: "relative_risk", value: .75 }, targetPower: .8, alpha: .05, dropout: 0 }), RangeError);
 });

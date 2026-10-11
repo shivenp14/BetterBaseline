@@ -2,8 +2,14 @@
 
 The form uses explicit percent/percentage-point inputs and a decimal RR. The
 parent receives the C1 `CalculateRequest` and draft-change notifications; #72
-owns production API/state/page wiring and per-field provenance. Initial values
-apply on mount; remount with a new key when changing presets. Summary props
+owns production API/state/page wiring and per-field provenance. Changing the
+preset ID or semantic initial assumptions resets the form internally; equivalent
+parent rerenders preserve edits without callers supplying remount keys.
+Unsupported initial assumptions display an error and disable calculation until
+supported props arrive. Percentage drafts scale shortest decimal strings exactly
+instead of multiplying floats. RR remains strictly between zero and one under
+the published binary-v1 backend schema and engine; null/increased-risk planning
+and non-inferiority designs require a separate contract change. Summary props
 accept the real #64 numerical response with optional parent-provided provenance
 and an explicit mock flag for fixtures. Missing source metadata is disclosed.
 
@@ -42,9 +48,11 @@ mocked. Its state and adapter are acceptance scaffolding, not production wiring.
 The browser script checks keyboard submission, first-invalid-field focus,
 invalid ARR with no request, RR draft preservation, exact fraction payload,
 903/1004 real counts, changed dropout, stale/failure states, and pending duplicate
-blocking. Remove the temporary page before the final production build.
+blocking, semantic preset/assumption resets, edit preservation across equivalent
+rerenders, and recovery from unsupported initial inputs. Remove the temporary
+page before the final production build.
 
-Verified 11 October 2026 against main `da6986e`: 69 parser/render tests and the
+Review fixes verified 11 October 2026 against main `4ce6675`: 72 parser/render tests and the
 Chromium acceptance script passed. The real endpoint returned 903 evaluable and
 1004 enrolled per arm at 10% dropout, and 903/903 at zero dropout. Source metadata
 was absent in the live response and was displayed as unavailable. No production

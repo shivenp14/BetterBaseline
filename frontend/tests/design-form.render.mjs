@@ -75,3 +75,17 @@ test("live API fields render without invented fixture provenance", () => {
   assert.ok(html.includes("Source metadata was not supplied"));
   assert.ok(!html.includes("Illustrative mock") && !html.includes("Synthetic fixture"));
 });
+
+test("unsupported initial assumptions render an error instead of crashing", () => {
+  for (const initialAssumptions of [
+    { ...assumptions, dropout: { control: .1, treatment: .2 } },
+    { ...assumptions, allocation_ratio: 2 },
+    { ...assumptions, control_event_rate: 20 },
+    { ...assumptions, effect: { kind: "relative_risk", value: 1 } },
+  ]) {
+    const html = form({ initialAssumptions });
+    assert.ok(html.includes('role="alert"'));
+    assert.ok(html.includes("Cannot initialize this planned design"));
+    assert.ok(!html.includes('<form'));
+  }
+});

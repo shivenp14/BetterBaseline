@@ -22,6 +22,14 @@ export interface PlanningValues {
 }
 
 export type DraftField = keyof PlanningDraft;
+export function isDraftField(value: string | null): value is DraftField {
+  return value === "controlPercent" || value === "effectKind" || value === "relativeRisk" ||
+    value === "reductionPoints" || value === "targetPercent" || value === "alphaPercent" || value === "dropoutPercent";
+}
+
+export function isEffectKind(value: string): value is EffectKind {
+  return value === "relative_risk" || value === "absolute_risk_reduction";
+}
 export type FieldErrors = Partial<Record<DraftField, string>>;
 export type ValidationResult =
   | { valid: true; values: PlanningValues; errors: FieldErrors }
@@ -89,16 +97,31 @@ export function validatePlanningDraft(draft: PlanningDraft): ValidationResult {
   };
 }
 
+/** Shift the shortest round-trip decimal string exactly, without float multiplication. */
+function percentDraft(value: number): string {
+  const parts = /^(-?)(\d+)(?:\.(\d+))?(?:e([+-]?\d+))?$/.exec(String(value));
+  if (!parts) throw new RangeError("Unsupported planning values");
+  const [, sign, whole, fractional = "", exponent = "0"] = parts;
+  const digits = whole + fractional;
+  const position = whole.length + Number(exponent) + 2;
+  const decimal = position <= 0 ? `0.${"0".repeat(-position)}${digits}`
+    : position >= digits.length ? digits + "0".repeat(position - digits.length)
+    : `${digits.slice(0, position)}.${digits.slice(position)}`;
+  const [integer, fraction = ""] = decimal.split(".");
+  const trimmedFraction = fraction.replace(/0+$/, "");
+  return sign + integer.replace(/^0+(?=\d)/, "") + (trimmedFraction ? `.${trimmedFraction}` : "");
+}
+
 /** Use unrounded editable strings; rounding belongs only in result display. */
 export function planningValuesToDraft(values: PlanningValues): PlanningDraft {
   const draft: PlanningDraft = {
-    controlPercent: String(values.controlRisk * 100),
+    controlPercent: percentDraft(values.controlRisk),
     effectKind: values.effect.kind,
     relativeRisk: values.effect.kind === "relative_risk" ? String(values.effect.value) : "",
-    reductionPoints: values.effect.kind === "absolute_risk_reduction" ? String(values.effect.value * 100) : "",
-    targetPercent: String(values.targetPower * 100),
-    alphaPercent: String(values.alpha * 100),
-    dropoutPercent: String(values.dropout * 100),
+    reductionPoints: values.effect.kind === "absolute_risk_reduction" ? percentDraft(values.effect.value) : "",
+    targetPercent: percentDraft(values.targetPower),
+    alphaPercent: percentDraft(values.alpha),
+    dropoutPercent: percentDraft(values.dropout),
   };
   if (!validatePlanningDraft(draft).valid) throw new RangeError("Unsupported planning values");
   return draft;
