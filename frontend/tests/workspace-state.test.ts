@@ -250,6 +250,59 @@ function testSwitchingPresetResetsStateAndProvenance() {
   console.log("✔ Switching preset resets state and provenance test passed");
 }
 
+function testPresetSwitchAndResetRejectLateRequestCompletions() {
+  const fixture = initializeWorkspaceState("baseline-collapse-v1");
+  const lateCalculate = fixture.calculatedDesign!;
+  const lateEvaluate = fixture.evaluateResult!;
+  const lateGrid = fixture.gridResult!;
+
+  for (const transition of ["LOAD_PRESET", "RESET_TO_PRESET"] as const) {
+    for (const requestType of ["CALCULATE", "EVALUATE", "GRID"] as const) {
+      let pending = initializeWorkspaceState("baseline-collapse-v1");
+      const pendingRevision = pending.requestRevision + 1;
+      if (requestType === "CALCULATE") {
+        pending = workspaceReducer(pending, { type: "START_CALCULATE", requestRevision: pendingRevision });
+      } else if (requestType === "EVALUATE") {
+        pending = workspaceReducer(pending, { type: "START_EVALUATE", requestRevision: pendingRevision });
+      } else {
+        pending = workspaceReducer(pending, { type: "START_GRID", requestRevision: pendingRevision });
+      }
+
+      const switched = transition === "LOAD_PRESET"
+        ? workspaceReducer(pending, { type: "LOAD_PRESET", presetId: "attrition-shock-v1" })
+        : workspaceReducer(pending, { type: "RESET_TO_PRESET" });
+      assert.ok(switched.requestRevision > pendingRevision, `${transition} advances request identity`);
+      assert.equal(switched.designStatus, "idle");
+      assert.equal(switched.evaluateStatus, "idle");
+      assert.equal(switched.gridStatus, "idle");
+
+      const completions = requestType === "CALCULATE"
+        ? [
+            { type: "CALCULATE_SUCCESS" as const, response: lateCalculate, requestRevision: pendingRevision },
+            { type: "CALCULATE_ERROR" as const, error: "late calculate", requestRevision: pendingRevision },
+          ]
+        : requestType === "EVALUATE"
+          ? [
+              { type: "EVALUATE_SUCCESS" as const, response: lateEvaluate, requestRevision: pendingRevision },
+              { type: "EVALUATE_ERROR" as const, error: "late evaluate", requestRevision: pendingRevision },
+            ]
+          : [
+              { type: "GRID_SUCCESS" as const, response: lateGrid, requestRevision: pendingRevision },
+              { type: "GRID_ERROR" as const, error: "late grid", requestRevision: pendingRevision },
+            ];
+
+      for (const completion of completions) {
+        assert.strictEqual(
+          workspaceReducer(switched, completion),
+          switched,
+          `${transition} with no follow-up request rejects late ${requestType} completion`,
+        );
+      }
+    }
+  }
+  console.log("✔ Preset switches and resets reject late calculate/evaluate/grid success and error completions");
+}
+
 function testRejectOutdatedLateResponses() {
   let state = initializeWorkspaceState("baseline-collapse-v1");
   const initialRevision = state.requestRevision;
@@ -576,6 +629,7 @@ async function runAll() {
   await testPlanningFormEditsUpdateDraftAndLockOnCalculate();
   testRecalculationInvalidatesPendingEvaluationAndGrid();
   testSwitchingPresetResetsStateAndProvenance();
+  testPresetSwitchAndResetRejectLateRequestCompletions();
   testRejectOutdatedLateResponses();
   await testLiveEvaluationCalculatesDifferentAssumptions();
   testSingleAuthoritativeLedgerPreservesManualOrigin();

@@ -91,11 +91,14 @@ Run adapter regressions and the real local service flow with:
 npm run test:backend-integration
 ```
 
-That command installs the locked backend/dev dependencies, starts a temporary
-Uvicorn service on a free localhost port, verifies calculate → freeze enrollment →
-edit stress → evaluate with seeded Monte Carlo and provenance, checks adapter payloads,
-and stops the temporary process on exit. It does not implement or claim a working
-backend grid calculation.
+By default, that command installs the locked backend/dev dependencies, starts a
+temporary Uvicorn service on a free localhost port, verifies calculate → freeze
+enrollment → edit stress → evaluate and grid with provenance, checks the current
+grid response shape, captures the actual downloaded export JSON, and validates it
+against the backend `ExportPayload` model. It stops the temporary process on exit.
+If a compatible Python 3.12 environment is already available, set
+`BACKEND_PYTHON=/path/to/python` to use its installed dependencies without running
+`uv sync`; the default locked `uv` path remains unchanged.
 
 The interface remains semantic, unstyled HTML with native controls and tables. Keep
 functional behavior, validation, loading/error/stale states, provenance, keyboard

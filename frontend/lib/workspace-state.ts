@@ -106,11 +106,20 @@ export function workspaceReducer(
 ): WorkspaceState {
   switch (action.type) {
     case "LOAD_PRESET": {
-      return initializeWorkspaceState(action.presetId);
+      return {
+        ...initializeWorkspaceState(action.presetId),
+        // Preset changes invalidate every in-flight request. Keep the revision
+        // monotonic so an already-resolving old request can never own the new
+        // preset, even when no request is started after the switch.
+        requestRevision: state.requestRevision + 1,
+      };
     }
 
     case "RESET_TO_PRESET": {
-      return initializeWorkspaceState(state.presetId);
+      return {
+        ...initializeWorkspaceState(state.presetId),
+        requestRevision: state.requestRevision + 1,
+      };
     }
 
     case "UPDATE_PLANNED_FIELD": {
@@ -247,7 +256,7 @@ export function workspaceReducer(
     }
 
     case "EVALUATE_SUCCESS": {
-      if (action.requestRevision < state.requestRevision) {
+      if (action.requestRevision !== state.requestRevision || state.evaluateStatus !== "evaluating") {
         return state;
       }
       return {
@@ -260,7 +269,7 @@ export function workspaceReducer(
     }
 
     case "EVALUATE_ERROR": {
-      if (action.requestRevision < state.requestRevision) {
+      if (action.requestRevision !== state.requestRevision || state.evaluateStatus !== "evaluating") {
         return state;
       }
       return {
@@ -281,7 +290,7 @@ export function workspaceReducer(
     }
 
     case "GRID_SUCCESS": {
-      if (action.requestRevision < state.requestRevision) {
+      if (action.requestRevision !== state.requestRevision || state.gridStatus !== "loading") {
         return state;
       }
       return {
@@ -294,7 +303,7 @@ export function workspaceReducer(
     }
 
     case "GRID_ERROR": {
-      if (action.requestRevision < state.requestRevision) {
+      if (action.requestRevision !== state.requestRevision || state.gridStatus !== "loading") {
         return state;
       }
       return {
