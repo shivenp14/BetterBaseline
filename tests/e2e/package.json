@@ -4,9 +4,10 @@
   "private": true,
   "description": "Isolated Playwright E2E tests for the offline baseline-collapse workflow (Issue #78).",
   "scripts": {
-    "test": "playwright test",
+    "test": "npm run check:egress-guard && playwright test",
     "test:headed": "playwright test --headed",
     "test:report": "playwright show-report",
+    "check:egress-guard": "python3 check_backend_egress_guard.py",
     "install:browsers": "playwright install chromium"
   },
   "devDependencies": {

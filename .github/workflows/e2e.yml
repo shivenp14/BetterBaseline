@@ -3,8 +3,9 @@ name: E2E — Offline Baseline-Collapse Workflow
 # Owned by Issue #78 (D2, @dersual).
 # This workflow is intentionally isolated from ci.yml and integration.yml.
 # It starts real local backend and frontend services with external internet
-# access disabled (GitHub Actions has no outbound internet in this job by design
-# plus Playwright route interception blocks any accidental external calls).
+# access constrained during the test run by Playwright browser routing and a
+# test-only backend socket guard. GitHub Actions runner egress is not globally
+# blocked; setup and dependency installation require outbound access.
 
 on:
   pull_request:
@@ -94,7 +95,7 @@ jobs:
           BACKEND_PORT: ${{ env.BACKEND_PORT }}
           FRONTEND_PORT: ${{ env.FRONTEND_PORT }}
           NEXT_PUBLIC_API_BASE_URL: "http://127.0.0.1:${{ env.BACKEND_PORT }}"
-        run: npx playwright test --reporter=list
+        run: npm test
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}

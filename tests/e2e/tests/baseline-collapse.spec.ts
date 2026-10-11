@@ -1,362 +1,312 @@
 /**
- * E2E: Offline baseline-collapse workflow (Issue #78 — D2)
+ * E2E acceptance tests for the real baseline-collapse workflow (#78).
  *
- * Validates the primary judge flow against a real local backend and frontend
- * with external internet access blocked. Mock-only runs do not satisfy this suite.
- *
- * Assertions per the issue acceptance criteria:
- *  1. Preset loads and design shows the 903/arm reference enrollment.
- *  2. Planned enrollment is frozen (displayed) before stress inputs change.
- *  3. Changing stress baseline updates live analytic/MC results (power near ~0.470).
- *  4. Frozen enrollment count does not change when stress sliders move.
- *  5. Invalid ARR state is surfaced and doesn't crash the page.
- *  6. Analytic grid label and orientation are correct.
- *  7. Separate MCSE labels are present and non-negative.
- *  8. Provenance-bearing export produces a valid JSON download.
- *  9. Failures identify whether the issue is app, contract, or fixture integration.
- * 10. No external network requests are made at any point.
+ * Every calculation assertion is tied to an HTTP request made by a UI action
+ * and the corresponding local FastAPI response. The current mock shell does
+ * not satisfy these tests; its missing integration is reported as pending #76.
  */
 
-import { test, expect, Page, Download } from "@playwright/test";
+import { test, expect, Page, Response } from "@playwright/test";
 
-// ── Constants from the playbook reference fixture ──
-const REFERENCE_EVALUABLE_N = 903;
-const REFERENCE_ENROLLED_N = 903; // baseline-collapse-v1 has 0% planned dropout
-const STRESS_POWER_APPROX = 0.47; // analytic conditional power at baseline 10%, N=903
-const STRESS_POWER_TOLERANCE = 0.05; // ±5 pp allowed — analytic approximation variance
+const BACKEND_PORT = Number(process.env.BACKEND_PORT || 8001);
+const FRONTEND_PORT = Number(process.env.FRONTEND_PORT || 3001);
+const BACKEND_ORIGIN = `http://127.0.0.1:${BACKEND_PORT}`;
+const FRONTEND_ORIGIN = `http://localhost:${FRONTEND_PORT}`;
+const LOCAL_ORIGINS = new Set([BACKEND_ORIGIN, FRONTEND_ORIGIN]);
 const PRESET_ID = "baseline-collapse-v1";
-const STRESS_BASELINE_PERCENT = 10; // 10% control event rate in stress scenario
+const ATTRITION_PRESET_ID = "attrition-shock-v1";
+const REFERENCE_N = 903;
+const RESPONSE_TIMEOUT_MS = 12_000;
 
-// ── Helpers ──
+const forbiddenRequests = new WeakMap<Page, string[]>();
+const forbiddenWebSockets = new WeakMap<Page, string[]>();
+
+function isLocalUrl(url: URL): boolean {
+  const normalized = new URL(url.href);
+  if (normalized.protocol === "ws:") normalized.protocol = "http:";
+  if (normalized.protocol === "wss:") normalized.protocol = "https:";
+  return LOCAL_ORIGINS.has(normalized.origin);
+}
 
 /**
- * Block all requests that go outside the local dev servers.
- * Playwright's route handler runs per-request; this is belt-and-suspenders
- * on top of the webServer isolation to assert the app uses no external URLs.
+ * Route every browser request, continue only requests to the two exact local
+ * server origins, and retain violations for a deterministic afterEach check.
+ * serviceWorkers: "block" in the Playwright config ensures page routing sees
+ * requests that might otherwise be handled by a service worker.
  */
-async function blockExternalNetwork(page: Page) {
-  await page.route(
-    (url) =>
-      !url.hostname.includes("localhost") &&
-      !url.hostname.includes("127.0.0.1"),
-    async (route) => {
-      const url = route.request().url();
-      // Fail the test explicitly — an external call is a contract violation
-      throw new Error(
-        `[E2E] External network request blocked — app must work offline: ${url}`
-      );
-    }
-  );
-}
-
-/** Parse a numeric percentage out of text like "47%" or "47.0%" → 0.47 */
-function parsePercent(text: string): number {
-  const match = text.match(/([\d.]+)%/);
-  if (!match) throw new Error(`Cannot parse percent from: "${text}"`);
-  return parseFloat(match[1]) / 100;
-}
-
-// ── Test suite ──
-
-test.describe("Offline baseline-collapse E2E workflow", () => {
-  test.beforeEach(async ({ page }) => {
-    await blockExternalNetwork(page);
-  });
-
-  test("loads the preset and shows the 903/arm reference enrollment", async ({
-    page,
-  }) => {
-    await page.goto("/");
-
-    // App shell renders
-    await expect(
-      page.getByRole("heading", { name: /better baseline/i })
-    ).toBeVisible();
-
-    // Select the baseline-collapse preset if there's a selector
-    const presetSelector = page.locator('select[id="preset"], select').first();
-    if (await presetSelector.isVisible()) {
-      await presetSelector.selectOption(PRESET_ID);
-    }
-
-    // Trigger design calculation
-    const calculateBtn = page.getByRole("button", {
-      name: /calculate/i,
-    });
-    await calculateBtn.click();
-
-    // 903 evaluable per arm must appear in the planned design section
-    const planSection = page.locator('section[aria-labelledby="planned-heading"]');
-    await expect(planSection).toContainText(String(REFERENCE_EVALUABLE_N));
-
-    // Enrolled N also 903 for baseline-collapse (0% dropout)
-    await expect(planSection).toContainText(String(REFERENCE_ENROLLED_N));
-  });
-
-  test("frozen enrollment does not change when stress baseline slider moves", async ({
-    page,
-  }) => {
-    await page.goto("/");
-
-    const presetSelector = page.locator('select[id="preset"], select').first();
-    if (await presetSelector.isVisible()) {
-      await presetSelector.selectOption(PRESET_ID);
-    }
-
-    // Calculate to lock enrollment
-    await page.getByRole("button", { name: /calculate/i }).click();
-
-    // Capture the enrolled N text before stress
-    const planSection = page.locator('section[aria-labelledby="planned-heading"]');
-    const enrolledTextBefore = await planSection.innerText();
-
-    // Move the stress baseline slider to a different value
-    const baselineSlider = page.locator('input[type="range"]#baseline, input[type="range"]').first();
-    await baselineSlider.fill("15"); // 15%
-
-    // Enrolled N must still read 903 — stress never resizes planned enrollment
-    const enrolledTextAfter = await planSection.innerText();
-    expect(enrolledTextAfter).toContain(String(REFERENCE_ENROLLED_N));
-
-    // The before/after planned-section text should be identical (enrollment frozen)
-    expect(enrolledTextBefore).toEqual(enrolledTextAfter);
-  });
-
-  test("stress evaluation returns live analytic power near 0.470 for baseline-collapse", async ({
-    page,
-  }) => {
-    await page.goto("/");
-
-    const presetSelector = page.locator('select[id="preset"], select').first();
-    if (await presetSelector.isVisible()) {
-      await presetSelector.selectOption(PRESET_ID);
-    }
-
-    // Calculate first to lock enrollment
-    await page.getByRole("button", { name: /calculate/i }).click();
-
-    // Set stress baseline to 10% (the reference fixture value)
-    const baselineSlider = page.locator(
-      'input[id="baseline"], input[type="range"]'
-    ).first();
-    await baselineSlider.fill(String(STRESS_BASELINE_PERCENT));
-
-    // Trigger evaluation
-    const evaluateBtn = page.getByRole("button", { name: /evaluate/i });
-    await evaluateBtn.click();
-
-    // Wait for a result containing a percentage (analytic conditional power)
-    const evaluateSection = page.locator(
-      '[aria-labelledby="evaluate-heading"], [aria-labelledby="stress-heading"], section'
-    );
-
-    // Extract analytic conditional power text — must be near STRESS_POWER_APPROX
-    // Look for "conditional power" or "analytic" label and the associated value
-    const powerText = await evaluateSection
-      .locator("li, td, p")
-      .filter({ hasText: /conditional power|analytic power/i })
-      .first()
-      .innerText();
-
-    const power = parsePercent(powerText);
-    expect(power).toBeGreaterThan(STRESS_POWER_APPROX - STRESS_POWER_TOLERANCE);
-    expect(power).toBeLessThan(STRESS_POWER_APPROX + STRESS_POWER_TOLERANCE);
-  });
-
-  test("evaluate returns separate MCSE labels and non-negative values", async ({
-    page,
-  }) => {
-    await page.goto("/");
-
-    const presetSelector = page.locator('select[id="preset"], select').first();
-    if (await presetSelector.isVisible()) {
-      await presetSelector.selectOption(PRESET_ID);
-    }
-
-    await page.getByRole("button", { name: /calculate/i }).click();
-    await page.getByRole("button", { name: /evaluate/i }).click();
-
-    const evalSection = page.locator(
-      '[aria-labelledby="evaluate-heading"], section'
-    );
-
-    // Two-sided MCSE label
-    await expect(
-      evalSection.locator("li, td, p").filter({ hasText: /two.sided.*mcse|mcse.*two.sided/i }).first()
-    ).toBeVisible();
-
-    // Favorable MCSE label
-    await expect(
-      evalSection.locator("li, td, p").filter({ hasText: /favorable.*mcse|mcse.*favorable/i }).first()
-    ).toBeVisible();
-
-    // Both values must be non-negative — extract and check
-    const twoSidedEl = evalSection
-      .locator("li, td, p")
-      .filter({ hasText: /two.sided.*mcse|mcse.*two.sided/i })
-      .first();
-    const favorableEl = evalSection
-      .locator("li, td, p")
-      .filter({ hasText: /favorable.*mcse|mcse.*favorable/i })
-      .first();
-
-    const twoSidedText = await twoSidedEl.innerText();
-    const favorableText = await favorableEl.innerText();
-    const twoSided = parsePercent(twoSidedText);
-    const favorable = parsePercent(favorableText);
-
-    expect(twoSided).toBeGreaterThanOrEqual(0);
-    expect(favorable).toBeGreaterThanOrEqual(0);
-  });
-
-  test("grid loads with correct dropout-major orientation label", async ({
-    page,
-  }) => {
-    await page.goto("/");
-
-    const presetSelector = page.locator('select[id="preset"], select').first();
-    if (await presetSelector.isVisible()) {
-      await presetSelector.selectOption(PRESET_ID);
-    }
-
-    await page.getByRole("button", { name: /calculate/i }).click();
-
-    // Trigger grid load
-    const gridBtn = page.getByRole("button", { name: /grid|load grid/i });
-    await gridBtn.click();
-
-    const gridSection = page.locator('[aria-labelledby="grid-heading"], section');
-
-    // Grid method label present
-    await expect(
-      gridSection.filter({ hasText: /cohen_h_normal_v1/i }).first()
-    ).toBeVisible();
-
-    // Dropout-major orientation label — row=dropout, col=baseline
-    await expect(
-      gridSection.locator("thead th, caption, p").filter({ hasText: /dropout/i }).first()
-    ).toBeVisible();
-  });
-
-  test("invalid ARR state shows validation error without crashing", async ({
-    page,
-  }) => {
-    await page.goto("/");
-
-    const presetSelector = page.locator('select[id="preset"], select').first();
-    if (await presetSelector.isVisible()) {
-      await presetSelector.selectOption(PRESET_ID);
-    }
-
-    await page.getByRole("button", { name: /calculate/i }).click();
-
-    // Intercept /api/v1/scenarios/evaluate to inject an ARR violation response
-    // This simulates the backend contract returning a structured 422 for invalid ARR
-    await page.route("**/api/v1/scenarios/evaluate", async (route) => {
-      await route.fulfill({
-        status: 422,
-        contentType: "application/json",
-        body: JSON.stringify({
-          error: {
-            code: "VALIDATION_ERROR",
-            message:
-              "Invalid ARR: value 0.15 must be strictly less than stressed control rate 0.10",
-            field: "stress_scenario.effect",
-            recoverable: true,
-          },
-        }),
-      });
-    });
-
-    await page.getByRole("button", { name: /evaluate/i }).click();
-
-    // App must display an error state — not crash or show a blank page
-    // Look for any error/warning disclosure
-    await expect(page.locator("body")).not.toContainText("Internal Server Error");
-    await expect(page.locator("body")).not.toContainText("Application error");
-
-    // A status message, error boundary, or warning list should surface something
-    // The page itself must still render its heading
-    await expect(
-      page.getByRole("heading", { name: /better baseline/i })
-    ).toBeVisible();
-  });
-
-  test("export produces downloadable JSON with provenance fields", async ({
-    page,
-  }) => {
-    await page.goto("/");
-
-    const presetSelector = page.locator('select[id="preset"], select').first();
-    if (await presetSelector.isVisible()) {
-      await presetSelector.selectOption(PRESET_ID);
-    }
-
-    await page.getByRole("button", { name: /calculate/i }).click();
-    await page.getByRole("button", { name: /evaluate/i }).click();
-
-    // Look for an export button — may not exist yet (C7/#76 owns ScenarioExport.tsx)
-    // If present, trigger it and verify the download
-    const exportBtn = page.getByRole("button", { name: /export/i });
-    if (!(await exportBtn.isVisible())) {
-      test.skip(true, "Export button not yet present — C7 (#76) integration pending");
+async function constrainBrowserNetwork(page: Page): Promise<void> {
+  const forbidden: string[] = [];
+  const forbiddenSockets: string[] = [];
+  forbiddenRequests.set(page, forbidden);
+  forbiddenWebSockets.set(page, forbiddenSockets);
+  // page.route() does not intercept WebSocket handshakes. routeWebSocket()
+  // installs before navigation and closes external sockets without connecting
+  // to their destination.
+  await page.routeWebSocket((url) => {
+    if (isLocalUrl(url)) return false;
+    forbiddenSockets.push(url.href);
+    return true;
+  }, (webSocket) => webSocket.close({ code: 1008, reason: "E2E external WebSocket blocked" }));
+  await page.route("**/*", async (route) => {
+    const requestUrl = route.request().url();
+    let origin: string;
+    try {
+      origin = new URL(requestUrl).origin;
+    } catch {
+      forbidden.push(requestUrl);
+      await route.abort();
       return;
     }
 
-    const [download]: [Download] = await Promise.all([
-      page.waitForEvent("download"),
-      exportBtn.click(),
-    ]);
-
-    const content = await download.createReadStream();
-    const chunks: Buffer[] = [];
-    for await (const chunk of content) {
-      chunks.push(Buffer.from(chunk));
+    if (!LOCAL_ORIGINS.has(origin)) {
+      forbidden.push(requestUrl);
+      await route.abort();
+      return;
     }
-    const rawJson = Buffer.concat(chunks).toString("utf8");
-    const parsed = JSON.parse(rawJson); // throws if invalid JSON
+    await route.continue();
+  });
+}
 
-    // Provenance-bearing: must include inputs_hash and provenance object
-    expect(parsed).toHaveProperty("inputs_hash");
-    expect(parsed).toHaveProperty("provenance");
+async function requireUiApiResponse(
+  page: Page,
+  endpoint: string,
+  action: () => Promise<unknown>,
+): Promise<Response> {
+  const pendingResponse = page.waitForResponse(
+    (response) => {
+      const url = new URL(response.url());
+      return url.origin === BACKEND_ORIGIN && url.pathname === endpoint && response.request().method() === "POST";
+    },
+    { timeout: RESPONSE_TIMEOUT_MS },
+  );
+  await action();
+  try {
+    return await pendingResponse;
+  } catch (error) {
+    throw new Error(
+      `[E2E integration pending #76] UI action did not receive ${endpoint} from ${BACKEND_ORIGIN}. ` +
+        `The current mock-only shell performs no API I/O. Original error: ${String(error)}`,
+    );
+  }
+}
 
-    // Must record seed/reps or software_versions for reproducibility
-    const hasReproFields =
-      "software_versions" in parsed ||
-      "seed" in (parsed.simulation ?? {}) ||
-      "replicates" in (parsed.simulation ?? {});
-    expect(hasReproFields).toBe(true);
+async function selectPreset(page: Page, id = PRESET_ID): Promise<void> {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: /better baseline/i })).toBeVisible();
+  await page.getByLabel("Synthetic scenario").selectOption(id);
+}
+
+async function calculateFromUi(page: Page): Promise<Record<string, any>> {
+  const response = await requireUiApiResponse(
+    page,
+    "/api/v1/design/calculate",
+    () => page.getByRole("button", { name: /calculate/i }).click(),
+  );
+  expect(response.status(), "design API response from the local backend").toBe(200);
+  return response.json();
+}
+
+async function evaluateFromUi(page: Page): Promise<{ response: Response; body: Record<string, any> }> {
+  const response = await requireUiApiResponse(
+    page,
+    "/api/v1/scenarios/evaluate",
+    () => page.getByRole("button", { name: /evaluate/i }).click(),
+  );
+  return { response, body: await response.json() };
+}
+
+test.describe("Offline baseline-collapse E2E workflow", () => {
+  test.beforeEach(async ({ page }) => {
+    await constrainBrowserNetwork(page);
   });
 
-  test("no external network requests are made during full workflow", async ({
-    page,
-  }) => {
-    const externalRequests: string[] = [];
+  test.afterEach(async ({ page }) => {
+    const forbidden = forbiddenRequests.get(page) ?? [];
+    expect(forbidden, "browser requests must use only the exact local frontend/backend origins").toEqual([]);
+    expect(forbiddenWebSockets.get(page) ?? [], "unexpected WebSocket attempts must use exact local origins").toEqual([]);
+  });
 
-    // Additional explicit tracking (blockExternalNetwork already throws, but
-    // we collect for clearer failure messages)
-    page.on("request", (request) => {
-      const host = new URL(request.url()).hostname;
-      if (!host.includes("localhost") && !host.includes("127.0.0.1")) {
-        externalRequests.push(request.url());
-      }
-    });
+  test("Calculate calls the local API and displays its 903-per-arm design response", async ({ page }) => {
+    await selectPreset(page);
+    const design = await calculateFromUi(page);
 
+    expect(design.evaluable_n).toEqual({ control: REFERENCE_N, treatment: REFERENCE_N });
+    expect(design.enrolled_n).toEqual({ control: REFERENCE_N, treatment: REFERENCE_N });
+    expect(design.method).toBe("cohen_h_normal_v1");
+    expect(design).not.toHaveProperty("mock");
+    await expect(page.locator('section[aria-labelledby="planned-heading"]')).toContainText("903");
+    await expect(page.locator('section[aria-labelledby="planned-heading"]')).toContainText(design.method);
+  });
+
+  test("Evaluate sends the frozen enrollment and current stress input to the local API", async ({ page }) => {
+    await selectPreset(page);
+    const design = await calculateFromUi(page);
+    await page.locator("#baseline").fill("10");
+
+    const { response, body } = await evaluateFromUi(page);
+    expect(response.status()).toBe(200);
+    const request = response.request().postDataJSON();
+    expect(request.fixed_enrollment).toEqual(design.enrolled_n);
+    expect(request.fixed_enrollment).toEqual({ control: REFERENCE_N, treatment: REFERENCE_N });
+    expect(request.stress_scenario.control_event_rate).toBe(0.1);
+    expect(request.planned_design.effect).toEqual({ kind: "relative_risk", value: 0.75 });
+    expect(body.metadata.fixed_enrollment).toEqual(request.fixed_enrollment);
+    expect(body.metadata.software_versions).toBeTruthy();
+    expect(body.analytic.conditional_power_approx).toBeGreaterThan(0.42);
+    expect(body.analytic.conditional_power_approx).toBeLessThan(0.52);
+    expect(body.monte_carlo.replicates).toBe(request.simulation.replicates);
+    expect(body.monte_carlo.seed).toBe(request.simulation.seed);
+    expect(body).not.toHaveProperty("mock");
+
+    const evaluateSection = page.locator('section[aria-labelledby="evaluate-heading"]');
+    await expect(evaluateSection).toContainText(`${(body.analytic.conditional_power_approx * 100).toFixed(0)}%`);
+    await expect(evaluateSection).toContainText(String(body.monte_carlo.replicates));
+  });
+
+  test("changed stress produces a fresh backend calculation and updated MC fields", async ({ page }) => {
+    await selectPreset(page);
+    const design = await calculateFromUi(page);
+    await page.locator("#baseline").fill("10");
+    const first = await evaluateFromUi(page);
+    expect(first.response.status()).toBe(200);
+    const firstRequest = first.response.request().postDataJSON();
+    expect(firstRequest.fixed_enrollment).toEqual(design.enrolled_n);
+    expect(firstRequest.stress_scenario.control_event_rate).toBe(0.1);
+
+    await page.locator("#baseline").fill("15");
+    const changed = await evaluateFromUi(page);
+    expect(changed.response.status()).toBe(200);
+    const changedRequest = changed.response.request().postDataJSON();
+    expect(changedRequest.fixed_enrollment).toEqual(design.enrolled_n);
+    expect(changedRequest.stress_scenario.control_event_rate).toBe(0.15);
+    expect(changed.body.metadata.inputs_hash).not.toBe(first.body.metadata.inputs_hash);
+    expect(changed.body.metadata.computed_at).not.toBe(first.body.metadata.computed_at);
+    expect(changed.body.analytic.conditional_power_approx).not.toBe(first.body.analytic.conditional_power_approx);
+    expect(changed.body.monte_carlo.significant_two_sided_fraction).not.toBe(first.body.monte_carlo.significant_two_sided_fraction);
+    expect(changed.body.monte_carlo.mcse_two_sided).toBeGreaterThanOrEqual(0);
+    expect(changed.body.monte_carlo.mcse_favorable).toBeGreaterThanOrEqual(0);
+    expect(changed.body.monte_carlo.replicates).toBe(changedRequest.simulation.replicates);
+    expect(changed.body.monte_carlo.seed).toBe(changedRequest.simulation.seed);
+
+    const evaluateSection = page.locator('section[aria-labelledby="evaluate-heading"]');
+    await expect(evaluateSection).toContainText(`${(changed.body.analytic.conditional_power_approx * 100).toFixed(0)}%`);
+    const twoSidedMcse = evaluateSection.locator("li").filter({ hasText: /two-sided significance MCSE/i });
+    const favorableMcse = evaluateSection.locator("li").filter({ hasText: /favorable-direction significance MCSE/i });
+    await expect(twoSidedMcse, "two-sided MCSE must have its own visible label").toBeVisible();
+    await expect(favorableMcse, "favorable-direction MCSE must have its own visible label").toBeVisible();
+    await expect(twoSidedMcse).toContainText(`${(changed.body.monte_carlo.mcse_two_sided * 100).toFixed(1)}%`);
+    await expect(favorableMcse).toContainText(`${(changed.body.monte_carlo.mcse_favorable * 100).toFixed(1)}%`);
+  });
+
+  test("grid action calls the local API with frozen enrollment and displays its response", async ({ page }) => {
+    await selectPreset(page);
+    const design = await calculateFromUi(page);
+    const response = await requireUiApiResponse(
+      page,
+      "/api/v1/scenarios/grid",
+      () => page.getByRole("button", { name: /grid/i }).click(),
+    );
+    expect(response.status()).toBe(200);
+    const request = response.request().postDataJSON();
+    const body = await response.json();
+    expect(request.fixed_enrollment).toEqual(design.enrolled_n);
+    expect(request.fixed_enrollment).toEqual({ control: REFERENCE_N, treatment: REFERENCE_N });
+    expect(body.method).toBe("cohen_h_normal_v1");
+    expect(body.grid_label).toBe("expected_count_approximation");
+    expect(body.y_dropout.length).toBeGreaterThan(0);
+    expect(body.x_baseline.length).toBeGreaterThan(0);
+    expect(body.power).toHaveLength(body.y_dropout.length);
+    expect(body.invalid_mask).toHaveLength(body.y_dropout.length);
+    for (const row of body.power) expect(row).toHaveLength(body.x_baseline.length);
+    for (const row of body.invalid_mask) expect(row).toHaveLength(body.x_baseline.length);
+    expect(body).not.toHaveProperty("mock");
+    const gridSection = page.locator('section[aria-labelledby="grid-heading"]');
+    await expect(gridSection).toContainText(body.grid_label);
+    await expect(gridSection).toContainText("Cell indexing follows [dropout][baseline]");
+    await expect(gridSection.locator("table caption")).toContainText(/dropout.*baseline/i);
+    await expect(gridSection.locator('thead th[scope="col"]').first()).toContainText(/dropout.*baseline/i);
+    await expect(gridSection.locator('tbody th[scope="row"]').first()).toBeVisible();
+  });
+
+  test("invalid ARR reaches FastAPI and displays the actual 422 validation error", async ({ page }) => {
+    await selectPreset(page, ATTRITION_PRESET_ID);
+    const design = await calculateFromUi(page);
+    await page.locator("#baseline").fill("5");
+
+    const { response, body } = await evaluateFromUi(page);
+    expect(response.status()).toBe(422);
+    const request = response.request().postDataJSON();
+    expect(request.fixed_enrollment).toEqual(design.enrolled_n);
+    expect(request.planned_design.effect).toEqual({ kind: "absolute_risk_reduction", value: 0.05 });
+    expect(request.stress_scenario.control_event_rate).toBe(0.05);
+    expect(body.error.message).toMatch(/invalid arr|cannot equal or exceed/i);
+
+    const alert = page.getByRole("alert");
+    await expect(alert, "the visible UI must expose the backend's invalid ARR 422").toBeVisible();
+    await expect(alert).toContainText(/arr/i);
+    await expect(page.getByRole("heading", { name: /better baseline/i })).toBeVisible();
+  });
+
+  test("export is available and downloads JSON containing provenance and real calculation metadata", async ({ page }) => {
+    await selectPreset(page);
+    const exportButton = page.getByRole("button", { name: /export/i });
+    await expect(
+      exportButton,
+      "[E2E integration pending #76] export button is missing; export assembly is not integrated",
+    ).toBeVisible();
+
+    await calculateFromUi(page);
+    await evaluateFromUi(page);
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      exportButton.click(),
+    ]);
+    const stream = await download.createReadStream();
+    expect(stream, "export action must create a downloadable file").not.toBeNull();
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream!) chunks.push(Buffer.from(chunk));
+    const exported = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+
+    expect(exported.export_schema_version).toBe(1);
+    expect(exported.exported_at).toBeTruthy();
+    expect(Object.keys(exported.provenance ?? {})).not.toHaveLength(0);
+    expect(exported.evaluation_result.metadata.inputs_hash).toMatch(/^[a-f0-9]{64}$/);
+    expect(exported.software_versions ?? exported.evaluation_result.metadata.software_versions).toBeTruthy();
+  });
+
+  test("complete workflow makes no requests outside the exact local server origins", async ({ page }) => {
+    await selectPreset(page);
+    await calculateFromUi(page);
+    await evaluateFromUi(page);
+    await requireUiApiResponse(
+      page,
+      "/api/v1/scenarios/grid",
+      () => page.getByRole("button", { name: /grid/i }).click(),
+    );
+    const exportButton = page.getByRole("button", { name: /export/i });
+    await expect(exportButton, "[E2E integration pending #76] export action is missing").toBeVisible();
+  });
+
+  test("external WebSockets are intercepted and closed before connecting", async ({ page }) => {
     await page.goto("/");
+    const state = await page.evaluate(async () => await new Promise<number>((resolve, reject) => {
+      const socket = new WebSocket("wss://example.invalid/e2e-guard-probe");
+      const timeout = window.setTimeout(() => reject(new Error("routed WebSocket did not close")), 2_000);
+      socket.addEventListener("close", () => {
+        window.clearTimeout(timeout);
+        resolve(socket.readyState);
+      }, { once: true });
+      socket.addEventListener("error", () => {
+        // A routed close may emit error as the browser reports the handshake
+        // termination; the close event below confirms interception completed.
+      }, { once: true });
+    }));
 
-    const presetSelector = page.locator('select[id="preset"], select').first();
-    if (await presetSelector.isVisible()) {
-      await presetSelector.selectOption(PRESET_ID);
-    }
-
-    await page.getByRole("button", { name: /calculate/i }).click();
-    await page.getByRole("button", { name: /evaluate/i }).click();
-
-    const gridBtn = page.getByRole("button", { name: /grid|load grid/i });
-    if (await gridBtn.isVisible()) {
-      await gridBtn.click();
-    }
-
-    expect(externalRequests).toHaveLength(0);
+    expect(state).toBe(WebSocket.CLOSED);
+    const captured = forbiddenWebSockets.get(page) ?? [];
+    expect(captured).toEqual(["wss://example.invalid/e2e-guard-probe"]);
+    // This one attempt is the subject of the test; clear it after proving the
+    // guard caught it so afterEach can continue checking unexpected attempts.
+    captured.length = 0;
   });
 });

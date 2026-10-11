@@ -1,12 +1,12 @@
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig } from "@playwright/test";
 import path from "path";
 
 /**
  * Playwright configuration for the isolated Better Baseline E2E suite.
  *
  * Runs a real local backend (FastAPI/uvicorn) and real local frontend (Next.js)
- * before each test run. External network access is blocked inside tests via
- * route interception — the app must work entirely from the local servers.
+ * before each test run. Browser requests are restricted to exact local server
+ * origins, and a test-only Python startup hook blocks backend socket egress.
  *
  * See: https://playwright.dev/docs/test-configuration
  */
@@ -23,6 +23,7 @@ const FRONTEND_DIR = path.join(REPO_ROOT, "frontend");
 const VENV_PYTHON = process.platform === "win32"
   ? path.join(BACKEND_DIR, ".venv", "Scripts", "python.exe")
   : path.join(BACKEND_DIR, ".venv", "bin", "python");
+const PYTHON_EGRESS_GUARD = path.join(__dirname, "python_guard");
 
 export default defineConfig({
   testDir: "./tests",
@@ -35,8 +36,8 @@ export default defineConfig({
 
   use: {
     baseURL: FRONTEND_URL,
-    // Block all external internet traffic — the suite must pass with no outbound access
-    // Individual tests also call page.route() for belt-and-suspenders assertion.
+    // Playwright cannot route service worker controlled requests.
+    serviceWorkers: "block",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
@@ -60,6 +61,7 @@ export default defineConfig({
       timeout: 60_000,
       env: {
         ALLOWED_ORIGINS: `["${FRONTEND_URL}"]`,
+        PYTHONPATH: PYTHON_EGRESS_GUARD,
       },
     },
     {
