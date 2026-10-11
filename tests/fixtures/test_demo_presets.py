@@ -275,6 +275,20 @@ class DemoPresetTests(unittest.TestCase):
                     generator._engine_commit()
                 self.assertEqual(command.call_count, 1)
 
+    def test_generator_rejects_shallow_history_for_engine_provenance(self):
+        spec = importlib.util.spec_from_file_location("preset_generator", DATA / "generate_snapshots.py")
+        generator = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(generator)
+        with patch.object(
+            generator.subprocess,
+            "check_output",
+            side_effect=["", "true"],
+        ) as command:
+            with self.assertRaisesRegex(RuntimeError, "Full Git history is required"):
+                generator._engine_commit()
+        self.assertEqual(command.call_count, 2)
+        self.assertEqual(command.call_args_list[1].args[0], ["git", "rev-parse", "--is-shallow-repository"])
+
 
 if __name__ == "__main__":
     unittest.main()

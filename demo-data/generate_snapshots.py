@@ -55,6 +55,16 @@ def _engine_commit() -> str:
         )
         if dirty.strip():
             raise RuntimeError("Commit or discard backend source changes before generating snapshots")
+        shallow = subprocess.check_output(
+            ["git", "rev-parse", "--is-shallow-repository"],
+            cwd=ROOT,
+            text=True,
+        ).strip()
+        if shallow == "true":
+            raise RuntimeError(
+                "Full Git history is required to identify the committed backend engine source; "
+                "fetch with actions/checkout fetch-depth: 0"
+            )
         return subprocess.check_output(
             ["git", "log", "-1", "--format=%H", "--", *ENGINE_PATHS],
             cwd=ROOT,
