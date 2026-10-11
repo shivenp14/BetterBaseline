@@ -1,19 +1,19 @@
 import { getPresetById } from "./presets";
 import type {
+  ApiDesignCalculateResponse, ApiProvenanceMap, ApiScenarioEvaluateResponse, ApiScenarioGridResponse,
   CalculateRequest, CalculateResponse, EvaluateRequest, EvaluateResponse,
   GridRequest, GridResponse, Provenance,
 } from "./contracts";
-import type { ProvenanceLedger } from "./workspace-contracts";
 import { computeLiveDesign, computeLiveEvaluation, computeLiveGrid } from "./statistical-engine";
 
 export interface ExtendedCalculateRequest extends CalculateRequest {
-  provenance_ledger?: ProvenanceLedger;
+  provenance_ledger?: ApiProvenanceMap;
 }
 export interface ExtendedEvaluateRequest extends EvaluateRequest {
-  provenance_ledger?: ProvenanceLedger;
+  provenance_ledger?: ApiProvenanceMap;
 }
 export interface ExtendedGridRequest extends GridRequest {
-  provenance_ledger?: ProvenanceLedger;
+  provenance_ledger?: ApiProvenanceMap;
 }
 
 type ApiMode = "live" | "demo";
@@ -29,7 +29,7 @@ export function getApiMode(): ApiMode {
   return process.env.NEXT_PUBLIC_API_MODE === "demo" ? "demo" : "live";
 }
 
-function backendProvenance(ledger?: ProvenanceLedger): Provenance {
+function backendProvenance(ledger?: ApiProvenanceMap): Provenance {
   return {
     scenario_id: "backend-execution",
     scenario_kind: "synthetic",
@@ -39,6 +39,9 @@ function backendProvenance(ledger?: ProvenanceLedger): Provenance {
     follow_up_label: "As specified by assumptions",
     method_version: "binary-v1",
     generated_by: "backend_service",
+    // This is the UI display envelope. Field-level records come from the API
+    // response when available; the ledger fallback keeps older API v1
+    // deployments usable without fabricating server-returned audit fields.
     field_provenance: ledger,
   };
 }
@@ -101,8 +104,14 @@ export async function calculateDesign(request: ExtendedCalculateRequest, signal?
     return demoResult(response);
   }
   const assumptions = omitKeys(request, "preset_id", "provenance_ledger");
-  const result = await post<Omit<CalculateResponse, "provenance" | "mock">>("/api/v1/design/calculate", assumptions, signal);
-  return backendResult({ ...result, provenance: backendProvenance(request.provenance_ledger), mock: false });
+  const payload = { ...assumptions, provenance: request.provenance_ledger ?? request.provenance ?? {} };
+  const result = await post<ApiDesignCalculateResponse>("/api/v1/design/calculate", payload, signal);
+  const { provenance: serverLedger, ...core } = result;
+  return backendResult({
+    ...core,
+    provenance: backendProvenance(serverLedger ?? request.provenance_ledger),
+    mock: false,
+  } as CalculateResponse);
 }
 
 export async function evaluateScenario(request: ExtendedEvaluateRequest, signal?: AbortSignal): Promise<EvaluateResponse> {
@@ -118,9 +127,13 @@ export async function evaluateScenario(request: ExtendedEvaluateRequest, signal?
   const provenance_ledger = request.provenance_ledger;
   const acceptedFields = omitKeys(request, "preset_id", "provenance_ledger");
   const payload = { ...acceptedFields, provenance: provenance_ledger ?? {} };
-  const result = await post<Omit<EvaluateResponse, "provenance" | "mock"> & { provenance?: ProvenanceLedger }>("/api/v1/scenarios/evaluate", payload, signal);
-  const { provenance: ledgerFromBackend, ...core } = result;
-  return backendResult({ ...core, provenance: backendProvenance(ledgerFromBackend ?? provenance_ledger), mock: false });
+  const result = await post<ApiScenarioEvaluateResponse>("/api/v1/scenarios/evaluate", payload, signal);
+  const { provenance: serverLedger, ...core } = result;
+  return backendResult({
+    ...core,
+    provenance: backendProvenance(serverLedger ?? provenance_ledger),
+    mock: false,
+  } as EvaluateResponse);
 }
 
 export async function getStressGrid(request: ExtendedGridRequest, signal?: AbortSignal): Promise<GridResponse> {
@@ -160,8 +173,9 @@ export async function getStressGrid(request: ExtendedGridRequest, signal?: Abort
       dropout: request.planned_design.dropout,
       effect_override: null,
     },
+    provenance: request.provenance_ledger ?? {},
   };
-  const result = await post<Record<string, unknown>>("/api/v1/scenarios/grid", payload, signal);
+  const result = await post<ApiScenarioGridResponse>("/api/v1/scenarios/grid", payload, signal);
   const point = (raw: unknown) => {
     const value = raw as Record<string, unknown> & { p_control: number; dropout: number };
     // Retain canonical backend fields for ExportPayload while adding the
@@ -176,7 +190,7 @@ export async function getStressGrid(request: ExtendedGridRequest, signal?: Abort
       ? null
       : point(result.selected_point),
     frontier_points: ((result.frontier_points ?? []) as unknown[]).map(point),
-    provenance: backendProvenance(request.provenance_ledger ?? {}),
+    provenance: backendProvenance(result.provenance ?? request.provenance_ledger),
     mock: false,
   } as unknown as GridResponse;
   return backendResult(normalized);

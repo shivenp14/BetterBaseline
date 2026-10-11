@@ -44,4 +44,4 @@ WORKSPACE_EXPORT_PATH="$tmp_dir/downloaded-export.json" \
 NEXT_PUBLIC_API_MODE=live NEXT_PUBLIC_API_BASE_URL="http://127.0.0.1:$port" \
   node "$tmp_dir/compiled/tests/backend-integration.test.js"
 NEXT_PUBLIC_API_MODE=live NEXT_PUBLIC_API_BASE_URL="http://127.0.0.1:$port" node "$tmp_dir/compiled/tests/api-adapter.test.js"
-"${python_runner[@]}" -c 'import json, sys; from app.schemas import ExportPayload; payload = json.load(open(sys.argv[1], encoding="utf-8")); parsed = ExportPayload.model_validate(payload); assert parsed.grid_result is not None; print("Downloaded export validates as backend ExportPayload (including canonical grid and provenance).")' "$tmp_dir/downloaded-export.json"
+PYTHONPATH="$backend_dir${PYTHONPATH:+:$PYTHONPATH}" "${python_runner[@]}" -c 'import json, sys; from app.schemas import ExportPayload; payload = json.load(open(sys.argv[1], encoding="utf-8")); parsed = ExportPayload.model_validate(payload); assert parsed.grid_result is not None; print("Downloaded export validates as backend ExportPayload (including canonical hash, grid and provenance).")' "$tmp_dir/downloaded-export.json"

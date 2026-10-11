@@ -47,9 +47,9 @@ export interface StatisticalDiagnostic {
 }
 
 export interface CalculateRequest extends TrialAssumptions {
-  /** UI metadata only; stripped by the adapter before HTTP transport. */
+  /** UI preset selection; stripped by the adapter before HTTP transport. */
   preset_id: string;
-  /** Optional backend API v1 provenance; distinct from the UI-only ledger wrapper. */
+  /** Optional backend API v1 field provenance, sent unchanged to the calculate route. */
   provenance?: ApiProvenanceMap;
 }
 
@@ -177,7 +177,7 @@ export interface EvaluateRequest {
   simulation: { replicates: number; seed: number };
   preset_id: string;
   provenance?: ApiProvenanceMap;
-  /** App ledger translated to the backend's top-level `provenance` field. */
+  /** UI adapter input; translated to the backend's top-level `provenance` field. */
   provenance_ledger?: Record<string, {
     source: "manual_user" | "synthetic_preset" | "protocol_curated" | "clinicaltrials_registry";
     description?: string | null;
@@ -204,7 +204,7 @@ export interface EvaluateResponse {
     mcse_favorable: number;
     invalid_test_fraction: number;
     replicates: number;
-    seed: number;
+    seed: number | null;
   } | null;
   warnings: string[];
   diagnostics?: StatisticalDiagnostic[];
