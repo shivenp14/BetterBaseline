@@ -12,6 +12,27 @@ import { solveMinimumN } from "../lib/statistical-engine";
 import type { CalculateResponse } from "../lib/contracts";
 import { planningValuesToRequest, validatePlanningDraft } from "../lib/validation";
 import { plannedFieldUpdateAction } from "../lib/workspace-planning";
+import type { WorkspaceAction } from "../lib/workspace-state";
+
+type TestWorkspaceState = ReturnType<typeof initializeWorkspaceState>;
+
+function startCalculate(state: TestWorkspaceState, requestRevision = state.requestRevision + 1) {
+  return workspaceReducer(state, {
+    type: "START_CALCULATE", requestRevision, expectedInputGeneration: state.inputGeneration,
+  });
+}
+
+function startEvaluate(state: TestWorkspaceState, requestRevision = state.requestRevision + 1) {
+  return workspaceReducer(state, {
+    type: "START_EVALUATE", requestRevision, expectedInputGeneration: state.inputGeneration,
+  });
+}
+
+function startGrid(state: TestWorkspaceState, requestRevision = state.requestRevision + 1) {
+  return workspaceReducer(state, {
+    type: "START_GRID", requestRevision, expectedInputGeneration: state.inputGeneration,
+  });
+}
 
 function testPresetLoading() {
   const state = initializeWorkspaceState("baseline-collapse-v1");
@@ -93,7 +114,7 @@ function testRecalculateLocksNewEnrollment() {
   };
 
   const requestRevision = state.requestRevision;
-  state = workspaceReducer(state, { type: "START_CALCULATE", requestRevision });
+  state = startCalculate(state, requestRevision);
   state = workspaceReducer(state, {
     type: "CALCULATE_SUCCESS",
     response: mockNewDesign,
@@ -152,7 +173,7 @@ async function testPlanningFormEditsUpdateDraftAndLockOnCalculate() {
 
   const calculated = await calculateDesign({ ...plannedRequest, provenance_ledger: state.provenanceLedger });
   const calculationRevision = state.requestRevision + 1;
-  state = workspaceReducer(state, { type: "START_CALCULATE", requestRevision: calculationRevision });
+  state = startCalculate(state, calculationRevision);
   state = workspaceReducer(state, { type: "CALCULATE_SUCCESS", response: calculated, requestRevision: calculationRevision });
   assert.equal(state.designStatus, "success");
   assert.deepEqual(state.frozenEnrollment, calculated.enrolled_n, "explicit Calculate locks the newly computed enrollment");
@@ -162,13 +183,13 @@ async function testPlanningFormEditsUpdateDraftAndLockOnCalculate() {
 function testRecalculationInvalidatesPendingEvaluationAndGrid() {
   let state = initializeWorkspaceState("baseline-collapse-v1");
   const oldRevision = state.requestRevision;
-  state = workspaceReducer(state, { type: "START_EVALUATE" });
-  state = workspaceReducer(state, { type: "START_GRID" });
+  state = startEvaluate(state);
+  state = startGrid(state);
   assert.equal(state.evaluateStatus, "evaluating");
   assert.equal(state.gridStatus, "loading");
 
   const calculationRevision = oldRevision + 1;
-  state = workspaceReducer(state, { type: "START_CALCULATE", requestRevision: calculationRevision });
+  state = startCalculate(state, calculationRevision);
   assert.equal(state.evaluateStatus, "stale", "aborted evaluation is retryable after recalculation starts");
   assert.equal(state.gridStatus, "stale", "aborted grid is retryable after recalculation starts");
   state = workspaceReducer(state, {
@@ -178,8 +199,8 @@ function testRecalculationInvalidatesPendingEvaluationAndGrid() {
   assert.equal(state.evaluateStatus, "stale", "failed recalculation leaves evaluation retryable");
   assert.equal(state.gridStatus, "stale", "failed recalculation leaves grid retryable");
 
-  state = workspaceReducer(state, { type: "START_EVALUATE" });
-  state = workspaceReducer(state, { type: "START_GRID" });
+  state = startEvaluate(state);
+  state = startGrid(state);
   assert.equal(state.evaluateStatus, "evaluating", "evaluation can retry after calculation failure");
   assert.equal(state.gridStatus, "loading", "grid can retry after calculation failure");
 
@@ -193,15 +214,15 @@ function testRecalculationInvalidatesPendingEvaluationAndGrid() {
   assert.equal(state, afterStart, "late same-input evaluation/grid completions cannot overwrite the recalculation state");
 
   let successful = initializeWorkspaceState("baseline-collapse-v1");
-  successful = workspaceReducer(successful, { type: "START_EVALUATE" });
-  successful = workspaceReducer(successful, { type: "START_GRID" });
+  successful = startEvaluate(successful);
+  successful = startGrid(successful);
   const successfulRevision = successful.requestRevision + 1;
-  successful = workspaceReducer(successful, { type: "START_CALCULATE", requestRevision: successfulRevision });
+  successful = startCalculate(successful, successfulRevision);
   // A direct/stale callback cannot start new work against the old enrollment
   // while the calculation is pending.
   const calculatingState = successful;
-  successful = workspaceReducer(successful, { type: "START_EVALUATE" });
-  successful = workspaceReducer(successful, { type: "START_GRID" });
+  successful = startEvaluate(successful);
+  successful = startGrid(successful);
   assert.equal(successful, calculatingState, "evaluation and grid starts are ignored during calculation");
   const pendingRevision = successful.requestRevision;
   successful = workspaceReducer(successful, {
@@ -217,8 +238,8 @@ function testRecalculationInvalidatesPendingEvaluationAndGrid() {
   });
   assert.equal(successful, lockedDesignState, "pending calculation results cannot replace results after the new design locks");
 
-  successful = workspaceReducer(successful, { type: "START_EVALUATE" });
-  successful = workspaceReducer(successful, { type: "START_GRID" });
+  successful = startEvaluate(successful);
+  successful = startGrid(successful);
   assert.equal(successful.evaluateStatus, "evaluating", "evaluation can retry after calculation success");
   assert.equal(successful.gridStatus, "loading", "grid can retry after calculation success");
 }
@@ -250,15 +271,68 @@ function testSwitchingPresetResetsStateAndProvenance() {
   console.log("✔ Switching preset resets state and provenance test passed");
 }
 
+function testPresetSwitchAndResetRejectLateRequestCompletions() {
+  const fixture = initializeWorkspaceState("baseline-collapse-v1");
+  const lateCalculate = fixture.calculatedDesign!;
+  const lateEvaluate = fixture.evaluateResult!;
+  const lateGrid = fixture.gridResult!;
+
+  for (const transition of ["LOAD_PRESET", "RESET_TO_PRESET"] as const) {
+    for (const requestType of ["CALCULATE", "EVALUATE", "GRID"] as const) {
+      let pending = initializeWorkspaceState("baseline-collapse-v1");
+      const pendingRevision = pending.requestRevision + 1;
+      if (requestType === "CALCULATE") {
+        pending = startCalculate(pending, pendingRevision);
+      } else if (requestType === "EVALUATE") {
+        pending = startEvaluate(pending, pendingRevision);
+      } else {
+        pending = startGrid(pending, pendingRevision);
+      }
+
+      const switched = transition === "LOAD_PRESET"
+        ? workspaceReducer(pending, { type: "LOAD_PRESET", presetId: "attrition-shock-v1" })
+        : workspaceReducer(pending, { type: "RESET_TO_PRESET" });
+      assert.ok(switched.requestRevision > pendingRevision, `${transition} advances request identity`);
+      assert.equal(switched.designStatus, "idle");
+      assert.equal(switched.evaluateStatus, "idle");
+      assert.equal(switched.gridStatus, "idle");
+      assert.equal(switched.activeCalculateRevision, null);
+      assert.equal(switched.activeEvaluateRevision, null);
+      assert.equal(switched.activeGridRevision, null);
+
+      const completions = requestType === "CALCULATE"
+        ? [
+            { type: "CALCULATE_SUCCESS" as const, response: lateCalculate, requestRevision: pendingRevision },
+            { type: "CALCULATE_ERROR" as const, error: "late calculate", requestRevision: pendingRevision },
+          ]
+        : requestType === "EVALUATE"
+          ? [
+              { type: "EVALUATE_SUCCESS" as const, response: lateEvaluate, requestRevision: pendingRevision },
+              { type: "EVALUATE_ERROR" as const, error: "late evaluate", requestRevision: pendingRevision },
+            ]
+          : [
+              { type: "GRID_SUCCESS" as const, response: lateGrid, requestRevision: pendingRevision },
+              { type: "GRID_ERROR" as const, error: "late grid", requestRevision: pendingRevision },
+            ];
+
+      for (const completion of completions) {
+        assert.strictEqual(
+          workspaceReducer(switched, completion),
+          switched,
+          `${transition} with no follow-up request rejects late ${requestType} completion`,
+        );
+      }
+    }
+  }
+  console.log("✔ Preset switches and resets reject late calculate/evaluate/grid success and error completions");
+}
+
 function testRejectOutdatedLateResponses() {
   let state = initializeWorkspaceState("baseline-collapse-v1");
   const initialRevision = state.requestRevision;
 
   // Dispatch an async calculate start at initialRevision
-  state = workspaceReducer(state, {
-    type: "START_CALCULATE",
-    requestRevision: state.requestRevision,
-  });
+  state = startCalculate(state, state.requestRevision);
 
   // User subsequently modifies stress baseline before calculation finishes
   state = workspaceReducer(state, {
@@ -448,10 +522,7 @@ async function testRolandReviewFixes() {
   assert.throws(() => solveMinimumN(0.2, 0.2, 0.8, 0.05), /UNBOUNDED_OR_INFEASIBLE/);
 
   // 5. Calculate does not get permanently stuck in calculating when stress edits arrive
-  let stressMidCalcState = workspaceReducer(state, {
-    type: "START_CALCULATE",
-    requestRevision: state.requestRevision,
-  });
+  let stressMidCalcState = startCalculate(state, state.requestRevision);
   assert.strictEqual(stressMidCalcState.designStatus, "calculating");
   stressMidCalcState = workspaceReducer(stressMidCalcState, {
     type: "UPDATE_STRESS_BASELINE",
@@ -523,10 +594,7 @@ async function testFieldProvenanceRoundTripsThroughLiveAndFixtureResults() {
 function testCalculateInvalidationDoesNotClearNewerRequest() {
   let state = initializeWorkspaceState("baseline-collapse-v1");
   const oldRevision = state.requestRevision;
-  state = workspaceReducer(state, {
-    type: "START_CALCULATE",
-    requestRevision: oldRevision,
-  });
+  state = startCalculate(state, oldRevision);
   assert.strictEqual(state.designStatus, "calculating");
 
   state = workspaceReducer(state, {
@@ -537,10 +605,7 @@ function testCalculateInvalidationDoesNotClearNewerRequest() {
   assert.strictEqual(state.activeCalculateRevision, null);
 
   const currentRevision = state.requestRevision;
-  state = workspaceReducer(state, {
-    type: "START_CALCULATE",
-    requestRevision: currentRevision,
-  });
+  state = startCalculate(state, currentRevision);
   const newerActiveState = state;
   state = workspaceReducer(state, {
     type: "CALCULATE_SUCCESS",
@@ -553,6 +618,255 @@ function testCalculateInvalidationDoesNotClearNewerRequest() {
   console.log("✔ Stress edits clear pending calculation and old completions preserve newer requests");
 }
 
+function testSupersededEvaluationRevisionIsRejected() {
+  let state = initializeWorkspaceState("baseline-collapse-v1");
+  state = startEvaluate(state);
+  const firstRevision = state.requestRevision;
+  state = startEvaluate(state);
+  const newerRequestState = state;
+  assert.ok(state.requestRevision > firstRevision, "each evaluation receives a distinct revision");
+  assert.equal(state.activeEvaluateRevision, state.requestRevision, "the latest evaluation owns its operation token");
+  state = workspaceReducer(state, {
+    type: "EVALUATE_SUCCESS",
+    response: initializeWorkspaceState("baseline-collapse-v1").evaluateResult!,
+    requestRevision: firstRevision,
+  });
+  assert.strictEqual(state, newerRequestState, "late result cannot replace a newer evaluation for the same inputs");
+  console.log("✔ Superseded same-input evaluation response is rejected by revision guard");
+}
+
+function testEvaluationAndGridOverlapCanSettleInEitherOrder() {
+  const evaluation = initializeWorkspaceState("baseline-collapse-v1").evaluateResult!;
+  const grid = initializeWorkspaceState("baseline-collapse-v1").gridResult!;
+  const outcomes = ["success", "error"] as const;
+  const cases = outcomes.flatMap((evaluationOutcome) => outcomes.flatMap((gridOutcome) => [
+    { evaluationOutcome, gridOutcome, first: "evaluation" as const },
+    { evaluationOutcome, gridOutcome, first: "grid" as const },
+  ]));
+
+  for (const { evaluationOutcome, gridOutcome, first } of cases) {
+    let state = initializeWorkspaceState("baseline-collapse-v1");
+    const evaluationRevision = state.requestRevision + 1;
+    state = startEvaluate(state, evaluationRevision);
+    const gridRevision = state.requestRevision + 1;
+    state = startGrid(state, gridRevision);
+
+    assert.equal(state.evaluateStatus, "evaluating", `${first}: evaluation remains active beside grid`);
+    assert.equal(state.gridStatus, "loading", `${first}: grid remains active beside evaluation`);
+    assert.equal(state.activeEvaluateRevision, evaluationRevision);
+    assert.equal(state.activeGridRevision, gridRevision);
+
+    const completeEvaluation = () => evaluationOutcome === "success"
+      ? { type: "EVALUATE_SUCCESS" as const, response: evaluation, requestRevision: evaluationRevision }
+      : { type: "EVALUATE_ERROR" as const, error: "evaluation failed", requestRevision: evaluationRevision };
+    const completeGrid = () => gridOutcome === "success"
+      ? { type: "GRID_SUCCESS" as const, response: grid, requestRevision: gridRevision }
+      : { type: "GRID_ERROR" as const, error: "grid failed", requestRevision: gridRevision };
+
+    state = workspaceReducer(state, first === "evaluation" ? completeEvaluation() : completeGrid());
+    assert.equal(
+      state.evaluateStatus,
+      first === "evaluation" ? (evaluationOutcome === "success" ? "success" : "error") : "evaluating",
+    );
+    assert.equal(
+      state.gridStatus,
+      first === "grid" ? (gridOutcome === "success" ? "success" : "error") : "loading",
+    );
+
+    state = workspaceReducer(state, first === "evaluation" ? completeGrid() : completeEvaluation());
+    assert.equal(state.evaluateStatus, evaluationOutcome === "success" ? "success" : "error");
+    assert.equal(state.gridStatus, gridOutcome === "success" ? "success" : "error");
+    assert.equal(state.activeEvaluateRevision, null, "settled evaluation releases its owner");
+    assert.equal(state.activeGridRevision, null, "settled grid releases its owner");
+    assert.notEqual(state.evaluateStatus, "evaluating", "evaluation cannot be stranded after its completion");
+    assert.notEqual(state.gridStatus, "loading", "grid cannot be stranded after its completion");
+    if (evaluationOutcome === "success") assert.strictEqual(state.evaluateResult, evaluation);
+    else assert.equal(state.evaluateError, "evaluation failed");
+    if (gridOutcome === "success") assert.strictEqual(state.gridResult, grid);
+    else assert.equal(state.gridError, "grid failed");
+  }
+  console.log("✔ Overlapping evaluation and grid requests settle independently in both orders");
+}
+
+function testSupersededEvaluationAndGridCannotStrandCurrentOwner() {
+  const fixture = initializeWorkspaceState("baseline-collapse-v1");
+
+  let evaluationState = fixture;
+  const firstEvaluation = evaluationState.requestRevision + 1;
+  evaluationState = startEvaluate(evaluationState, firstEvaluation);
+  const currentEvaluation = evaluationState.requestRevision + 1;
+  evaluationState = startEvaluate(evaluationState, currentEvaluation);
+  const currentEvaluationState = evaluationState;
+  for (const completion of [
+    { type: "EVALUATE_SUCCESS" as const, response: fixture.evaluateResult!, requestRevision: firstEvaluation },
+    { type: "EVALUATE_ERROR" as const, error: "superseded evaluation failed", requestRevision: firstEvaluation },
+  ]) {
+    assert.strictEqual(workspaceReducer(evaluationState, completion), currentEvaluationState,
+      "old evaluation success/error cannot affect the latest owner");
+  }
+  evaluationState = workspaceReducer(evaluationState, {
+    type: "EVALUATE_SUCCESS", response: fixture.evaluateResult!, requestRevision: currentEvaluation,
+  });
+  assert.equal(evaluationState.evaluateStatus, "success");
+  assert.equal(evaluationState.activeEvaluateRevision, null);
+
+  let gridState = fixture;
+  const firstGrid = gridState.requestRevision + 1;
+  gridState = startGrid(gridState, firstGrid);
+  const currentGrid = gridState.requestRevision + 1;
+  gridState = startGrid(gridState, currentGrid);
+  const currentGridState = gridState;
+  for (const completion of [
+    { type: "GRID_SUCCESS" as const, response: fixture.gridResult!, requestRevision: firstGrid },
+    { type: "GRID_ERROR" as const, error: "superseded grid failed", requestRevision: firstGrid },
+  ]) {
+    assert.strictEqual(workspaceReducer(gridState, completion), currentGridState,
+      "old grid success/error cannot affect the latest owner");
+  }
+  gridState = workspaceReducer(gridState, {
+    type: "GRID_SUCCESS", response: fixture.gridResult!, requestRevision: currentGrid,
+  });
+  assert.equal(gridState.gridStatus, "success");
+  assert.equal(gridState.activeGridRevision, null);
+  console.log("✔ Same-kind request supersession keeps the latest owner active until it settles");
+}
+
+function testInputChangesInvalidateOverlappingRequests() {
+  const inputChanges: { label: string; action: WorkspaceAction }[] = [
+    {
+      label: "planned edit",
+      action: {
+        type: "UPDATE_PLANNED_FIELD",
+        fieldPointer: "/planned_design/control_event_rate",
+        update: { control_event_rate: 0.12 },
+      },
+    },
+    { label: "stress baseline edit", action: { type: "UPDATE_STRESS_BASELINE", baseline: 0.15 } },
+    { label: "stress dropout edit", action: { type: "UPDATE_STRESS_DROPOUT", dropout: 0.2 } },
+  ];
+  const fixture = initializeWorkspaceState("baseline-collapse-v1");
+
+  for (const { label, action } of inputChanges) {
+    let state = fixture;
+    const evaluationRevision = state.requestRevision + 1;
+    state = startEvaluate(state, evaluationRevision);
+    const gridRevision = state.requestRevision + 1;
+    state = startGrid(state, gridRevision);
+    state = workspaceReducer(state, action);
+    const staleState = state;
+
+    assert.ok(state.requestRevision > gridRevision, `${label} advances the invalidation revision`);
+    assert.equal(state.evaluateStatus, "stale", `${label} marks the evaluation stale`);
+    assert.equal(state.gridStatus, "stale", `${label} marks the grid stale`);
+    assert.equal(state.activeEvaluateRevision, null, `${label} releases the evaluation owner`);
+    assert.equal(state.activeGridRevision, null, `${label} releases the grid owner`);
+
+    for (const completion of [
+      { type: "EVALUATE_SUCCESS" as const, response: fixture.evaluateResult!, requestRevision: evaluationRevision },
+      { type: "EVALUATE_ERROR" as const, error: "late evaluation", requestRevision: evaluationRevision },
+      { type: "GRID_SUCCESS" as const, response: fixture.gridResult!, requestRevision: gridRevision },
+      { type: "GRID_ERROR" as const, error: "late grid", requestRevision: gridRevision },
+    ]) {
+      assert.strictEqual(workspaceReducer(state, completion), staleState,
+        `${label} rejects late success/error and does not restore an active status`);
+    }
+  }
+  console.log("✔ Planned and stress input edits invalidate both active request owners");
+}
+
+function testObsoleteRequestStartsCannotReclaimInvalidatedInputs() {
+  const fixture = initializeWorkspaceState("baseline-collapse-v1");
+  const staleStateAfterIntent = (transition: WorkspaceAction) => {
+    let state = fixture;
+    state = workspaceReducer(state, transition);
+    const staleGeneration = state.inputGeneration;
+    const staleRevision = state.requestRevision;
+    const invalidated = workspaceReducer(state, { type: "LOAD_PRESET", presetId: "attrition-shock-v1" });
+    assert.ok(invalidated.inputGeneration > staleGeneration, "preset selection advances input generation");
+    assert.ok(invalidated.requestRevision > staleRevision, "preset selection preserves monotonic owner token");
+    return { invalidated, staleGeneration };
+  };
+
+  const afterStressEdit = workspaceReducer(fixture, { type: "UPDATE_STRESS_BASELINE", baseline: 0.18 });
+  const capturedGeneration = afterStressEdit.inputGeneration;
+  // Reproduce the review's collision: the callback's next token equals the
+  // revision installed by the subsequent preset transition.
+  const collidingRevision = afterStressEdit.requestRevision + 1;
+  const afterPreset = workspaceReducer(afterStressEdit, {
+    type: "LOAD_PRESET", presetId: "attrition-shock-v1",
+  });
+  assert.equal(afterPreset.requestRevision, collidingRevision);
+  assert.equal(afterPreset.inputGeneration, capturedGeneration + 1);
+  assert.strictEqual(workspaceReducer(afterPreset, {
+    type: "START_EVALUATE",
+    requestRevision: collidingRevision,
+    expectedInputGeneration: capturedGeneration,
+  }), afterPreset, "a stale debounce start cannot reclaim a colliding evaluation token after preset selection");
+  assert.equal(afterPreset.evaluateStatus, "idle", "obsolete starts cannot strand evaluation status");
+
+  const transitions: { label: string; action: WorkspaceAction }[] = [
+    { label: "planned edit", action: {
+      type: "UPDATE_PLANNED_FIELD",
+      fieldPointer: "/planned_design/control_event_rate",
+      update: { control_event_rate: 0.12 },
+    } },
+    { label: "stress edit", action: { type: "UPDATE_STRESS_DROPOUT", dropout: 0.2 } },
+    { label: "preset change", action: { type: "LOAD_PRESET", presetId: "attrition-shock-v1" } },
+    { label: "reset", action: { type: "RESET_TO_PRESET" } },
+  ];
+
+  for (const { label, action } of transitions) {
+    const oldGeneration = fixture.inputGeneration;
+    const transitioned = workspaceReducer(fixture, action);
+    assert.ok(transitioned.inputGeneration > oldGeneration, `${label} advances the input generation`);
+    const afterObsoleteStart = workspaceReducer(transitioned, {
+      type: "START_EVALUATE",
+      requestRevision: transitioned.requestRevision + 1,
+      expectedInputGeneration: oldGeneration,
+    });
+    assert.strictEqual(afterObsoleteStart, transitioned, `${label} rejects a delayed evaluation start`);
+    assert.equal(afterObsoleteStart.evaluateStatus, transitioned.evaluateStatus,
+      `${label} does not leave evaluation marked active`);
+    assert.equal(afterObsoleteStart.activeEvaluateRevision, null);
+    const afterObsoleteGridStart = workspaceReducer(transitioned, {
+      type: "START_GRID",
+      requestRevision: transitioned.requestRevision + 1,
+      expectedInputGeneration: oldGeneration,
+    });
+    assert.strictEqual(afterObsoleteGridStart, transitioned, `${label} rejects a delayed grid start`);
+    assert.equal(afterObsoleteGridStart.gridStatus, transitioned.gridStatus,
+      `${label} does not leave grid marked loading`);
+    assert.equal(afterObsoleteGridStart.activeGridRevision, null);
+  }
+
+  const { invalidated: afterPresetFromIntent, staleGeneration } = staleStateAfterIntent({
+    type: "UPDATE_STRESS_BASELINE", baseline: 0.16,
+  });
+  assert.equal(afterPresetFromIntent.evaluateStatus, "idle");
+  assert.equal(afterPresetFromIntent.gridStatus, "idle");
+  const staleCalculate = workspaceReducer(afterPresetFromIntent, {
+    type: "START_CALCULATE",
+    requestRevision: afterPresetFromIntent.requestRevision + 1,
+    expectedInputGeneration: staleGeneration,
+  });
+  assert.strictEqual(staleCalculate, afterPresetFromIntent, "recalculation starts also require the current input generation");
+
+  let recalculating = fixture;
+  const calculationGeneration = recalculating.inputGeneration;
+  recalculating = startCalculate(recalculating, recalculating.requestRevision + 1);
+  assert.equal(recalculating.inputGeneration, calculationGeneration + 1,
+    "recalculation intent advances the generation while preserving current starts");
+  const afterStaleEvaluationDuringRecalculation = workspaceReducer(recalculating, {
+    type: "START_EVALUATE",
+    requestRevision: recalculating.requestRevision + 1,
+    expectedInputGeneration: calculationGeneration,
+  });
+  assert.strictEqual(afterStaleEvaluationDuringRecalculation, recalculating,
+    "a callback captured before recalculation cannot start against the old enrollment lock");
+  assert.equal(recalculating.evaluateStatus, "idle");
+  console.log("✔ Obsolete async starts are rejected by monotonic input generation");
+}
+
 async function runAll() {
   testPresetLoading();
   testStressAdjustmentPreservesFrozenEnrollment();
@@ -560,12 +874,18 @@ async function runAll() {
   await testPlanningFormEditsUpdateDraftAndLockOnCalculate();
   testRecalculationInvalidatesPendingEvaluationAndGrid();
   testSwitchingPresetResetsStateAndProvenance();
+  testPresetSwitchAndResetRejectLateRequestCompletions();
   testRejectOutdatedLateResponses();
   await testLiveEvaluationCalculatesDifferentAssumptions();
   testSingleAuthoritativeLedgerPreservesManualOrigin();
   await testRolandReviewFixes();
   await testFieldProvenanceRoundTripsThroughLiveAndFixtureResults();
   testCalculateInvalidationDoesNotClearNewerRequest();
+  testSupersededEvaluationRevisionIsRejected();
+  testEvaluationAndGridOverlapCanSettleInEitherOrder();
+  testSupersededEvaluationAndGridCannotStrandCurrentOwner();
+  testInputChangesInvalidateOverlappingRequests();
+  testObsoleteRequestStartsCannotReclaimInvalidatedInputs();
   console.log("\nALL WORKSPACE STATE INVARIANT TESTS PASSED!");
 }
 

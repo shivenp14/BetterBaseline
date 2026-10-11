@@ -46,7 +46,7 @@ export interface WorkspaceState {
   frozenEnrollment: FixedEnrollment | null;
   designStatus: "idle" | "calculating" | "success" | "error";
   designError: string | null;
-  /** Input revision owned by the currently active calculate request, if any. */
+  /** Exact owner token for the currently active calculate request, if any. */
   activeCalculateRevision: number | null;
   stressBaseline: number;
   stressDropout: number;
@@ -55,10 +55,16 @@ export interface WorkspaceState {
   evaluateResult: EvaluateResponse | null;
   evaluateStatus: "idle" | "evaluating" | "stale" | "success" | "error";
   evaluateError: string | null;
+  /** Exact owner token for the currently active evaluation, if any. */
+  activeEvaluateRevision: number | null;
   gridResult: GridResponse | null;
   gridStatus: "idle" | "loading" | "stale" | "success" | "error";
   gridError: string | null;
+  /** Exact owner token for the currently active grid request, if any. */
+  activeGridRevision: number | null;
+  /** Input snapshot identity. Mutating inputs or starting a recalculation advances it. */
+  inputGeneration: number;
   displayedInputsHash: string | null;
-  /** Monotonically increasing revision counter to detect and reject stale responses */
+  /** Monotonic token allocator; operation ownership is tracked in the active fields above. */
   requestRevision: number;
 }

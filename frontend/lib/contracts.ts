@@ -116,8 +116,16 @@ export interface GridRequest {
 }
 
 export interface GridPoint {
+  /** Canonical backend grid coordinate. */
+  p_control?: number;
+  /** UI alias added by the API adapter. */
   baseline: number;
   dropout: number;
+  power?: number | null;
+  is_safe?: boolean;
+  is_valid?: boolean;
+  expected_evaluable_n?: FixedEnrollment;
+  invalid_reason?: string | null;
 }
 
 export interface GridResponse {
@@ -134,6 +142,15 @@ export interface GridResponse {
   planned_point: GridPoint;
   selected_point: GridPoint | null;
   frontier_points: GridPoint[];
+  /** Canonical backend fields used by exports and current-grid verification. */
+  fixed_enrollment?: FixedEnrollment;
+  below_target?: (boolean | null)[][];
+  analytic_delta?: number | null;
+  software_versions?: Record<string, string>;
+  contour_segments?: { start: { p_control: number; dropout: number }; end: { p_control: number; dropout: number } }[];
+  power_curve?: { p_control: number; power: number | null; is_valid: boolean }[];
+  invalid_cell_count?: number;
+  worst_case_power?: number | null;
   warnings: string[];
   diagnostics?: StatisticalDiagnostic[];
   computed_at: string;
