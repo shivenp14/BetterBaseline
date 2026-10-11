@@ -125,12 +125,21 @@ def test_concurrency_saturation_returns_429_with_retry_after():
         }
         # Clear cache to guarantee guarded computation attempt
         guard.cache.clear()
-        response = client.post("/api/v1/design/calculate", json=payload)
+        response = client.post(
+            "/api/v1/design/calculate",
+            json=payload,
+            headers={"Origin": "http://localhost:3000"},
+        )
         assert response.status_code == 429
         body = response.json()
         assert body["error"]["code"] == "RESOURCE_SATURATED"
         assert body["error"]["recoverable"] is True
         assert "Retry-After" in response.headers
+        assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
+        assert "retry-after" in {
+            header.strip().lower()
+            for header in response.headers["access-control-expose-headers"].split(",")
+        }
     finally:
         # Release all permits
         guard.semaphore.release()

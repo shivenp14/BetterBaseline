@@ -62,6 +62,7 @@ def create_app(app_settings: Optional[Settings] = None) -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["Retry-After"],
     )
 
     # Exception handlers
