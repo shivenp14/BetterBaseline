@@ -7,7 +7,7 @@ import "../components/audit.css";
 export const metadata: Metadata = {
   title: "Better Baseline · Trial planning workspace",
   description:
-    "Offline synthetic planning workspace for exploring clinical trial assumptions.",
+    "Stress-test binary clinical trial assumptions before enrollment: freeze sample size and explore how lower event risk or greater dropout affects statistical power.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

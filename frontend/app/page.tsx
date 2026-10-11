@@ -11,6 +11,7 @@ import { scheduleDebounced } from "@/lib/debounce";
 import { buildScenarioExport, type ExportRuns, type ScenarioExportPayload } from "@/lib/export";
 import { parseSimulationOptions, parseSimulationResult, simulationIdentity, type RunSimulation, type SimulationSelection } from "@/lib/simulation-client";
 import { PresetSelector } from "@/components/PresetSelector";
+import { HistoricalCaseStudy } from "@/components/HistoricalCaseStudy";
 import { DesignForm } from "@/components/DesignForm";
 import { DesignSummary } from "@/components/DesignSummary";
 import { StressControls } from "@/components/StressControls";
@@ -147,8 +148,9 @@ export default function Home() {
     } catch (error) { return { payload: null, exportReason: error instanceof Error ? error.message : "Complete current calculations and a selected simulation before exporting." }; }
   }, [state, runs, simulationDraft]);
   return <main className={styles.workspace}>
-    <header className={styles.header}><h1>Better Baseline</h1><p>Trial planning workspace backed by a local calculation service.</p><p><strong>Execution mode:</strong> {getApiMode() === "demo" ? "DEMO — fixtures and client calculations; no backend execution" : "LIVE — fresh calculations require the backend service"}</p></header>
+    <header className={styles.header}><h1>Better Baseline</h1><p>See how fewer events than expected can weaken a trial before enrollment begins.</p><p>Plan a binary-outcome trial, freeze enrollment, and explore which assumptions put its statistical power at risk.</p><p><strong>Execution mode:</strong> {getApiMode() === "demo" ? "DEMO — fixtures and client calculations; no backend execution" : "LIVE — fresh calculations require the backend service"}</p></header>
     <PresetSelector selectedPresetId={state.presetId} onSelectPreset={selectPreset} onResetPreset={() => selectPreset()} />
+    <HistoricalCaseStudy onLoadExample={selectPreset} />
     <div className={styles.planningGrid}>
     <section className={styles.planning} aria-labelledby="planned-heading"><h2 id="planned-heading">Planned design and enrollment locking</h2>
       <DesignForm key={`${state.presetId}:${formResetKey}`} initialAssumptions={getPresetById(state.presetId).planned_design} presetId={state.presetId} onCalculate={calculate} onDraftChange={changePlanned} isCalculating={state.designStatus === "calculating"} error={state.designError} submitLabel="Calculate & Lock Design" />

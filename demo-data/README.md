@@ -1,5 +1,13 @@
 # Better Baseline offline presets
 
+The default `baseline-collapse-v1` preset is paired with the AERIFY historical
+context in `frontend/lib/historical/aerify-v1.json`. The workspace displays trial registry links
+and sponsor-reported outcomes beside a button to load the default synthetic
+example. Historical context does not supply numerical engine inputs; all preset
+assumptions retain synthetic provenance. See
+[`docs/HISTORICAL_CASE_STUDY.md`](../docs/HISTORICAL_CASE_STUDY.md) for evidence and
+endpoint limitations.
+
 `index.json` lists three self-contained, versioned synthetic presets. Each folder
 contains a manifest, explicit planned/stress inputs, a **draft mock response**,
 and a separate **generated final response**. Mocks remain for frontend work before

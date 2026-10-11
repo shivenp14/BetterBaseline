@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "case_study_id": "aerify-v1",
+  "title": "AERIFY: fewer events than expected",
+  "drug": "Itepekimab (REGN3500 / SAR440340)",
+  "developers": "Regeneron and Sanofi",
+  "condition": "Chronic obstructive pulmonary disease (COPD)",
+  "endpoint": "Annualized rate of acute moderate or severe COPD exacerbations",
+  "evidence_kind": "historical_context",
+  "source_summary": "User-provided message.txt narrative; historical outcome and power statements checked against the sponsor release, not a raw registry export.",
+  "source_checked_on": "2026-10-11",
+  "trials": [
+    {
+      "name": "AERIFY-1",
+      "nct_id": "NCT04701983",
+      "registry_url": "https://clinicaltrials.gov/study/NCT04701983",
+      "reported_outcome": "Met the primary endpoint at 52 weeks."
+    },
+    {
+      "name": "AERIFY-2",
+      "nct_id": "NCT04751487",
+      "registry_url": "https://clinicaltrials.gov/study/NCT04751487",
+      "reported_outcome": "Did not meet the primary endpoint at 52 weeks."
+    }
+  ],
+  "report": {
+    "label": "Regeneron and Sanofi results announcement — May 30, 2025",
+    "published_on": "2025-05-30",
+    "url": "https://investor.regeneron.com/news-releases/news-release-details/itepekimab-met-primary-endpoint-one-two-chronic-obstructive/",
+    "summary": "The sponsors reported fewer exacerbations than anticipated and reduced statistical power in both trials. Pandemic-era enrollment was described as a possible contributor, not an established cause."
+  },
+  "limitations": "This historical context does not establish why AERIFY-2 missed its endpoint. Recurrent exacerbation rates cannot be entered as binary risks without an explicit validated model. Original binary planning assumptions and reconstructed trial power are not available here.",
+  "illustrative_preset_id": "baseline-collapse-v1",
+  "illustrative_disclosure": "The default sample data are synthetic binary assumptions, not AERIFY measurements or a reconstruction. A planned control risk of 20% falls to 10% with RR 0.75 and zero dropout; enrollment stays at 903 per arm and approximate conditional power falls from 80% to 47%. Power is the chance of detecting the assumed difference under the model, not the probability a drug works."
+}
