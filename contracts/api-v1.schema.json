@@ -339,6 +339,35 @@
           ],
           "default": null
         },
+        "design_result": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DesignCalculateResponse"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "grid_result": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ScenarioGridResponse"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "software_versions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Software Versions",
+          "type": "object"
+        },
         "provenance": {
           "additionalProperties": {
             "$ref": "#/$defs/FieldProvenance"

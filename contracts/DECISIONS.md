@@ -34,3 +34,7 @@
 12. **Development & Test Dependencies:**
    - Test execution requires the `dev` extra declared in `backend/pyproject.toml`.
    - Install command: `pip install -e ".[dev]"` (includes `pytest>=8.0.0` and `jsonschema>=4.20.0`).
+13. **Grid Effect Precedence & Full Export Reproducibility:**
+   - In `ScenarioGridRequest`, top-level `effect_override` and `selected_scenario.effect_override` must not specify conflicting values. If both are specified with different values, validation fails with `INVALID_MODEL_INPUT`. Precedence resolves via `effective_grid_effect` (`effect_override` or `selected_scenario.effect_override` or `planned_design.effect`).
+   - `ExportPayload` contains typed fields for all displayed calculation results (`design_result: Optional[DesignCalculateResponse]`, `grid_result: Optional[ScenarioGridResponse]`) alongside `evaluation_result`.
+   - Software and package versions are captured in `software_versions: Dict[str, str]` (e.g. `python`, `numpy`, `scipy`, `statsmodels`, `betterbaseline`) to ensure full auditability and reproduction of exports.
