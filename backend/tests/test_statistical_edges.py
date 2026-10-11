@@ -216,29 +216,59 @@ class TestStressGridEdges:
         assert all(all(val is None for val in row) for row in res.power)
         assert any("All grid cells are invalid" in w for w in res.warnings)
 
-    def test_disconnected_frontier_never_bridges_invalid_cells(self):
-        """Contours must terminate at invalid cell boundaries and never bridge through them."""
-        enrollment = FixedEnrollment(300, 300)
-        # ARR = 0.12 makes baseline 0.10 invalid while baselines 0.15, 0.20, 0.25 are valid
-        effect = Effect("absolute_risk_reduction", 0.12)
-        baselines = [0.10, 0.15, 0.20, 0.25]
-        dropouts = [0.0, 0.10, 0.20]
+    def test_frontier_terminates_at_invalid_cell_boundary_without_bridging(self):
+        """Contour crosses adjacent to invalid cells and terminates on boundary without bridging."""
+        # ARR=0.10 renders baseline 0.08 invalid across all dropouts.
+        # At baseline 0.17 (adjacent column), power crosses 0.80 between dropout 0.0 (0.815)
+        # and dropout 0.10 (0.772), forcing the contour to intersect the vertical seam at baseline 0.17.
+        enrollment = FixedEnrollment(165, 165)
+        effect = Effect("absolute_risk_reduction", 0.10)
+        baselines = [0.08, 0.17, 0.25, 0.35]
+        dropouts = [0.0, 0.10, 0.20, 0.30]
 
         res = stress_grid(
             enrollment,
             effect,
             baselines,
             dropouts,
-            planned_point=GridCoordinate(0.20, 0.0),
-            selected_point=GridCoordinate(0.20, 0.0),
+            planned_point=GridCoordinate(0.25, 0.0),
+            selected_point=GridCoordinate(0.25, 0.0),
             target_power=0.80,
         )
 
-        assert res.invalid_cell_count == len(dropouts)  # Entire first column is invalid
-        # All contour coordinates must lie strictly within the valid baseline range (>= 0.15)
-        for segment in res.frontier_points:
-            for pt in segment.points:
-                assert pt.baseline >= 0.15
+        assert res.invalid_cell_count == len(dropouts)
+        assert len(res.frontier_points) == 1
+        segment = res.frontier_points[0]
+        # The contour terminates exactly on the boundary edge baseline=0.17 without bridging into 0.08
+        assert segment.points[0].baseline == pytest.approx(0.17)
+        assert all(pt.baseline >= 0.17 for pt in segment.points)
+
+    def test_disconnected_frontier_components_across_inflection_and_invalid_domain(self):
+        """Variance inflection produces distinct disconnected contour components in valid region."""
+        # N=300 with ARR=0.10: baseline 0.05 is invalid.
+        # Variance peaks near p=0.50, causing the 0.80 power contour to split into two
+        # topologically disjoint components: one in [0.22, 0.32] and one in [0.75, 0.85].
+        enrollment = FixedEnrollment(300, 300)
+        effect = Effect("absolute_risk_reduction", 0.10)
+        baselines = [0.05, 0.15, 0.35, 0.60, 0.85]
+        dropouts = [0.0, 0.05, 0.10, 0.20, 0.35]
+
+        res = stress_grid(
+            enrollment,
+            effect,
+            baselines,
+            dropouts,
+            planned_point=GridCoordinate(0.35, 0.0),
+            selected_point=GridCoordinate(0.35, 0.0),
+            target_power=0.80,
+        )
+
+        assert res.invalid_cell_count == len(dropouts)
+        assert len(res.frontier_points) == 2
+        comp1, comp2 = res.frontier_points
+        # Assert topological separation between the two contour components
+        assert max(pt.baseline for pt in comp1.points) < min(pt.baseline for pt in comp2.points)
+        assert all(pt.baseline >= 0.15 for pt in comp1.points + comp2.points)
 
     def test_grid_contours_follow_non_default_target_power(self):
         """Frontier contour shifts with non-default target power."""
