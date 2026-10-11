@@ -1,0 +1,9 @@
+fastapi<1,>=0.115
+pydantic<3,>=2.10
+uvicorn<1,>=0.30
+psycopg[binary]==3.2.13
+httpx==0.28.1
+python-multipart==0.0.22
+
+[test]
+httpx<1,>=0.27

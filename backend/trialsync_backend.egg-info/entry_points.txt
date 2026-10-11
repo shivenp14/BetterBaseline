@@ -1,0 +1,4 @@
+[console_scripts]
+trialsync-api = app.main:run
+trialsync-seed = app.persistence.seed:main
+trialsync-worker = app.worker:main
