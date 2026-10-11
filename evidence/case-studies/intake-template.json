@@ -1,0 +1,50 @@
+{
+  "status": "unfilled_template_not_trial_evidence",
+  "case_selection_issue": "https://github.com/shivenp14/BetterBaseline/issues/108",
+  "case_selection_review_url": null,
+  "case_id": null,
+  "source_ledger_reference": null,
+  "endpoint": {
+    "definition": null,
+    "binary_adverse_outcome": null,
+    "fixed_window": null,
+    "units": null,
+    "analysis_population": null,
+    "compatible_with_binary_v1": null,
+    "departures_from_original_analysis": []
+  },
+  "original_planning": {
+    "planning_date": null,
+    "control_event_risk": null,
+    "effect_kind": null,
+    "effect_value": null,
+    "alpha": null,
+    "target_power": null,
+    "enrolled_control": null,
+    "enrolled_treatment": null,
+    "symmetric_dropout": null,
+    "source_references_by_field": {}
+  },
+  "later_observations": {
+    "status": "hindsight_only_never_original_planning_inputs",
+    "control_outcome": null,
+    "treatment_outcome": null,
+    "observation_window": null,
+    "units": null,
+    "source_references_by_field": {}
+  },
+  "prespecified_scenarios": [],
+  "candidate_redesigns": [],
+  "execution": {
+    "status": "not_run",
+    "engine_commit": null,
+    "software_versions": null,
+    "seed": null,
+    "replicates": null,
+    "capture_timestamp": null,
+    "raw_api_capture_paths": [],
+    "independently_downloaded_ui_export_path": null,
+    "clean_rerun_evidence_path": null,
+    "scientific_review_url": null
+  }
+}
