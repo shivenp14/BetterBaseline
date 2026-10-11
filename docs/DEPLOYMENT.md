@@ -27,7 +27,7 @@ For a different browser device or hosted UI, supply the publicly reachable
 HTTPS API origin at build time and allow that UI origin in backend CORS.
 `NEXT_PUBLIC_API_BASE_URL` is baked into Next.js bundles: changing a running
 container's environment does not change it; rebuild the frontend.
-Confirm `CORS_ORIGINS` and its string/list encoding against #68's final settings
+Confirm `ALLOWED_ORIGINS` and its string/list encoding against #68's final settings
 before running. No wildcard origin is proposed.
 
 The frontend uses the existing npm lockfile. The backend installs the package
@@ -105,3 +105,13 @@ Stop services with `docker compose down`. No volumes or database are required.
   manifest/main/settings and frontend fetch integration. Backend container and
   combined Compose startup cannot yet be exercised.
 - No public hosting or complete offline calculation flow has been verified.
+
+## Scaffold alignment update
+
+PR #99's current settings read ALLOWED_ORIGINS (comma-separated or JSON list),
+so Compose and .env.example now use that name. #68 must confirm the final seam.
+The backend package declares README.md; its image now copies backend/README.md
+before installation. That file is absent from the current #99 scaffold and
+must be supplied by its package owner before the backend image can build.
+The prerequisite checker reports it explicitly. These changes are preparatory;
+no backend container/CORS/offline acceptance is claimed.

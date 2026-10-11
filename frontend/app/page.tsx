@@ -185,7 +185,9 @@ export default function Home() {
         <p>Selected baseline {percent(stressBaseline)}; symmetric dropout {percent(stressDropout)}; fixed enrollment {displayedDesign.enrolled_n.control.toLocaleString()} per arm.</p>
         <p>Analytic method: {displayedEvaluate.analytic.method}.</p>
         <ul>
-          <li>Illustrative conditional power: {percent(displayedEvaluate.analytic.conditional_power_approx)}</li>
+          <li>Illustrative conditional power: {displayedEvaluate.analytic.conditional_power_approx === null
+            ? "Unavailable: zero expected retention"
+            : percent(displayedEvaluate.analytic.conditional_power_approx)}</li>
           <li>Stress expected retained count: {displayedEvaluate.analytic.assumed_evaluable_n.control.toLocaleString()} control and {displayedEvaluate.analytic.assumed_evaluable_n.treatment.toLocaleString()} treatment participants</li>
           <li>Monte Carlo method: {displayedEvaluate.monte_carlo.method}</li>
           <li>Two-sided significance fraction: {percent(displayedEvaluate.monte_carlo.significant_two_sided_fraction)}</li>

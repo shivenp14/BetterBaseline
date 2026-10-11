@@ -50,7 +50,7 @@ export interface EvaluateResponse {
   model_version: "binary-v1";
   analytic: {
     method: "cohen_h_normal_v1";
-    conditional_power_approx: number;
+    conditional_power_approx: number | null;
     assumed_evaluable_n: FixedEnrollment;
   };
   monte_carlo: {
