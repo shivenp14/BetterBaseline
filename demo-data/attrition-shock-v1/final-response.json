@@ -3,10 +3,10 @@
   "preset_id": "attrition-shock-v1",
   "result_status": "measured_generated_backend_output",
   "inputs_hash": "sha256:02fd9c794d5d3928538b46dd7af0ff60d8e7708e854797dcee87d0f4c49fa932",
-  "engine_commit": "fc12dd0bbe4ed305467e9de0d762480b6c2f28b5",
+  "engine_commit": "e1af26fde695dfecad34d63c83e6ed23ad4c11c3",
   "generation": {
     "command": "uv run --locked --directory backend python ../demo-data/generate_snapshots.py",
-    "engine_commit": "fc12dd0bbe4ed305467e9de0d762480b6c2f28b5",
+    "engine_commit": "e1af26fde695dfecad34d63c83e6ed23ad4c11c3",
     "seed": 42,
     "replicates": 10000,
     "grid_request": {
@@ -50,7 +50,8 @@
       "dropout": {
         "control": 0.05,
         "treatment": 0.05
-      }
+      },
+      "provenance": {}
     },
     "point": {
       "planned_design": {
@@ -89,103 +90,154 @@
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/planned_design/control_event_rate": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/planned_design/effect/kind": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/planned_design/effect/value": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/planned_design/alpha": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/planned_design/target_power": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/planned_design/allocation_ratio": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/planned_design/dropout/control": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/planned_design/dropout/treatment": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/fixed_enrollment/control": {
           "source": "synthetic_preset",
           "description": "ceil(903 / (1 - planned_dropout)); synthetic reference, not an engine result",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/fixed_enrollment/treatment": {
           "source": "synthetic_preset",
           "description": "ceil(903 / (1 - planned_dropout)); synthetic reference, not an engine result",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/stress_scenario/control_event_rate": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/stress_scenario/dropout/control": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/stress_scenario/dropout/treatment": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/stress_scenario/effect_override": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/simulation/replicates": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/simulation/seed": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         }
       }
     },
@@ -195,103 +247,154 @@
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/planned_design/control_event_rate": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/planned_design/effect/kind": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/planned_design/effect/value": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/planned_design/alpha": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/planned_design/target_power": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/planned_design/allocation_ratio": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/planned_design/dropout/control": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/planned_design/dropout/treatment": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/fixed_enrollment/control": {
           "source": "synthetic_preset",
           "description": "ceil(903 / (1 - planned_dropout)); synthetic reference, not an engine result",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/fixed_enrollment/treatment": {
           "source": "synthetic_preset",
           "description": "ceil(903 / (1 - planned_dropout)); synthetic reference, not an engine result",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/stress_scenario/control_event_rate": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/stress_scenario/dropout/control": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/stress_scenario/dropout/treatment": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/stress_scenario/effect_override": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/simulation/replicates": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         },
         "/simulation/seed": {
           "source": "synthetic_preset",
           "description": "Hand-authored synthetic assumption from playbook; no clinical source",
           "retrieved_at": null,
-          "source_url": null
+          "source_url": null,
+          "source_location": null,
+          "verified_by_user": null,
+          "is_observed_registry_result": null
         }
       },
       "planned_design": {
@@ -350,6 +453,24 @@
     "warnings": [
       "Dropout inflation represents expected retention, not guaranteed evaluable counts."
     ],
+    "diagnostics": [
+      {
+        "code": "CONDITIONAL_POWER_ONLY",
+        "severity": "info",
+        "field": "interpretation",
+        "method": "cohen_h_normal",
+        "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+        "arm": null,
+        "outcome": null,
+        "expected_count": null,
+        "threshold": null,
+        "count_basis": null,
+        "invalid_test_fraction": null,
+        "replicates": null,
+        "invalid_test_policy": null
+      }
+    ],
+    "provenance": {},
     "inputs_hash": "ec656687cf6fa06b"
   },
   "point": {
@@ -389,8 +510,55 @@
       "Synthetic outcomes conditional on assumptions; not clinical evidence.",
       "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
     ],
+    "diagnostics": [
+      {
+        "code": "CONDITIONAL_POWER_ONLY",
+        "severity": "info",
+        "field": "interpretation",
+        "method": "cohen_h_normal",
+        "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+        "arm": null,
+        "outcome": null,
+        "expected_count": null,
+        "threshold": null,
+        "count_basis": null,
+        "invalid_test_fraction": null,
+        "replicates": null,
+        "invalid_test_policy": null
+      },
+      {
+        "code": "CONDITIONAL_POWER_ONLY",
+        "severity": "info",
+        "field": "interpretation",
+        "method": "pooled_two_proportion_z_v1",
+        "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+        "arm": null,
+        "outcome": null,
+        "expected_count": null,
+        "threshold": null,
+        "count_basis": null,
+        "invalid_test_fraction": null,
+        "replicates": null,
+        "invalid_test_policy": null
+      },
+      {
+        "code": "DISTINCT_METHOD_APPROXIMATIONS",
+        "severity": "info",
+        "field": "method",
+        "method": "pooled_two_proportion_z_v1",
+        "message": "Pooled-z simulation and Cohen's-h analytic power use distinct approximations; Monte Carlo does not remove pooled-z small-sample limits.",
+        "arm": null,
+        "outcome": null,
+        "expected_count": null,
+        "threshold": null,
+        "count_basis": null,
+        "invalid_test_fraction": null,
+        "replicates": null,
+        "invalid_test_policy": null
+      }
+    ],
     "metadata": {
-      "inputs_hash": "sha256:db2381476af378a2b210eca29449319e3bb424005057d9ea72c18a9ac910e0e4",
+      "inputs_hash": "sha256:9b631e7bbf3ac3b892d1c9c6cd03dbf2a68d2f17ad8b0169a3f79586d9cc2067",
       "software_versions": {
         "python": "3.12.13",
         "numpy": "2.5.4",
@@ -407,103 +575,154 @@
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/planned_design/control_event_rate": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/planned_design/effect/kind": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/planned_design/effect/value": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/planned_design/alpha": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/planned_design/target_power": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/planned_design/allocation_ratio": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/planned_design/dropout/control": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/planned_design/dropout/treatment": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/fixed_enrollment/control": {
         "source": "synthetic_preset",
         "description": "ceil(903 / (1 - planned_dropout)); synthetic reference, not an engine result",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/fixed_enrollment/treatment": {
         "source": "synthetic_preset",
         "description": "ceil(903 / (1 - planned_dropout)); synthetic reference, not an engine result",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/stress_scenario/control_event_rate": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/stress_scenario/dropout/control": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/stress_scenario/dropout/treatment": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/stress_scenario/effect_override": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/simulation/replicates": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/simulation/seed": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       }
     }
   },
@@ -1395,103 +1614,154 @@
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/planned_design/control_event_rate": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/planned_design/effect/kind": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/planned_design/effect/value": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/planned_design/alpha": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/planned_design/target_power": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/planned_design/allocation_ratio": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/planned_design/dropout/control": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/planned_design/dropout/treatment": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/fixed_enrollment/control": {
         "source": "synthetic_preset",
         "description": "ceil(903 / (1 - planned_dropout)); synthetic reference, not an engine result",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/fixed_enrollment/treatment": {
         "source": "synthetic_preset",
         "description": "ceil(903 / (1 - planned_dropout)); synthetic reference, not an engine result",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/stress_scenario/control_event_rate": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/stress_scenario/dropout/control": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/stress_scenario/dropout/treatment": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/stress_scenario/effect_override": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/simulation/replicates": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       },
       "/simulation/seed": {
         "source": "synthetic_preset",
         "description": "Hand-authored synthetic assumption from playbook; no clinical source",
         "retrieved_at": null,
-        "source_url": null
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
       }
     },
     "model_version": "binary-v1",
@@ -4157,6 +4427,38 @@
       "Expected-count approximation: floored expected retention is not a simulated or guaranteed retained count.",
       "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation."
     ],
-    "inputs_hash": "sha256:d34402e59af947f7cd6cf12c32213e4bfa1c76767c1a114beaebe0493cbef0ea"
+    "diagnostics": [
+      {
+        "code": "CONDITIONAL_POWER_ONLY",
+        "severity": "info",
+        "field": "interpretation",
+        "method": "cohen_h_normal",
+        "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+        "arm": null,
+        "outcome": null,
+        "expected_count": null,
+        "threshold": null,
+        "count_basis": null,
+        "invalid_test_fraction": null,
+        "replicates": null,
+        "invalid_test_policy": null
+      },
+      {
+        "code": "CONDITIONAL_POWER_ONLY",
+        "severity": "info",
+        "field": "interpretation",
+        "method": "cohen_h_normal",
+        "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+        "arm": null,
+        "outcome": null,
+        "expected_count": null,
+        "threshold": null,
+        "count_basis": null,
+        "invalid_test_fraction": null,
+        "replicates": null,
+        "invalid_test_policy": null
+      }
+    ],
+    "inputs_hash": "sha256:746ad26e018a2403a0a7316d2c199d18703d19080506f9c052d73f2254eb2a30"
   }
 }
