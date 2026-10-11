@@ -2,8 +2,7 @@
 name = "betterbaseline-backend"
 version = "0.1.0"
 description = "Deterministic clinical-trial assumption stress tester backend"
-readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi>=0.110.0",
     "uvicorn>=0.28.0",
@@ -19,6 +18,13 @@ dev = [
     "pytest>=8.0.0",
     "jsonschema>=4.20.0",
 ]
+
+[build-system]
+requires = ["setuptools>=80,<81"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
 
 
 [tool.pytest.ini_options]

@@ -1,10 +1,11 @@
 # D3 integration preparation (#79)
 
 This draft prepares external request/result/export invariants. It does not
-close #79 or report live API-to-export acceptance. #90 is merged; #65/#66/#67/#76
-still gate real integration. Core CI #80 (PR #95) is also unmerged, so this draft
-adds no integration.yml yet. Add that independent workflow after the #80 handoff;
-do not modify ci.yml/e2e.yml or product source.
+close #79 or report live API-to-export acceptance. #65 is implemented by merged PR #91; #66/#67/#76
+still gate full integration. Core CI #80 (PR #95) is merged. This draft now adds its own integration.yml
+using the same pinned Python/uv and committed lock. It runs fixture mutation
+checks and the real calculate-to-evaluate HTTP handoff, without modifying
+ci.yml/e2e.yml or product source.
 
 Run the standard-library fixture checker regressions from the repository root:
 
@@ -46,7 +47,8 @@ uv run --project backend --locked --extra dev python tests/integration/check_cap
 The tool loads #63's committed JSON schema, validates each named response/export
 model and checks the cross-boundary invariants. A missing schema, field, library
 or capture fails; there is no fixture substitution or successful skip. The
-current branch has no frozen schema file, so a live run is presently blocked.
+branch now contains #63 schemas; full capture acceptance still requires the
+real grid and independently downloaded UI export.
 Proposed count aggregates, optional simulation, RNG/software metadata and richer
 provenance must be aligned with the final contracts through their owners before
 readiness. Current #89 schemas do not yet express all those fields; this draft
@@ -74,9 +76,27 @@ Record actual request/response/browser evidence and failures. Fixture checks
 passing alone cannot mark the draft ready or close the issue. This capture tool
 is preparation for assertions on real evidence; it does not drive the browser,
 fetch a backend response, or independently establish that a supplied capture was
-obtained live. Add orchestration/CI after the registered API and #76 handoffs.
+obtained live. The separate point-API orchestration is available now; add full grid/UI-export
+orchestration after #66/#67/#76.
 
 #65 follow-up: expected-retention assertions now follow the shared decimal-floor
 convention and allow null analytic power exactly at zero expected retention.
 The registered point API is implemented in #91; full grid/UI-export acceptance
-still awaits #66/#67/#76 and the #80 workflow handoff.
+still awaits #66/#67/#76 while its point-API workflow runs independently.
+
+## Running the partial HTTP integration
+
+`run_point_checks.py` takes `--base-url http://127.0.0.1:8765` and requires a
+real running local backend. It loads the synthetic assumptions as inputs, then
+uses actual HTTP calculate/evaluate responses and the app’s registered OpenAPI
+response model. It verifies the 903/.470 reference, 1,004 enrollment inflation,
+same-seed repeatability, frozen counts under stress and changing input identity.
+It never imports an engine or fabricates an export. The workflow starts the real
+uvicorn app, waits up to 30 seconds for health and fails on any mismatch.
+
+Local evidence: the committed lock installs, 292 backend/fixture tests (183
+subtests) and 12 invariant regressions pass. The HTTP checker passes against the
+locked, non-root backend container: stressed power 0.46999657396642797, seed 42,
+Python 3.12.15 / NumPy 2.5.4 / SciPy 1.18.1 / statsmodels 0.15.0. See
+DEPLOYMENT.md for the tested image and CORS evidence. This scope is point API only; grid, provenance normalization and
+real browser export/offline acceptance remain pending.
