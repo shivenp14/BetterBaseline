@@ -97,25 +97,39 @@ uvicorn app.main:app --reload --port 8000
 Start the frontend in another terminal:
 
 ```bash
+cd backend
+uv sync --locked --extra dev
+uv run --locked python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+In a second terminal:
+
+```bash
 cd frontend
 npm ci
 cp .env.example .env.local
 npm run dev
 ```
 
-The intended local UI is **http://localhost:3000**, with the FastAPI service at **http://localhost:8000**.
+Open **http://localhost:3000**. The default frontend configuration sends fresh
+calculate and evaluate requests to the local API. Set `NEXT_PUBLIC_API_MODE=demo`
+in `frontend/.env.local` only when intentionally using labeled fixtures and local
+analytic calculations. The backend grid endpoint is currently a #66 scaffold that
+returns HTTP 501; the live frontend reports that limitation and does not substitute
+client-side grid formulas.
 
-Set `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000` in the frontend environment. The backend should allow the local frontend origin through `CORS_ORIGINS=http://localhost:3000`.
-
-Run backend tests:
+Run backend tests and the frontend's real-service integration check:
 
 ```bash
 cd backend
-source .venv/bin/activate
-pytest -q
+uv run --locked --extra dev pytest -q
+cd ../frontend
+npm run test:backend-integration
 ```
 
-> These commands are **targets for the planned repository**, not runnable from the current documentation-only folder. See the infrastructure and implementation documents before scaffolding.
+The integration command starts and cleans up its own temporary Uvicorn process. See
+[`frontend/README.md`](frontend/README.md) for frontend lint, typecheck, build, and
+workspace invariant commands.
 
 ## API overview
 
@@ -133,7 +147,7 @@ Optional: `GET /api/v1/trials/{nct_id}` for public trial metadata. See the [infr
 
 **Ship first:** validated sample-size calculation → immutable planned design vs. stress scenario → live power comparison → sensitivity heatmap → seeded Monte Carlo → reproducible export.
 
-**Only if time permits:** ClinicalTrials.gov metadata import and curated real-world context. A complete offline demonstration using synthetic inputs is the fallback and should always work.
+**Only if time permits:** ClinicalTrials.gov metadata import and curated real-world context. An explicit demo mode remains available for synthetic fixture exploration.
 
 ## Documentation
 
