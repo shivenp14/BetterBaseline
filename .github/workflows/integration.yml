@@ -1,0 +1,42 @@
+name: Integration invariants (fixture and point API)
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fixture-and-point-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.13"
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.26"
+      - name: Install committed backend lock with dev dependencies
+        working-directory: backend
+        run: uv sync --locked --extra dev
+      - name: Check fixture invariants and mutation regressions
+        run: uv run --project backend --locked --extra dev python -m unittest discover -s tests/integration -p 'test_*.py' -v
+      - name: Check actual calculate to evaluation HTTP handoff
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=backend uv run --project backend --locked --extra dev python -m uvicorn app.main:app --host 127.0.0.1 --port 8765 > /tmp/betterbaseline-point-api.log 2>&1 &
+          api_pid=$!
+          trap 'kill "$api_pid" 2>/dev/null || true' EXIT
+          if ! uv run --project backend --locked --extra dev python tests/integration/run_point_checks.py; then
+            cat /tmp/betterbaseline-point-api.log
+            exit 1
+          fi
+
+# Partial integration only. Add real grid/provenance/UI-export orchestration
+# after #66/#67/#76. Keep browser E2E and core CI in their separate workflows.

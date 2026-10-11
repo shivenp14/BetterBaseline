@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-REQUIRED = ("backend/pyproject.toml", "backend/README.md", "backend/app/main.py", "backend/app/settings.py",
+REQUIRED = ("backend/pyproject.toml", "backend/uv.lock", "backend/app/main.py", "backend/app/settings.py",
             "frontend/package-lock.json")
 
 
