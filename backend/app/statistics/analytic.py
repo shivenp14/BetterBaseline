@@ -102,8 +102,10 @@ def analytic_power(
         else -_STANDARD_NORMAL.inv_cdf(lower_tail)
     )
     noncentral_mean = math.sqrt(enrollment.control / 2.0) * abs(h)
-    power = _STANDARD_NORMAL.cdf(noncentral_mean - z_alpha) + _STANDARD_NORMAL.cdf(
-        -noncentral_mean - z_alpha
+    # erfc evaluates the small rejection tails directly, avoiding cancellation
+    # in (1 + erf(x)) / 2 for tiny valid alpha and target powers.
+    power = 0.5 * math.erfc((z_alpha - noncentral_mean) / math.sqrt(2.0)) + 0.5 * math.erfc(
+        (z_alpha + noncentral_mean) / math.sqrt(2.0)
     )
     return AnalyticPowerResult(
         power=power,

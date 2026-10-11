@@ -162,6 +162,29 @@ def test_subnormal_alpha_solver_meets_target_at_oracle_boundary(multiple):
     assert oracle_power(result.evaluable_per_arm - 1) < target
 
 
+def test_small_target_solver_is_minimal_against_independent_tail_oracle():
+    special = pytest.importorskip("scipy.special")
+    alpha, target = 1e-20, 1e-18
+    z = -special.ndtri_exp(math.log(alpha) - math.log(2.0))
+    h = 2 * math.asin(math.sqrt(.15)) - 2 * math.asin(math.sqrt(.20))
+
+    def oracle(n):
+        mean = math.sqrt(n / 2) * abs(h)
+        return special.ndtr(mean - z) + special.ndtr(-mean - z)
+
+    result = minimum_sample_size(.20, .15, alpha=alpha, target_power=target)
+    assert result.evaluable_per_arm == 39
+    assert oracle(result.evaluable_per_arm) >= target
+    assert oracle(result.evaluable_per_arm - 1) < target
+    assert result.achieved_power == pytest.approx(oracle(39), rel=1e-12, abs=0)
+
+
+@pytest.mark.parametrize("alpha", [1e-20, 1e-100, 1e-300])
+def test_tiny_alpha_null_power_preserves_rejection_probability(alpha):
+    result = analytic_power(.20, .20, 903, 903, alpha=alpha)
+    assert result.power == pytest.approx(alpha, rel=1e-12, abs=0)
+
+
 def test_independent_statsmodels_normal_ind_power_oracle():
     statsmodels_power = pytest.importorskip("statsmodels.stats.power")
     statsmodels_proportion = pytest.importorskip("statsmodels.stats.proportion")
