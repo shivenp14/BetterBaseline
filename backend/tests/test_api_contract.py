@@ -180,8 +180,8 @@ def test_scenarios_evaluate_registered_handoff(client: TestClient) -> None:
     assert data["metadata"]["fixed_enrollment"] == payload["fixed_enrollment"]
 
 
-def test_scenarios_grid_stub_501(client: TestClient) -> None:
-    """POST /api/v1/scenarios/grid returns 501 scaffold for #66 handoff."""
+def test_scenarios_grid_registered_endpoint(client: TestClient) -> None:
+    """#66 replaces the handed-off grid scaffold with a real calculation."""
     payload = {
         "planned_design": {
             "model_version": "binary-v1",
@@ -191,7 +191,12 @@ def test_scenarios_grid_stub_501(client: TestClient) -> None:
         "fixed_enrollment": {"control": 1004, "treatment": 1004},
     }
     response = client.post("/api/v1/scenarios/grid", json=payload)
-    assert response.status_code == 501
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["power"]) == 10
+    assert all(len(row) == 15 for row in data["power"])
+    assert data["fixed_enrollment"] == payload["fixed_enrollment"]
+    assert data["method"] == "cohen_h_normal_v1"
 
 
 def test_cors_preflight_default_allowed_origins(client: TestClient) -> None:
