@@ -29,21 +29,27 @@ and package installation use outbound network access.
 
 ## Current integration status
 
-Current main includes live Calculate/Evaluate/grid wiring. The suite uses the
-current preset selector and decimal-fraction stress fields, selects ARR
-explicitly in the planning form, checks the actual backend error in the visible
-stress section, and compares every rendered grid cell with the live response.
-The shipped presets use RR; attrition-shock is not an ARR preset.
+Current main includes the final product assembly from PR #128. The suite uses
+named regions for Planned design summary, Sensitivity heatmap, Selected-scenario
+Monte Carlo simulation, and Scenario export. It selects ARR explicitly in the
+planning form and checks the actual backend 422 error in the stress section.
 
-Main now includes the export/provenance handoff from PRs #126/#127. The export
-check uses the current Download current results (JSON) control and requires an
-actual download with the captured design, evaluation, grid and frozen enrollment,
-plus provenance and software metadata. It validates the downloaded JSON with the
-backend ExportPayload contract, including canonical inputs-hash verification,
-and attaches the JSON to the Playwright report. Evaluation hashes allow the
-canonical sha256: prefix. The no-external-network workflow also downloads the
-export. Missing API or export wiring must fail explicitly; no skips or expected
-failures are permitted.
+Evaluate Stress Scenario requests analytic results with simulation null. Run
+simulation explicitly requests seed 42 and 10,000 replicates. Response matching
+separates these requests from automatic analytic refreshes. Simulation assertions
+check the current response timestamp, labeled result values, and both MCSEs in
+percentage points with three decimal places. Every heatmap cell is checked against
+the live response, including raw SVG values, coordinates, invalid masks, and
+one-decimal table percentages.
+
+Export starts as a disabled button and becomes the Download current scenario JSON
+link after current design, seeded simulation, and grid results are available. The
+suite downloads that link and compares complete captured responses, unwrapping
+the API provenance envelope into the canonical field map for design/evaluation.
+It validates the JSON with the backend ExportPayload contract, including canonical
+inputs-hash verification, and attaches the JSON to the Playwright report. The
+no-external-network workflow also downloads the export. Missing API or export
+wiring must fail explicitly; no skips or expected failures are permitted.
 
 The production build embeds NEXT_PUBLIC_API_BASE_URL and NEXT_PUBLIC_API_MODE;
 changing only the startup environment does not rebuild those values. CI sets live
@@ -58,12 +64,9 @@ checks are defined in `backend/app/schemas.py` and the design/scenario routers.
 
 ## Validated handoff
 
-2026-10-11, integrated main a2b3f2a (including #97/#115/#117/#126/#127): all eight
-Chromium checks pass with the production frontend, real local FastAPI responses,
-Python 3.12.13 and locked backend dependencies. The final run took 5.2 seconds
+2026-10-11, integrated main 86e834e (final assembly #128): all eight Chromium
+checks pass with the production frontend, real local FastAPI responses,
+Python 3.12.13 and locked backend dependencies. The final run took 6.8 seconds
 excluding installation/build. Backend egress self-check, targeted TypeScript,
 production build and whitespace checks also pass. The HTML report contains the
-actual downloaded JSON attachment. Earlier missing-export runs failed both
-export-dependent checks and retained HTML/screenshots/traces, confirming that
-absent wiring cannot satisfy acceptance. Final product assembly remains #76's
-responsibility; this evidence covers the tested acceptance flow.
+actual downloaded JSON attachment validated by the backend export schema.

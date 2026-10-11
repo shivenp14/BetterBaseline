@@ -72,11 +72,12 @@ async function requireUiApiResponse(
   page: Page,
   endpoint: string,
   action: () => Promise<unknown>,
+  matchesRequest: (body: Record<string, any>) => boolean = () => true,
 ): Promise<Response> {
   const pendingResponse = page.waitForResponse(
     (response) => {
       const url = new URL(response.url());
-      return url.origin === BACKEND_ORIGIN && url.pathname === endpoint && response.request().method() === "POST";
+      return url.origin === BACKEND_ORIGIN && url.pathname === endpoint && response.request().method() === "POST" && matchesRequest(response.request().postDataJSON());
     },
     { timeout: RESPONSE_TIMEOUT_MS },
   );
@@ -85,7 +86,7 @@ async function requireUiApiResponse(
     return response;
   } catch (error) {
     throw new Error(
-      `[E2E integration pending #76] UI action did not receive ${endpoint} from ${BACKEND_ORIGIN}. ` +
+      `[E2E live integration] UI action did not receive ${endpoint} from ${BACKEND_ORIGIN}. ` +
         `Verify live API configuration and UI request wiring. Original error: ${String(error)}`,
     );
   }
@@ -111,9 +112,45 @@ async function evaluateFromUi(page: Page): Promise<{ response: Response; body: R
   const response = await requireUiApiResponse(
     page,
     "/api/v1/scenarios/evaluate",
-    () => page.getByRole("button", { name: /evaluate/i }).click(),
+    () => page.getByRole("button", { name: "Evaluate Stress Scenario", exact: true }).click(),
+    (request) => request.simulation === null,
   );
   return { response, body: await response.json() };
+}
+
+function simulationRegion(page: Page) {
+  return page.getByRole("region", { name: "Selected-scenario Monte Carlo simulation", exact: true });
+}
+
+function resultValue(page: Page, label: string) {
+  return simulationRegion(page).locator("dt").filter({ hasText: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`) }).locator("+ dd");
+}
+
+async function simulateFromUi(page: Page): Promise<{ response: Response; body: Record<string, any> }> {
+  const region = simulationRegion(page);
+  await region.getByLabel("Simulation seed", { exact: true }).fill("42");
+  await region.getByLabel("Simulation replicates", { exact: true }).fill("10000");
+  const response = await requireUiApiResponse(page, "/api/v1/scenarios/evaluate",
+    () => region.getByRole("button", { name: "Run simulation", exact: true }).click(),
+    (request) => request.simulation?.seed === 42 && request.simulation?.replicates === 10000);
+  expect(response.status()).toBe(200);
+  const body = await response.json();
+  expect(body.monte_carlo).not.toBeNull();
+  await expect(resultValue(page, "Computed at")).toHaveText(body.metadata.computed_at);
+  await expect(resultValue(page, "Seed")).toHaveText("42");
+  await expect(resultValue(page, "Replicates")).toHaveText("10000");
+  return { response, body };
+}
+
+// The app unwraps the API's provenance envelope before storing canonical results.
+// Preserve every other returned field so export assertions remain full equality.
+function canonicalResponse(body: Record<string, any>): Record<string, any> {
+  return { ...body, provenance: body.provenance.field_provenance ?? body.provenance };
+}
+
+function exportLink(page: Page) {
+  return page.getByRole("region", { name: "Scenario export", exact: true })
+    .getByRole("link", { name: "Download current scenario JSON", exact: true });
 }
 
 test.describe("Offline baseline-collapse E2E workflow", () => {
@@ -135,16 +172,21 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
     expect(design.enrolled_n).toEqual({ control: REFERENCE_N, treatment: REFERENCE_N });
     expect(design.method).toBe("cohen_h_normal_v1");
     expect(design).not.toHaveProperty("mock");
-    await expect(page.locator('section[aria-labelledby="planned-heading"]')).toContainText("903");
-    await expect(page.locator('section[aria-labelledby="planned-heading"]')).toContainText(design.method);
+    await expect(page.getByRole("region", { name: "Planned design summary", exact: true })).toContainText("903");
+    await expect(page.getByRole("region", { name: "Planned design summary", exact: true })).toContainText(design.method);
   });
 
-  test("Evaluate sends the frozen enrollment and current stress input to the local API", async ({ page }) => {
+  test("Analytic Evaluate and explicit simulation send frozen enrollment and current stress", async ({ page }) => {
     await selectPreset(page);
     const design = await calculateFromUi(page);
     await page.locator("#stress-baseline-num").fill("0.10");
 
-    const { response, body } = await evaluateFromUi(page);
+    const analytic = await evaluateFromUi(page);
+    expect(analytic.response.status()).toBe(200);
+    expect(analytic.response.request().postDataJSON().simulation).toBeNull();
+    expect(analytic.body.monte_carlo).toBeNull();
+    const { response, body } = await simulateFromUi(page);
+    expect(body.analytic).toEqual(analytic.body.analytic);
     expect(response.status()).toBe(200);
     const request = response.request().postDataJSON();
     expect(request.fixed_enrollment).toEqual(design.enrolled_n);
@@ -159,23 +201,23 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
     expect(body.monte_carlo.seed).toBe(request.simulation.seed);
     expect(body).not.toHaveProperty("mock");
 
-    const evaluateSection = page.locator('section[aria-labelledby="evaluate-heading"]');
-    await expect(evaluateSection).toContainText(`${(body.analytic.conditional_power_approx * 100).toFixed(0)}%`);
-    await expect(evaluateSection).toContainText(Number(body.monte_carlo.replicates).toLocaleString("en-US"));
+    await expect(resultValue(page, "Two-sided significance fraction")).toHaveText(
+      `${(body.monte_carlo.significant_two_sided_fraction * 100).toFixed(3)}%`);
+
   });
 
   test("changed stress produces a fresh backend calculation and updated MC fields", async ({ page }) => {
     await selectPreset(page);
     const design = await calculateFromUi(page);
     await page.locator("#stress-baseline-num").fill("0.10");
-    const first = await evaluateFromUi(page);
+    const first = await simulateFromUi(page);
     expect(first.response.status()).toBe(200);
     const firstRequest = first.response.request().postDataJSON();
     expect(firstRequest.fixed_enrollment).toEqual(design.enrolled_n);
     expect(firstRequest.stress_scenario.control_event_rate).toBe(0.1);
 
     await page.locator("#stress-baseline-num").fill("0.15");
-    const changed = await evaluateFromUi(page);
+    const changed = await simulateFromUi(page);
     expect(changed.response.status()).toBe(200);
     const changedRequest = changed.response.request().postDataJSON();
     expect(changedRequest.fixed_enrollment).toEqual(design.enrolled_n);
@@ -189,14 +231,13 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
     expect(changed.body.monte_carlo.replicates).toBe(changedRequest.simulation.replicates);
     expect(changed.body.monte_carlo.seed).toBe(changedRequest.simulation.seed);
 
-    const evaluateSection = page.locator('section[aria-labelledby="evaluate-heading"]');
-    await expect(evaluateSection).toContainText(`${(changed.body.analytic.conditional_power_approx * 100).toFixed(0)}%`);
-    const twoSidedMcse = evaluateSection.locator("li").filter({ hasText: /two-sided significance MCSE/i });
-    const favorableMcse = evaluateSection.locator("li").filter({ hasText: /favorable-direction significance MCSE/i });
-    await expect(twoSidedMcse, "two-sided MCSE must have its own visible label").toBeVisible();
-    await expect(favorableMcse, "favorable-direction MCSE must have its own visible label").toBeVisible();
-    await expect(twoSidedMcse).toContainText(`${(changed.body.monte_carlo.mcse_two_sided * 100).toFixed(1)}%`);
-    await expect(favorableMcse).toContainText(`${(changed.body.monte_carlo.mcse_favorable * 100).toFixed(1)}%`);
+    await expect(resultValue(page, "Two-sided significance fraction")).toHaveText(
+      `${(changed.body.monte_carlo.significant_two_sided_fraction * 100).toFixed(3)}%`);
+    await expect(resultValue(page, "Two-sided MCSE (percentage points)")).toHaveText(
+      (changed.body.monte_carlo.mcse_two_sided * 100).toFixed(3));
+    await expect(resultValue(page, "Favorable-direction MCSE (percentage points)")).toHaveText(
+      (changed.body.monte_carlo.mcse_favorable * 100).toFixed(3));
+
   });
 
   test("grid action calls the local API with frozen enrollment and displays its response", async ({ page }) => {
@@ -205,7 +246,7 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
     const response = await requireUiApiResponse(
       page,
       "/api/v1/scenarios/grid",
-      () => page.getByRole("button", { name: /grid/i }).click(),
+      () => page.getByRole("button", { name: "Load grid response from backend", exact: true }).click(),
     );
     expect(response.status()).toBe(200);
     const request = response.request().postDataJSON();
@@ -221,18 +262,26 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
     for (const row of body.power) expect(row).toHaveLength(body.x_baseline.length);
     for (const row of body.invalid_mask) expect(row).toHaveLength(body.x_baseline.length);
     expect(body).not.toHaveProperty("mock");
-    const gridSection = page.locator('section[aria-labelledby="grid-heading"]');
-    await expect(gridSection).toContainText(body.grid_label);
-    await expect(gridSection).toContainText("Cell indexing follows [dropout][baseline]");
+    const gridSection = page.getByRole("region", { name: "Sensitivity heatmap", exact: true });
+    await expect(gridSection).toContainText(body.method);
     await expect(gridSection.locator("table caption")).toContainText(/dropout.*baseline/i);
     await expect(gridSection.locator('thead th[scope="col"]').first()).toContainText(/dropout.*baseline/i);
     await expect(gridSection.locator('tbody th[scope="row"]').first()).toBeVisible();
     await expect(gridSection.locator("tbody tr")).toHaveCount(body.y_dropout.length);
     await expect(gridSection.locator("tbody td")).toHaveCount(body.x_baseline.length * body.y_dropout.length);
-    await expect(gridSection.locator("tbody td")).toHaveText(
-      body.power.flat().map((power: number | null) =>
-        power === null ? "Invalid (power null)" : `${(power * 100).toFixed(0)}%`),
-    );
+    for (let row = 0; row < body.y_dropout.length; row++) {
+      for (let col = 0; col < body.x_baseline.length; col++) {
+        const power = body.power[row][col];
+        expect(body.invalid_mask[row][col]).toBe(power === null);
+        const cell = gridSection.locator(`[data-cell="${row}-${col}"]`);
+        await expect(cell).toHaveAttribute("data-power", power === null ? "null" : String(power));
+        await expect(cell).toHaveAttribute("data-baseline", String(body.x_baseline[col]));
+        await expect(cell).toHaveAttribute("data-dropout", String(body.y_dropout[row]));
+        await expect(gridSection.locator("tbody tr").nth(row).locator("td").nth(col)).toContainText(
+          power === null ? "Invalid scenario (null)" : `${(power * 100).toFixed(1)}% (${power} fraction)`);
+      }
+    }
+
   });
 
   test("invalid ARR reaches FastAPI and displays the actual 422 validation error", async ({ page }) => {
@@ -259,17 +308,15 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
 
   test("export is available and downloads JSON containing provenance and real calculation metadata", async ({ page }, testInfo) => {
     await selectPreset(page);
-    const exportButton = page.locator('section[aria-labelledby="export-heading"]').getByRole("button", { name: /download.*json/i });
-    await expect(
-      exportButton,
-      "[E2E integration pending #76] export button is missing; export assembly is not integrated",
-    ).toBeVisible();
+    await expect(page.getByRole("region", { name: "Scenario export", exact: true })
+      .getByRole("button", { name: "Download current scenario JSON", exact: true })).toBeDisabled();
+    const exportButton = exportLink(page);
 
     const design = await calculateFromUi(page);
-    const evaluation = await evaluateFromUi(page);
+    const evaluation = await simulateFromUi(page);
     expect(evaluation.response.status()).toBe(200);
     const gridResponse = await requireUiApiResponse(page, "/api/v1/scenarios/grid",
-      () => page.getByRole("button", { name: /grid/i }).click());
+      () => page.getByRole("button", { name: "Load grid response from backend", exact: true }).click());
     expect(gridResponse.status()).toBe(200);
     const grid = await gridResponse.json();
     await expect(exportButton).toBeEnabled();
@@ -298,8 +345,8 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
     expect(exported.exported_at).toBeTruthy();
     expect(Object.keys(exported.provenance ?? {})).not.toHaveLength(0);
     expect(exported.fixed_enrollment).toEqual(design.enrolled_n);
-    expect(exported.design_result).toEqual(design);
-    expect(exported.evaluation_result).toEqual(evaluation.body);
+    expect(exported.design_result).toEqual(canonicalResponse(design));
+    expect(exported.evaluation_result).toEqual(canonicalResponse(evaluation.body));
     expect(exported.grid_result).toEqual(grid);
     expect(exported.evaluation_result.metadata.inputs_hash).toMatch(/^(?:sha256:)?[a-f0-9]{64}$/);
     expect(exported.software_versions ?? exported.evaluation_result.metadata.software_versions).toBeTruthy();
@@ -309,13 +356,14 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
     await selectPreset(page);
     await calculateFromUi(page);
     await evaluateFromUi(page);
+    await simulateFromUi(page);
     await requireUiApiResponse(
       page,
       "/api/v1/scenarios/grid",
-      () => page.getByRole("button", { name: /grid/i }).click(),
+      () => page.getByRole("button", { name: "Load grid response from backend", exact: true }).click(),
     );
-    const exportButton = page.locator('section[aria-labelledby="export-heading"]').getByRole("button", { name: /download.*json/i });
-    await expect(exportButton, "[E2E integration pending #76] export action is missing").toBeVisible();
+    const exportButton = exportLink(page);
+    await expect(exportButton, "current seeded results must provide a download link").toBeVisible();
     await expect(exportButton).toBeEnabled();
     await Promise.all([page.waitForEvent("download"), exportButton.click()]);
   });
