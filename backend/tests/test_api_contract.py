@@ -158,8 +158,8 @@ def test_design_calculate_non_1_to_1_allocation_rejected(client: TestClient) -> 
     assert "allocation_ratio" in envelope.error.message.lower()
 
 
-def test_scenarios_evaluate_stub_501(client: TestClient) -> None:
-    """POST /api/v1/scenarios/evaluate returns 501 scaffold for #65 handoff."""
+def test_scenarios_evaluate_registered_handoff(client: TestClient) -> None:
+    """The completed #65 handoff evaluates through the registered router."""
     payload = {
         "planned_design": {
             "model_version": "binary-v1",
@@ -173,7 +173,11 @@ def test_scenarios_evaluate_stub_501(client: TestClient) -> None:
         },
     }
     response = client.post("/api/v1/scenarios/evaluate", json=payload)
-    assert response.status_code == 501
+    assert response.status_code == 200
+    data = response.json()
+    assert data["analytic"]["assumed_evaluable_n"] == {"control": 853, "treatment": 853}
+    assert data["monte_carlo"]["replicates"] == 10_000
+    assert data["metadata"]["fixed_enrollment"] == payload["fixed_enrollment"]
 
 
 def test_scenarios_grid_stub_501(client: TestClient) -> None:
