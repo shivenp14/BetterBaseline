@@ -3,10 +3,10 @@
   "preset_id": "attrition-shock-v1",
   "result_status": "measured_generated_backend_output",
   "inputs_hash": "sha256:02fd9c794d5d3928538b46dd7af0ff60d8e7708e854797dcee87d0f4c49fa932",
-  "engine_commit": "fc12dd0bbe4ed305467e9de0d762480b6c2f28b5",
+  "engine_commit": "d18bfceb8d9e53d9d1db26f3f95e0c47035531ca",
   "generation": {
     "command": "uv run --locked --directory backend python ../demo-data/generate_snapshots.py",
-    "engine_commit": "fc12dd0bbe4ed305467e9de0d762480b6c2f28b5",
+    "engine_commit": "d18bfceb8d9e53d9d1db26f3f95e0c47035531ca",
     "seed": 42,
     "replicates": 10000,
     "grid_request": {
@@ -350,6 +350,23 @@
     "warnings": [
       "Dropout inflation represents expected retention, not guaranteed evaluable counts."
     ],
+    "diagnostics": [
+      {
+        "code": "CONDITIONAL_POWER_ONLY",
+        "severity": "info",
+        "field": "interpretation",
+        "method": "cohen_h_normal",
+        "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+        "arm": null,
+        "outcome": null,
+        "expected_count": null,
+        "threshold": null,
+        "count_basis": null,
+        "invalid_test_fraction": null,
+        "replicates": null,
+        "invalid_test_policy": null
+      }
+    ],
     "inputs_hash": "ec656687cf6fa06b"
   },
   "point": {
@@ -388,6 +405,53 @@
       "Analytic counts are floored expected retention, not actual simulated retained counts.",
       "Synthetic outcomes conditional on assumptions; not clinical evidence.",
       "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+    ],
+    "diagnostics": [
+      {
+        "code": "CONDITIONAL_POWER_ONLY",
+        "severity": "info",
+        "field": "interpretation",
+        "method": "cohen_h_normal",
+        "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+        "arm": null,
+        "outcome": null,
+        "expected_count": null,
+        "threshold": null,
+        "count_basis": null,
+        "invalid_test_fraction": null,
+        "replicates": null,
+        "invalid_test_policy": null
+      },
+      {
+        "code": "CONDITIONAL_POWER_ONLY",
+        "severity": "info",
+        "field": "interpretation",
+        "method": "pooled_two_proportion_z_v1",
+        "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+        "arm": null,
+        "outcome": null,
+        "expected_count": null,
+        "threshold": null,
+        "count_basis": null,
+        "invalid_test_fraction": null,
+        "replicates": null,
+        "invalid_test_policy": null
+      },
+      {
+        "code": "DISTINCT_METHOD_APPROXIMATIONS",
+        "severity": "info",
+        "field": "method",
+        "method": "pooled_two_proportion_z_v1",
+        "message": "Pooled-z simulation and Cohen's-h analytic power use distinct approximations; Monte Carlo does not remove pooled-z small-sample limits.",
+        "arm": null,
+        "outcome": null,
+        "expected_count": null,
+        "threshold": null,
+        "count_basis": null,
+        "invalid_test_fraction": null,
+        "replicates": null,
+        "invalid_test_policy": null
+      }
     ],
     "metadata": {
       "inputs_hash": "sha256:db2381476af378a2b210eca29449319e3bb424005057d9ea72c18a9ac910e0e4",
@@ -4156,6 +4220,38 @@
     "warnings": [
       "Expected-count approximation: floored expected retention is not a simulated or guaranteed retained count.",
       "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation."
+    ],
+    "diagnostics": [
+      {
+        "code": "CONDITIONAL_POWER_ONLY",
+        "severity": "info",
+        "field": "interpretation",
+        "method": "cohen_h_normal",
+        "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+        "arm": null,
+        "outcome": null,
+        "expected_count": null,
+        "threshold": null,
+        "count_basis": null,
+        "invalid_test_fraction": null,
+        "replicates": null,
+        "invalid_test_policy": null
+      },
+      {
+        "code": "CONDITIONAL_POWER_ONLY",
+        "severity": "info",
+        "field": "interpretation",
+        "method": "cohen_h_normal",
+        "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+        "arm": null,
+        "outcome": null,
+        "expected_count": null,
+        "threshold": null,
+        "count_basis": null,
+        "invalid_test_fraction": null,
+        "replicates": null,
+        "invalid_test_policy": null
+      }
     ],
     "inputs_hash": "sha256:d34402e59af947f7cd6cf12c32213e4bfa1c76767c1a114beaebe0493cbef0ea"
   }
