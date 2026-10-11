@@ -54,5 +54,9 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     result = verify(json.loads(args.input.read_text()))
-    args.output.write_text(json.dumps(result, indent=2, allow_nan=False) + '\n')
+    try:
+        with args.output.open('x') as report:
+            report.write(json.dumps(result, indent=2, allow_nan=False) + '\n')
+    except FileExistsError:
+        parser.error(f'Output report already exists: {args.output}; choose a new path to preserve existing evidence')
     print(json.dumps({key: value for key, value in result.items() if key != 'results'}))
