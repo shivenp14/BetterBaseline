@@ -186,11 +186,12 @@ export default function Home() {
         <p>Analytic method: {displayedEvaluate.analytic.method}.</p>
         <ul>
           <li>Illustrative conditional power: {percent(displayedEvaluate.analytic.conditional_power_approx)}</li>
-          <li>Assumed evaluable count: {displayedEvaluate.analytic.assumed_evaluable_n.control.toLocaleString()} per arm</li>
+          <li>Stress expected retained count: {displayedEvaluate.analytic.assumed_evaluable_n.control.toLocaleString()} control and {displayedEvaluate.analytic.assumed_evaluable_n.treatment.toLocaleString()} treatment participants</li>
           <li>Monte Carlo method: {displayedEvaluate.monte_carlo.method}</li>
           <li>Two-sided significance fraction: {percent(displayedEvaluate.monte_carlo.significant_two_sided_fraction)}</li>
           <li>Favorable-direction significance fraction: {percent(displayedEvaluate.monte_carlo.significant_favorable_fraction)}</li>
-          <li>Monte Carlo standard error: {percent(displayedEvaluate.monte_carlo.mcse, 1)}</li>
+          <li>Two-sided significance MCSE: {percent(displayedEvaluate.monte_carlo.mcse_two_sided, 1)}</li>
+          <li>Favorable-direction significance MCSE: {percent(displayedEvaluate.monte_carlo.mcse_favorable, 1)}</li>
           <li>Invalid-test fraction: {percent(displayedEvaluate.monte_carlo.invalid_test_fraction, 1)}</li>
           <li>Replicates: {displayedEvaluate.monte_carlo.replicates.toLocaleString()}</li>
           <li>Seed: {displayedEvaluate.monte_carlo.seed}</li>

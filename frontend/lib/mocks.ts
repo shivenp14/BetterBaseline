@@ -50,7 +50,9 @@ function evaluate(
   power: number,
   twoSided: number,
   favorable: number,
-  mcse: number,
+  mcseTwoSided: number,
+  mcseFavorable: number,
+  stressExpectedRetainedPerArm: number,
   invalidFraction: number,
   hash: string,
   source: Provenance,
@@ -60,13 +62,17 @@ function evaluate(
     analytic: {
       method: "cohen_h_normal_v1",
       conditional_power_approx: power,
-      assumed_evaluable_n: { control: 903, treatment: 903 },
+      assumed_evaluable_n: {
+        control: stressExpectedRetainedPerArm,
+        treatment: stressExpectedRetainedPerArm,
+      },
     },
     monte_carlo: {
       method: "pooled_two_proportion_z_v1",
       significant_two_sided_fraction: twoSided,
       significant_favorable_fraction: favorable,
-      mcse,
+      mcse_two_sided: mcseTwoSided,
+      mcse_favorable: mcseFavorable,
       invalid_test_fraction: invalidFraction,
       replicates: 10000,
       seed: 42,
@@ -147,7 +153,7 @@ export const presets: Preset[] = [
     stress: { control_event_rate: 0.2, dropout: 0 },
     effect_label: "RR 0.75",
     design_response: design(0.15, 903, 903, 0.801, "stable-design", stableSource),
-    evaluate_response: evaluate(0.801, 0.803, 0.803, 0.004, 0, "stable-eval", stableSource),
+    evaluate_response: evaluate(0.801, 0.803, 0.803, 0.004, 0.003, 903, 0, "stable-eval", stableSource),
     grid_response: grid(
       [0.05, 0.1, 0.15, 0.2, 0.25, 0.3],
       [0, 0.1, 0.2, 0.3],
@@ -191,7 +197,7 @@ export const presets: Preset[] = [
     stress: { control_event_rate: 0.1, dropout: 0 },
     effect_label: "RR 0.75",
     design_response: design(0.15, 903, 903, 0.801, "collapse-design", collapseSource),
-    evaluate_response: evaluate(0.47, 0.468, 0.466, 0.005, 0.001, "collapse-eval", collapseSource),
+    evaluate_response: evaluate(0.47, 0.468, 0.466, 0.005, 0.004, 903, 0.001, "collapse-eval", collapseSource),
     grid_response: grid(
       [0.05, 0.1, 0.15, 0.2, 0.25, 0.3],
       [0, 0.1, 0.2, 0.3],
@@ -235,7 +241,7 @@ export const presets: Preset[] = [
     stress: { control_event_rate: 0.13, dropout: 0.2 },
     effect_label: "ARR 5 pp",
     design_response: design(0.15, 903, 1004, 0.801, "attrition-design", attritionSource),
-    evaluate_response: evaluate(0.5, 0.497, 0.495, 0.005, 0.002, "attrition-eval", attritionSource),
+    evaluate_response: evaluate(0.5, 0.497, 0.495, 0.005, 0.004, 803, 0.002, "attrition-eval", attritionSource),
     grid_response: grid(
       [0.03, 0.08, 0.13, 0.18, 0.23, 0.28],
       [0, 0.1, 0.2, 0.3],

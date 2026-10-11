@@ -57,7 +57,8 @@ export interface EvaluateResponse {
     method: "pooled_two_proportion_z_v1";
     significant_two_sided_fraction: number;
     significant_favorable_fraction: number;
-    mcse: number;
+    mcse_two_sided: number;
+    mcse_favorable: number;
     invalid_test_fraction: number;
     replicates: number;
     seed: number;
