@@ -13,6 +13,7 @@ export interface DesignFormProps {
   onCalculate: (request: CalculateRequest) => void | Promise<void>;
   /** Parent marks prior results stale and tracks edited input provenance here. */
   onDraftChange?: (draft: PlanningDraft, changedField: DraftField) => void;
+  submitLabel?: string;
   isCalculating?: boolean;
   error?: string | null;
 }
@@ -34,7 +35,7 @@ export function DesignForm(props: DesignFormProps) {
 }
 
 function DesignFormFields({ initialDraft, presetId, onCalculate, onDraftChange,
-  isCalculating = false, error = null }: DesignFormProps & { initialDraft: PlanningDraft }) {
+  isCalculating = false, error = null, submitLabel = "Calculate design" }: DesignFormProps & { initialDraft: PlanningDraft }) {
   const id = useId();
   const form = useRef<HTMLFormElement>(null);
   const submitting = useRef(false);
@@ -122,7 +123,7 @@ function DesignFormFields({ initialDraft, presetId, onCalculate, onDraftChange,
         {input("targetPercent", "Target power (%)")}
         {input("alphaPercent", "Two-sided alpha (%)")}
         {input("dropoutPercent", "Dropout in each arm (%)", "One shared fraction applies to both arms. Dropout assumes independent missingness; retained participant counts are not guaranteed.")}
-        <button type="submit">{busy ? "Calculating design…" : "Calculate design"}</button>
+        <button type="submit">{busy ? "Calculating design…" : submitLabel}</button>
       </fieldset>
       {Object.keys(errors).length > 0 && <p role="alert">Correct the marked planning inputs before calculating.</p>}
       {(callbackError || error) && <p role="alert">{callbackError || error}</p>}
