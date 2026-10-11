@@ -2,6 +2,7 @@
 from copy import deepcopy
 from datetime import datetime, timezone
 import io
+from http.client import BadStatusLine, HTTPResponse
 import json
 import unittest
 from unittest.mock import Mock
@@ -74,6 +75,17 @@ FIXTURE = {
 
 def response(payload=FIXTURE):
     return io.BytesIO(json.dumps(payload).encode())
+
+
+def truncated_chunked_response():
+    # Exercise http.client's real chunk parser rather than a BytesIO read that
+    # cannot raise the protocol errors returned by urllib's HTTP transport.
+    class Socket:
+        def makefile(self, mode):
+            return io.BytesIO(b'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n20\r\n{}')
+    result = HTTPResponse(Socket())
+    result.begin()
+    return result
 
 
 class TrialAdapterTests(unittest.TestCase):
@@ -161,6 +173,32 @@ class TrialAdapterTests(unittest.TestCase):
     def test_5xx_retry_can_recover(self):
         client, opener = self.client(HTTPError(API_ROOT+NCT, 503, '', {}, None), response())
         self.assertEqual(client.lookup(NCT)['nct_id'], NCT)
+        self.assertEqual(opener.open.call_count, 2)
+
+    def test_truncated_chunked_response_retries_and_recovers(self):
+        broken = truncated_chunked_response()
+        client, opener = self.client(broken, response())
+        self.assertEqual(client.lookup(NCT)['nct_id'], NCT)
+        self.assertEqual(opener.open.call_count, 2)
+        self.assertTrue(broken.isclosed())
+
+    def test_protocol_status_failure_has_bounded_retry(self):
+        client, opener = self.client(BadStatusLine('broken status'), BadStatusLine('broken status'))
+        self.assert_error(client, 'UPSTREAM_UNAVAILABLE')
+        self.assertEqual(opener.open.call_count, 2)
+
+    def test_truncated_response_exhaustion_is_stable_at_registered_route(self):
+        from fastapi.testclient import TestClient
+        from app.main import create_app
+        from app.routers.trials import get_trial_client
+        client, opener = self.client(truncated_chunked_response(), truncated_chunked_response())
+        app = create_app()
+        app.dependency_overrides[get_trial_client] = lambda: client
+        with TestClient(app, raise_server_exceptions=False) as http:
+            result = http.get('/api/v1/trials/' + NCT)
+        self.assertEqual(result.status_code, 503)
+        self.assertEqual(result.json()['error']['code'], 'UPSTREAM_UNAVAILABLE')
+        self.assertTrue(result.json()['error']['recoverable'])
         self.assertEqual(opener.open.call_count, 2)
 
     def test_5xx_exhaustion_and_other_statuses_are_explicit(self):
