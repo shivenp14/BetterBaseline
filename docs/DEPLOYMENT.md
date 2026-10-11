@@ -115,3 +115,11 @@ before installation. That file is absent from the current #99 scaffold and
 must be supplied by its package owner before the backend image can build.
 The prerequisite checker reports it explicitly. These changes are preparatory;
 no backend container/CORS/offline acceptance is claimed.
+
+## Evaluation integration update
+
+The #64 scaffold has merged and #91 now implements the real point evaluation
+endpoint with optional simulation and reproducibility metadata. This branch
+incorporates both. The backend package's declared README and dependency lock are
+still absent; the frontend still uses fixtures. Complete #68/#76 handoffs and
+actual container/CORS/browser/offline verification before deployment acceptance.

@@ -1,6 +1,7 @@
 """Black-box request/result/export invariants; never import product calculators."""
 import json
 import math
+from decimal import Decimal
 
 
 def require(condition, message):
@@ -22,10 +23,11 @@ def check_evaluation(request, response):
     stress = request['stress_scenario']
     analytic = response['analytic']
     require(analytic['method'] == 'cohen_h_normal_v1', 'analytic method mismatch')
-    expected = {arm: math.floor(fixed[arm] * (1 - stress['dropout'][arm]))
+    expected = {arm: int(Decimal(fixed[arm]) * (1 - Decimal(str(stress['dropout'][arm]))))
                 for arm in ('control', 'treatment')}
     require(analytic['assumed_evaluable_n'] == expected, 'expected-retained floor/count mismatch')
-    require(probability(analytic['conditional_power_approx']), 'invalid analytic power')
+    require(analytic['conditional_power_approx'] is None if expected['control'] == 0
+            else probability(analytic['conditional_power_approx']), 'invalid analytic power availability')
     mc = response['monte_carlo']
     options = request.get('simulation')
     if options is None:
