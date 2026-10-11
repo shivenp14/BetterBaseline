@@ -15,7 +15,7 @@ import subprocess
 import sys
 import os
 
-from core import ROOT, canonical, environment
+from core import ROOT, canonical, environment, close_float, normalized_source_hash
 from http_uncached import request_payload, ROUTES, validate_response, replay_identity
 
 
@@ -184,7 +184,8 @@ def metadata():
             'frontend_runtime':{'node':subprocess.check_output(['node','--version'],text=True).strip(),
                 'build_id':(ROOT/'frontend/.next/BUILD_ID').read_text().strip() if (ROOT/'frontend/.next/BUILD_ID').exists() else None,
                 'packages':{name:json.loads((ROOT/'frontend/node_modules'/name/'package.json').read_text())['version'] for name in ('next','react','react-dom')}},
-            'source_sha256':{str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest()
+            'source_hash_policy':'UTF-8 text, CRLF/CR normalized to LF',
+            'source_sha256':{str(p.relative_to(ROOT)):normalized_source_hash(p.read_bytes())
                 for folder in ('backend/app','frontend/app','frontend/lib','frontend/components','scripts/benchmarks')
                 for p in sorted((ROOT/folder).rglob('*')) if p.suffix in ('.py','.ts','.tsx','.mjs')},
             'instrumentation':'Benchmark-only delegating cache observer; real get/set/clear/len methods. Single serial request. Clear and inspection outside timing; no HTTP control endpoint or product-source edits.',
@@ -226,7 +227,7 @@ def main():
                         n=expected_retained_count(captured['fixed_enrollment']['control'],dropout)
                         for column, baseline in enumerate(result['x_baseline']):
                             expected=analytic_power(baseline,resolve_treatment_risk(baseline,effect),n,n,captured['planned_design']['alpha']).power
-                            assert result['power'][row][column]==expected
+                            assert close_float(result['power'][row][column],expected)
                             assert not result['invalid_mask'][row][column]
                 else:
                     validate_response(measurement['workload'],witness,result)
@@ -246,7 +247,7 @@ def main():
     for measurement in measurements:
         measurement['semantic_result_sha256']=hashlib.sha256(replay_identity(measurement['representative_result']).encode()).hexdigest()
     report = {'cache_identity_checks':identity_checks, 'benchmark_schema_version':2, **metadata(), 'frontend':args.browser,
-              'scope': ('Production workspace native action through DOM result commit; excludes navigation, setup, cache reset/inspection and result validation. Includes client helper, HTTP and React DOM commit; excludes paint.' if args.browser else 'Persistent loopback HTTP POST send through complete response body receipt; excludes startup, resets/inspection, JSON parsing and validation.'),
+              'scope': ('Native action through DOM result commit: production workspace plus isolated shared-helper 31x21 benchmark page; excludes navigation, setup, cache reset/inspection and result validation. Includes client helper, HTTP and React DOM commit; excludes paint.' if args.browser else 'Persistent loopback HTTP POST send through complete response body receipt; excludes startup, resets/inspection, JSON parsing and validation.'),
               'measurements':measurements}
     args.output.write_text(json.dumps(report,indent=2,allow_nan=False)+'\n')
 

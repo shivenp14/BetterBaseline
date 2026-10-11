@@ -1,5 +1,8 @@
 # Better Baseline statistical methods
 
+These methods are educational and conditional on the entered assumptions. They
+do not establish treatment efficacy, clinical utility or regulatory validation.
+
 ## Task #56: binary inputs and effect transformation
 
 The statistical core is independent of FastAPI. Import `Effect`, `Dropout`, `FixedEnrollment`,
@@ -221,11 +224,11 @@ Grid remains uncached because the route currently supplies no cache key.
 
 | Workload | Condition | Median (ms) | p95 (ms) |
 |---|---|---:|---:|
-| Design | cache-cold | 0.853 | 1.019 |
-| Design | cache-warm | 0.783 | 1.177 |
-| 31×21 grid | uncached-grid | 9.232 | 9.543 |
-| Seed 42 / 10,000 replicates | cache-cold | 4.582 | 4.732 |
-| Seed 42 / 10,000 replicates | cache-warm | 0.739 | 0.846 |
+| Design | cache-cold | 0.881 | 1.358 |
+| Design | cache-warm | 0.825 | 1.049 |
+| 31×21 grid | uncached-grid | 9.398 | 9.628 |
+| Seed 42 / 10,000 replicates | cache-cold | 4.595 | 4.802 |
+| Seed 42 / 10,000 replicates | cache-warm | 0.732 | 0.828 |
 
 [Raw timings, results and cache witnesses](../scripts/benchmarks/reports/live/http.json).
 
@@ -233,21 +236,23 @@ Grid remains uncached because the route currently supplies no cache key.
 
 | Workload | Condition | Median (ms) | p95 (ms) |
 |---|---|---:|---:|
-| Design | cache-cold | 2.300 | 3.100 |
-| Design | cache-warm | 2.000 | 2.900 |
-| 6×4 production grid | uncached-grid | 4.900 | 5.500 |
-| Seed 42 / 10,000 replicates | cache-cold | 6.500 | 7.100 |
-| Seed 42 / 10,000 replicates | cache-warm | 1.900 | 2.600 |
+| Design | cache-cold | 2.100 | 4.600 |
+| Design | cache-warm | 2.000 | 2.700 |
+| 6×4 production grid | uncached-grid | 5.000 | 6.100 |
+| Seed 42 / 10,000 replicates | cache-cold | 6.500 | 7.400 |
+| Seed 42 / 10,000 replicates | cache-warm | 1.900 | 2.200 |
+| 31×21 benchmark page | uncached-grid | 11.100 | 11.900 |
 
 [Raw timings, results and cache witnesses](../scripts/benchmarks/reports/live/browser.json).
 
 HTTP timing covers request send through full response receipt. Browser timing
-covers the native production action through React result/status DOM commit;
+covers the native action through React result/status DOM commit;
 paint is excluded. Browser navigation, fixture setup, cache reset/inspection,
 result validation and report generation are outside timing. Browser durations
-use performance.now and may be quantized. The browser uses the unchanged
-production page and shared helper, not fixture responses or a temporary page.
-The 6×4 browser grid is distinct from the required 31×21 HTTP workload.
+use performance.now and may be quantized. The browser measures the unchanged
+production workspace (including its 6×4 grid) and an isolated, temporary
+benchmark-owned 31×21 page. Both use the real shared API helper and backend.
+The temporary page is removed after measurement and is not a product change.
 
 Each new report records the actual hardware/software, frontend build ID,
 Chromium and Node versions, complete request/result, source hashes, raw durations
@@ -266,3 +271,9 @@ Measured services start fresh, so these reports make no cross-upgrade cache clai
 D6's core, merged HTTP/cache and current frontend measurement work is complete.
 Final product screen and downloaded-export acceptance remain with #76; these
 runtime measurements do not establish clinical utility or regulatory validation.
+
+New report source hashes normalize UTF-8 CRLF/CR line endings to LF. Historical
+raw hashes remain capture metadata rather than equality checks against a later
+checkout. Continuous numerical audit comparisons use relative and absolute
+tolerances of 1e-12; counts, masks, shapes and seeds remain exact, as does
+same-environment seeded replay.

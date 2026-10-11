@@ -14,7 +14,7 @@ import sys
 import tempfile
 import time
 
-from core import ROOT, PRESETS, canonical, environment, prepare
+from core import ROOT, PRESETS, canonical, environment, prepare, close_float, normalized_source_hash
 
 # Exact pass-through scaffold from main c7fe68d. Cache timings require #116.
 SCAFFOLD_SHA256 = 'aba783fe64bbd8ff93bd2dd5206a979c5cabb98db2e2df7ebb5658a726a86150'
@@ -25,7 +25,7 @@ ROUTES = {'design': '/api/v1/design/calculate', 'grid': '/api/v1/scenarios/grid'
 def ensure_uncached_service():
     if not __debug__:
         raise ValueError('Run without -O: numerical assertions must remain enabled.')
-    actual = hashlib.sha256((ROOT / 'backend/app/services/compute.py').read_bytes()).hexdigest()
+    actual = normalized_source_hash((ROOT / 'backend/app/services/compute.py').read_bytes())
     if actual != SCAFFOLD_SHA256:
         raise ValueError('Compute wrapper changed: stop and adapt cache benchmarks after #116; no uncached label is inferred.')
 
@@ -64,7 +64,7 @@ def validate_response(workload, inputs, result):
         expected = prepare('design', inputs)()
         assert result['evaluable_n'] == dict.fromkeys(('control', 'treatment'), expected['evaluable_per_arm'])
         assert result['enrolled_n'] == dict.fromkeys(('control', 'treatment'), expected['enrolled_per_arm'])
-        assert result['nominal_power_evaluable'] == expected['achieved_power']
+        assert close_float(result['nominal_power_evaluable'], expected['achieved_power'])
         return
     plan = inputs['planned_design']
     stress = inputs['stress_scenario']
@@ -73,13 +73,15 @@ def validate_response(workload, inputs, result):
         assert result['metadata']['fixed_enrollment'] == inputs['fixed_enrollment']
         expected = prepare('monte-carlo', inputs)()
         for key, value in expected.items():
-            if key == 'warnings':
+            if key == 'software_versions':
+                assert result['monte_carlo'][key] and all(isinstance(version,str) and version for version in result['monte_carlo'][key].values())
+            elif key == 'warnings':
                 assert all(warning in result['warnings'] for warning in value)
             else:
-                assert result['monte_carlo'][key] == value, key
+                assert (close_float(result['monte_carlo'][key], value) if type(value) is float else result['monte_carlo'][key] == value), key
         n = expected_retained_count(inputs['fixed_enrollment']['control'], stress['dropout']['control'])
         expected_power = analytic_power(stress['control_event_rate'], resolve_treatment_risk(stress['control_event_rate'], effect), n, n, plan['alpha']).power
-        assert result['analytic']['conditional_power_approx'] == expected_power
+        assert close_float(result['analytic']['conditional_power_approx'], expected_power)
         return
     assert result['fixed_enrollment'] == inputs['fixed_enrollment']
     assert len(result['x_baseline']) == 31 and len(result['y_dropout']) == 21
@@ -93,15 +95,15 @@ def validate_response(workload, inputs, result):
         for column, baseline in enumerate(result['x_baseline']):
             expected = analytic_power(baseline, resolve_treatment_risk(baseline, effect), n, n, plan['alpha']).power
             assert not result['invalid_mask'][row][column]
-            assert result['power'][row][column] == expected
+            assert close_float(result['power'][row][column], expected)
             assert result['below_target'][row][column] == (expected < plan['target_power'])
             valid.append(expected)
-    assert result['worst_case_power'] == min(valid) and result['invalid_cell_count'] == 0
+    assert close_float(result['worst_case_power'], min(valid)) and result['invalid_cell_count'] == 0
     for point, baseline in zip(result['power_curve'], result['x_baseline']):
         n = expected_retained_count(inputs['fixed_enrollment']['control'], stress['dropout']['control'])
         expected = analytic_power(baseline, resolve_treatment_risk(baseline, effect), n, n, plan['alpha']).power
         assert point['p_control'] == baseline
-        assert point['power'] == expected
+        assert close_float(point['power'], expected)
     assert len(result['power_curve']) == 31
 
 
@@ -210,8 +212,8 @@ def main():
                   'server': {'workers': 1, 'concurrent_requests': 1, 'owned_fresh_process': True,
                              'connection': 'persistent HTTP/1.1; initial connection in excluded warmups'},
                   'environment': environment(),
-                  'service_source_sha256': {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted((ROOT/'backend/app').rglob('*.py'))},
-                  'http_harness_source_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                  'service_source_sha256': {str(p.relative_to(ROOT)): normalized_source_hash(p.read_bytes()) for p in sorted((ROOT/'backend/app').rglob('*.py'))},
+                  'http_harness_source_sha256': normalized_source_hash(Path(__file__).read_bytes()),
                   'numerical_invariants_checked': True, 'measurement': measurement,
                   'timing_notice': 'Hardware/load-dependent local measurements; no speedup or clinical validation claim.'}
         args.output.write_text(json.dumps(report, indent=2, allow_nan=False)+'\n')

@@ -57,7 +57,15 @@ must agree. Raw timestamps and per-request cache keys/hit witnesses are retained
 
 ## Production frontend action-to-result measurements
 
-In frontend/, build and start the unchanged production app:
+Prepare the benchmark-owned 31×21 route template from the repo root:
+
+```sh
+mkdir -p frontend/app/d6-grid
+cp scripts/benchmarks/grid-page.tsx frontend/app/d6-grid/page.tsx
+```
+
+The copy is temporary acceptance wiring; exclude it from commits. In frontend/,
+build and start the production app with that isolated route:
 
 ```sh
 npm ci
@@ -74,8 +82,9 @@ PYTHONPATH=backend PLAYWRIGHT_BROWSERS_PATH=/path/to/browsers D6_PLAYWRIGHT_MODU
 
 The command starts/stops its own real backend on 127.0.0.1:8000. The production
 frontend must use its default live API URL (no demo mode or URL override).
-There is no temporary page, custom render harness, intercepted fetch or injected
-statistical result. Native Calculate/Load grid/Evaluate actions use the committed
+The existing workspace remains unchanged. An additional temporary benchmark page
+uses the shared helper to request and render a 31×21 grid. Neither path intercepts
+fetch or injects statistical results. Native Calculate/Load grid/Evaluate actions use the committed
 shared helper, reducer and UI. Playwright checks the real HTTP payload/response,
 rendered counts/grid/MCSE values, seed, replicates, live execution and page errors.
 
@@ -88,9 +97,12 @@ quantized. The backend cache observer is controlled through local process pipes,
 not a network endpoint; its work is outside timing. Each condition has 30 raw
 observations after one priming request and three excluded warmups.
 
-The current production preset grid is **6 baselines × 4 dropouts**, not 31×21.
-Its exact request is retained. The separate HTTP benchmark measures the required
-31×21 grid. Do not compare these grid workloads as though their sizes were equal.
+The current production preset grid is **6 baselines × 4 dropouts**. The separate
+benchmark-owned route and HTTP workload both measure **31×21**. Browser reports
+identify the route variant and retain exact requests and rendered dimensions.
+Do not describe the isolated 31×21 page as the final production workspace.
+After measurement, remove frontend/app/d6-grid/page.tsx and its empty directory,
+then rebuild without it; no production source changes belong in the PR.
 The browser page is warm; cache-cold describes backend compute cache misses,
 not process startup, browser cache, navigation or first-paint latency.
 
@@ -118,3 +130,17 @@ capture environments and must not be presented as a controlled before/after tria
 
 #76 owns final screen/export assembly. These measurements cover the currently
 shipped workspace and do not claim downloaded-export or clinical validation.
+
+
+## Portable audit policy
+
+New source hashes normalize UTF-8 text line endings (CRLF/CR to LF). Historical
+raw source hashes remain capture metadata and are checked for valid digest
+format, not equality with a later checkout. Result/request hashes still cover
+canonical JSON unchanged. Software versions describe the capture environment,
+not the machine running the audit.
+
+Continuous power/MCSE comparisons use math.isclose with relative and absolute
+tolerances of 1e-12. Integer counts, shapes, masks, seeds, options and same-process
+replay remain exact. Regression checks accept 8e-16 power perturbations but reject
+a .001 change. These methods are educational and conditional on assumptions.
