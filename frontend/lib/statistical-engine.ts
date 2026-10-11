@@ -6,6 +6,7 @@ import type {
   GridResponse,
   GridPoint,
 } from "./contracts";
+import type { ProvenanceLedger } from "./workspace-contracts";
 
 export interface AnalyticPowerResult {
   power: number;
@@ -71,25 +72,34 @@ function invNormCdf(p: number): number {
   const d3 = 2.445134137142996;
   const d4 = 3.754408661907416;
 
-  const q = Math.min(p, 1 - p);
-  let r: number;
-  if (q > 0.02425) {
-    /* Central region */
-    const u = q - 0.5;
-    const t = u * u;
-    r =
-      (u *
-        (((((a1 * t + a2) * t + a3) * t + a4) * t + a5) * t + a6)) /
-      (((((b1 * t + b2) * t + b3) * t + b4) * t + b5) * t + 1);
-  } else {
-    /* Tail region */
-    const t = Math.sqrt(-2.0 * Math.log(q));
-    r =
-      (((((c1 * t + c2) * t + c3) * t + c4) * t + c5) * t + c6) /
-      ((((d1 * t + d2) * t + d3) * t + d4) * t + 1);
-    if (p < 0.5) r = -r;
+  const pLow = 0.02425;
+  const pHigh = 1.0 - pLow;
+
+  if (p < pLow) {
+    /* Lower tail */
+    const q = Math.sqrt(-2.0 * Math.log(p));
+    return (
+      ((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6
+    ) / ((((d1 * q + d2) * q + d3) * q + d4) * q + 1.0);
   }
-  return p < 0.5 ? r : -r;
+
+  if (p <= pHigh) {
+    /* Central region */
+    const q = p - 0.5;
+    const r = q * q;
+    return (
+      (((((a1 * r + a2) * r + a3) * r + a4) * r + a5) * r + a6) *
+      q /
+      (((((b1 * r + b2) * r + b3) * r + b4) * r + b5) * r + 1.0)
+    );
+  }
+
+  /* Upper tail */
+  const q = Math.sqrt(-2.0 * Math.log(1.0 - p));
+  return -(
+    (((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) /
+    ((((d1 * q + d2) * q + d3) * q + d4) * q + 1.0)
+  );
 }
 
 /** Calculate two-sided Cohen's h normal approximation power matching backend */
@@ -151,9 +161,9 @@ export function solveMinimumN(
   return low;
 }
 
-/** Live design calculation matching canonical formulas */
 export function computeLiveDesign(
-  assumptions: TrialAssumptions
+  assumptions: TrialAssumptions,
+  provenanceLedger?: ProvenanceLedger
 ): CalculateResponse {
   const pTreatment = resolveTreatmentRisk(
     assumptions.control_event_rate,
@@ -179,6 +189,12 @@ export function computeLiveDesign(
     assumptions.alpha
   );
 
+  const hasManualPlanned =
+    provenanceLedger &&
+    Object.entries(provenanceLedger).some(
+      ([k, v]) => k.startsWith("/planned_design") && v.source === "manual_user"
+    );
+
   return {
     model_version: "binary-v1",
     method: "cohen_h_normal_v1",
@@ -192,9 +208,9 @@ export function computeLiveDesign(
     ],
     inputs_hash: `calc:${Date.now()}`,
     provenance: {
-      scenario_id: "live-calculation",
+      scenario_id: hasManualPlanned ? "user-customized" : "live-calculation",
       scenario_kind: "synthetic",
-      label: "Live Calculated Scenario",
+      label: hasManualPlanned ? "User Customized Design" : "Live Calculated Scenario",
       source: { type: "synthetic", citation_url: null, source_location: null },
       endpoint_type: "binary_undesirable_event",
       follow_up_label: "12 months",
@@ -205,12 +221,12 @@ export function computeLiveDesign(
   };
 }
 
-/** Live stress evaluation matching canonical floored expected retention */
 export function computeLiveEvaluation(
   plannedDesign: TrialAssumptions,
   fixedEnrollment: FixedEnrollment,
   stressBaseline: number,
-  stressDropout: number
+  stressDropout: number,
+  provenanceLedger?: ProvenanceLedger
 ): EvaluateResponse {
   const pTreatment = resolveTreatmentRisk(stressBaseline, plannedDesign.effect);
   const enrolledPerArm = fixedEnrollment.control;
@@ -226,6 +242,11 @@ export function computeLiveEvaluation(
     );
   }
 
+  const warnings = [
+    "Calculated live at fixed enrollment; analytic retention uses floor(N * (1 - dropout)).",
+    "Monte Carlo simulation unavailable for custom inputs without backend execution; simulation metrics nullified.",
+  ];
+
   return {
     model_version: "binary-v1",
     analytic: {
@@ -237,22 +258,8 @@ export function computeLiveEvaluation(
         treatment: expectedRetainedFloor,
       },
     },
-    monte_carlo: {
-      method: "pooled_two_proportion_z_v1",
-      significant_two_sided_fraction:
-        conditionalPower !== null ? Math.round(conditionalPower * 1000) / 1000 : 0,
-      significant_favorable_fraction:
-        conditionalPower !== null ? Math.round(conditionalPower * 1000) / 1000 : 0,
-      mcse_two_sided: 0.005,
-      mcse_favorable: 0.005,
-      invalid_test_fraction: 0.0,
-      replicates: 10000,
-      seed: 42,
-    },
-    warnings: [
-      "Calculated live at fixed enrollment; analytic retention uses floor(N * (1 - dropout)).",
-      "Analytic and pooled-z simulation use distinct approximations.",
-    ],
+    monte_carlo: null,
+    warnings,
     metadata: {
       computed_at: new Date().toISOString(),
       inputs_hash: `eval:${Date.now()}`,

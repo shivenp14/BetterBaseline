@@ -410,41 +410,52 @@ export default function Home() {
               {displayedEvaluate.analytic.assumed_evaluable_n.treatment.toLocaleString()}{" "}
               treatment participants
             </li>
-            <li>
-              Monte Carlo method: {displayedEvaluate.monte_carlo.method}
-            </li>
-            <li>
-              Two-sided significance fraction:{" "}
-              {percent(
-                displayedEvaluate.monte_carlo.significant_two_sided_fraction
-              )}
-            </li>
-            <li>
-              Favorable-direction significance fraction:{" "}
-              {percent(
-                displayedEvaluate.monte_carlo.significant_favorable_fraction
-              )}
-            </li>
-            <li>
-              Two-sided significance MCSE:{" "}
-              {percent(displayedEvaluate.monte_carlo.mcse_two_sided, 1)}
-            </li>
-            <li>
-              Favorable-direction significance MCSE:{" "}
-              {percent(displayedEvaluate.monte_carlo.mcse_favorable, 1)}
-            </li>
-            <li>
-              Invalid-test fraction:{" "}
-              {percent(
-                displayedEvaluate.monte_carlo.invalid_test_fraction,
-                1
-              )}
-            </li>
-            <li>
-              Replicates:{" "}
-              {displayedEvaluate.monte_carlo.replicates.toLocaleString()}
-            </li>
-            <li>Seed: {displayedEvaluate.monte_carlo.seed}</li>
+            {displayedEvaluate.monte_carlo ? (
+              <>
+                <li>
+                  Monte Carlo method: {displayedEvaluate.monte_carlo.method}
+                </li>
+                <li>
+                  Two-sided significance fraction:{" "}
+                  {percent(
+                    displayedEvaluate.monte_carlo.significant_two_sided_fraction
+                  )}
+                </li>
+                <li>
+                  Favorable-direction significance fraction:{" "}
+                  {percent(
+                    displayedEvaluate.monte_carlo.significant_favorable_fraction
+                  )}
+                </li>
+                <li>
+                  Two-sided significance MCSE:{" "}
+                  {percent(displayedEvaluate.monte_carlo.mcse_two_sided, 1)}
+                </li>
+                <li>
+                  Favorable-direction significance MCSE:{" "}
+                  {percent(displayedEvaluate.monte_carlo.mcse_favorable, 1)}
+                </li>
+                <li>
+                  Invalid-test fraction:{" "}
+                  {percent(
+                    displayedEvaluate.monte_carlo.invalid_test_fraction,
+                    1
+                  )}
+                </li>
+                <li>
+                  Replicates:{" "}
+                  {displayedEvaluate.monte_carlo.replicates.toLocaleString()}
+                </li>
+                <li>Seed: {displayedEvaluate.monte_carlo.seed}</li>
+              </>
+            ) : (
+              <li>
+                Monte Carlo simulation:{" "}
+                <em>
+                  Unavailable for custom client-side inputs; backend simulation required for pooled-z results.
+                </em>
+              </li>
+            )}
           </ul>
           <p>
             <strong>Statistical estimate only.</strong> An estimate of

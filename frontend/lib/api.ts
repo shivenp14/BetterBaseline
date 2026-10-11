@@ -26,34 +26,53 @@ export interface ExtendedGridRequest extends GridRequest {
   provenance_ledger?: ProvenanceLedger;
 }
 
-function matchesPresetInputs(request: EvaluateRequest): boolean {
+function matchesPresetInputs(request: ExtendedEvaluateRequest): boolean {
   const preset = getPresetById(request.preset_id);
   if (!preset) return false;
   const p = preset.planned_design;
   const s = preset.stress_scenario;
   const f = preset.fixed_enrollment;
 
+  const effectMatches =
+    p.effect.kind === request.planned_design.effect.kind &&
+    p.effect.value === request.planned_design.effect.value;
+
+  const effectOverrideMatches =
+    s.effect_override === null && request.stress_scenario.effect_override === null;
+
   return (
     p.control_event_rate === request.planned_design.control_event_rate &&
+    effectMatches &&
     p.alpha === request.planned_design.alpha &&
     p.target_power === request.planned_design.target_power &&
     p.dropout.control === request.planned_design.dropout.control &&
     f.control === request.fixed_enrollment.control &&
     s.control_event_rate === request.stress_scenario.control_event_rate &&
-    s.dropout.control === request.stress_scenario.dropout.control
+    s.dropout.control === request.stress_scenario.dropout.control &&
+    effectOverrideMatches
   );
 }
 
-function matchesPresetDesign(request: CalculateRequest): boolean {
+function matchesPresetDesign(request: ExtendedCalculateRequest): boolean {
   const preset = getPresetById(request.preset_id);
   if (!preset) return false;
   const p = preset.planned_design;
   return (
     p.control_event_rate === request.control_event_rate &&
+    p.effect.kind === request.effect.kind &&
+    p.effect.value === request.effect.value &&
     p.alpha === request.alpha &&
     p.target_power === request.target_power &&
     p.dropout.control === request.dropout.control
   );
+}
+
+function arraysEqual(a: number[], b: number[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
 }
 
 /**
@@ -103,7 +122,8 @@ export async function evaluateScenario(
     request.planned_design,
     request.fixed_enrollment,
     request.stress_scenario.control_event_rate,
-    request.stress_scenario.dropout.control
+    request.stress_scenario.dropout.control,
+    request.provenance_ledger
   );
 }
 
@@ -125,9 +145,17 @@ export async function getStressGrid(
   }
 
   const preset = getPresetById(request.preset_id);
+  const p = preset.planned_design;
   const isDefaultPreset =
-    preset.planned_design.control_event_rate === request.planned_design.control_event_rate &&
-    preset.fixed_enrollment.control === request.fixed_enrollment.control;
+    p.control_event_rate === request.planned_design.control_event_rate &&
+    p.effect.kind === request.planned_design.effect.kind &&
+    p.effect.value === request.planned_design.effect.value &&
+    p.alpha === request.planned_design.alpha &&
+    p.target_power === request.planned_design.target_power &&
+    p.dropout.control === request.planned_design.dropout.control &&
+    preset.fixed_enrollment.control === request.fixed_enrollment.control &&
+    arraysEqual(preset.grid_response.x_baseline, request.x_baseline) &&
+    arraysEqual(preset.grid_response.y_dropout, request.y_dropout);
 
   if (isDefaultPreset) {
     return preset.grid_response;

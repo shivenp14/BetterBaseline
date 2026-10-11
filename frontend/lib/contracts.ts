@@ -62,7 +62,7 @@ export interface EvaluateResponse {
     invalid_test_fraction: number;
     replicates: number;
     seed: number;
-  };
+  } | null;
   warnings: string[];
   metadata: { computed_at: string; inputs_hash: string };
   provenance: Provenance;

@@ -233,6 +233,35 @@ function testSingleAuthoritativeLedgerPreservesManualOrigin() {
   console.log("✔ Single authoritative ledger preserves manual origin across planned and stress fields");
 }
 
+async function testRolandReviewFixes() {
+  const state = initializeWorkspaceState("baseline-collapse-v1");
+
+  // 1. Changing effect kind/value triggers live evaluation, not preset mock
+  const modifiedEffectEval = await evaluateScenario({
+    planned_design: {
+      ...state.plannedDraft,
+      effect: { kind: "relative_risk", value: 0.9 },
+    },
+    fixed_enrollment: state.frozenEnrollment!,
+    stress_scenario: {
+      control_event_rate: 0.10,
+      dropout: { control: 0.0, treatment: 0.0 },
+      effect_override: null,
+    },
+    simulation: { replicates: 10000, seed: 42 },
+    preset_id: state.presetId,
+  });
+  // Live calculation should produce null monte_carlo and lower power than preset 0.47
+  assert.strictEqual(modifiedEffectEval.monte_carlo, null);
+  assert.notStrictEqual(modifiedEffectEval.analytic.conditional_power_approx, 0.47);
+  assert.strictEqual(
+    modifiedEffectEval.warnings.some((w) => w.includes("Monte Carlo simulation unavailable")),
+    true
+  );
+
+  console.log("✔ Roland review fixes: null MC disclosure and effect matching verified");
+}
+
 async function runAll() {
   testPresetLoading();
   testStressAdjustmentPreservesFrozenEnrollment();
@@ -241,10 +270,12 @@ async function runAll() {
   testRejectOutdatedLateResponses();
   await testLiveEvaluationCalculatesDifferentAssumptions();
   testSingleAuthoritativeLedgerPreservesManualOrigin();
-  console.log("\nALL 7 WORKSPACE STATE INVARIANT TESTS PASSED!");
+  await testRolandReviewFixes();
+  console.log("\nALL WORKSPACE STATE INVARIANT TESTS PASSED!");
 }
 
 runAll().catch((err) => {
   console.error("Test failed:", err);
   process.exit(1);
 });
+
