@@ -1,0 +1,1171 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Better Baseline API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/healthz": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Get Health",
+        "operationId": "get_health_healthz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/meta": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Get Metadata",
+        "operationId": "get_metadata_api_v1_meta_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetaResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/design/calculate": {
+      "post": {
+        "tags": [
+          "design"
+        ],
+        "summary": "Calculate Design",
+        "operationId": "calculate_design_api_v1_design_calculate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DesignCalculateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignCalculateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scenarios/evaluate": {
+      "post": {
+        "tags": [
+          "scenarios"
+        ],
+        "summary": "Evaluate Scenario",
+        "description": "Scaffold endpoint for scenario evaluation.\n\nHandoff to Issue #65 (@PranavGoyal01) for full analytic evaluation and\nMonte Carlo simulation integration.",
+        "operationId": "evaluate_scenario_api_v1_scenarios_evaluate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioEvaluateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioEvaluateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scenarios/grid": {
+      "post": {
+        "tags": [
+          "grid"
+        ],
+        "summary": "Generate Scenario Grid",
+        "description": "Scaffold endpoint for 2D scenario grid and 1D power curve generation.\n\nHandoff to Issue #66 (@roland-aranas) for full grid calculation and contour extraction.",
+        "operationId": "generate_scenario_grid_api_v1_scenarios_grid_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioGridRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioGridResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AbsoluteRiskReductionEffect": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "absolute_risk_reduction",
+            "title": "Kind",
+            "default": "absolute_risk_reduction"
+          },
+          "value": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Value",
+            "description": "Absolute risk reduction (0, 1)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "title": "AbsoluteRiskReductionEffect"
+      },
+      "AnalyticEvaluation": {
+        "properties": {
+          "method": {
+            "type": "string",
+            "const": "cohen_h_normal_v1",
+            "title": "Method",
+            "default": "cohen_h_normal_v1"
+          },
+          "conditional_power_approx": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Conditional Power Approx"
+          },
+          "assumed_evaluable_n": {
+            "$ref": "#/components/schemas/ArmCounts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "conditional_power_approx",
+          "assumed_evaluable_n"
+        ],
+        "title": "AnalyticEvaluation"
+      },
+      "ArmCounts": {
+        "properties": {
+          "control": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Control",
+            "description": "Control arm count"
+          },
+          "treatment": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Treatment",
+            "description": "Treatment arm count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "control",
+          "treatment"
+        ],
+        "title": "ArmCounts"
+      },
+      "ArmProportions": {
+        "properties": {
+          "control": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "minimum": 0.0,
+            "title": "Control",
+            "description": "Control arm rate"
+          },
+          "treatment": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "minimum": 0.0,
+            "title": "Treatment",
+            "description": "Treatment arm rate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "control",
+          "treatment"
+        ],
+        "title": "ArmProportions"
+      },
+      "ContourPoint": {
+        "properties": {
+          "p_control": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "P Control"
+          },
+          "dropout": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Dropout"
+          }
+        },
+        "type": "object",
+        "required": [
+          "p_control",
+          "dropout"
+        ],
+        "title": "ContourPoint"
+      },
+      "ContourSegment": {
+        "properties": {
+          "start": {
+            "$ref": "#/components/schemas/ContourPoint"
+          },
+          "end": {
+            "$ref": "#/components/schemas/ContourPoint"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "end"
+        ],
+        "title": "ContourSegment"
+      },
+      "DesignCalculateRequest": {
+        "properties": {
+          "model_version": {
+            "type": "string",
+            "const": "binary-v1",
+            "title": "Model Version",
+            "default": "binary-v1"
+          },
+          "control_event_rate": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Control Event Rate",
+            "description": "Baseline control event probability"
+          },
+          "effect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RelativeRiskEffect"
+              },
+              {
+                "$ref": "#/components/schemas/AbsoluteRiskReductionEffect"
+              }
+            ],
+            "title": "Effect",
+            "discriminator": {
+              "propertyName": "kind",
+              "mapping": {
+                "absolute_risk_reduction": "#/components/schemas/AbsoluteRiskReductionEffect",
+                "relative_risk": "#/components/schemas/RelativeRiskEffect"
+              }
+            }
+          },
+          "alpha": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Alpha",
+            "description": "Significance level",
+            "default": 0.05
+          },
+          "target_power": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Target Power",
+            "description": "Target statistical power",
+            "default": 0.8
+          },
+          "allocation_ratio": {
+            "type": "number",
+            "title": "Allocation Ratio",
+            "description": "Allocation ratio (MVP: 1.0)",
+            "default": 1.0
+          },
+          "dropout": {
+            "$ref": "#/components/schemas/ArmProportions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "control_event_rate",
+          "effect"
+        ],
+        "title": "DesignCalculateRequest"
+      },
+      "DesignCalculateResponse": {
+        "properties": {
+          "model_version": {
+            "type": "string",
+            "const": "binary-v1",
+            "title": "Model Version",
+            "default": "binary-v1"
+          },
+          "method": {
+            "type": "string",
+            "const": "cohen_h_normal_v1",
+            "title": "Method",
+            "default": "cohen_h_normal_v1"
+          },
+          "p_treatment": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "P Treatment"
+          },
+          "evaluable_n": {
+            "$ref": "#/components/schemas/ArmCounts"
+          },
+          "enrolled_n": {
+            "$ref": "#/components/schemas/ArmCounts"
+          },
+          "nominal_power_evaluable": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Nominal Power Evaluable"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "inputs_hash": {
+            "type": "string",
+            "title": "Inputs Hash"
+          }
+        },
+        "type": "object",
+        "required": [
+          "p_treatment",
+          "evaluable_n",
+          "enrolled_n",
+          "nominal_power_evaluable",
+          "inputs_hash"
+        ],
+        "title": "DesignCalculateResponse"
+      },
+      "GridAxisSpec": {
+        "properties": {
+          "min": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Min"
+          },
+          "max": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Max"
+          },
+          "steps": {
+            "type": "integer",
+            "maximum": 81.0,
+            "minimum": 2.0,
+            "title": "Steps"
+          }
+        },
+        "type": "object",
+        "required": [
+          "min",
+          "max",
+          "steps"
+        ],
+        "title": "GridAxisSpec"
+      },
+      "GridDropoutAxisSpec": {
+        "properties": {
+          "min": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "minimum": 0.0,
+            "title": "Min",
+            "default": 0.0
+          },
+          "max": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "minimum": 0.0,
+            "title": "Max",
+            "default": 0.3
+          },
+          "steps": {
+            "type": "integer",
+            "maximum": 61.0,
+            "minimum": 2.0,
+            "title": "Steps",
+            "default": 10
+          }
+        },
+        "type": "object",
+        "title": "GridDropoutAxisSpec"
+      },
+      "GridPoint": {
+        "properties": {
+          "p_control": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "P Control"
+          },
+          "dropout": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Dropout"
+          },
+          "power": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Power"
+          },
+          "is_safe": {
+            "type": "boolean",
+            "title": "Is Safe",
+            "default": false
+          },
+          "is_valid": {
+            "type": "boolean",
+            "title": "Is Valid",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "p_control",
+          "dropout"
+        ],
+        "title": "GridPoint"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "ok"
+          },
+          "model_version": {
+            "type": "string",
+            "title": "Model Version",
+            "default": "binary-v1"
+          }
+        },
+        "type": "object",
+        "title": "HealthResponse"
+      },
+      "MetaResponse": {
+        "properties": {
+          "app_name": {
+            "type": "string",
+            "title": "App Name"
+          },
+          "app_version": {
+            "type": "string",
+            "title": "App Version"
+          },
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          },
+          "analytical_method": {
+            "type": "string",
+            "title": "Analytical Method",
+            "default": "cohen_h_normal_v1"
+          },
+          "simulation_method": {
+            "type": "string",
+            "title": "Simulation Method",
+            "default": "pooled_two_proportion_z_v1"
+          }
+        },
+        "type": "object",
+        "required": [
+          "app_name",
+          "app_version",
+          "model_version"
+        ],
+        "title": "MetaResponse"
+      },
+      "MonteCarloEvaluation": {
+        "properties": {
+          "method": {
+            "type": "string",
+            "const": "pooled_two_proportion_z_v1",
+            "title": "Method",
+            "default": "pooled_two_proportion_z_v1"
+          },
+          "significant_two_sided_fraction": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Significant Two Sided Fraction"
+          },
+          "significant_favorable_fraction": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Significant Favorable Fraction"
+          },
+          "mcse_two_sided": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Mcse Two Sided"
+          },
+          "mcse_favorable": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Mcse Favorable"
+          },
+          "invalid_test_fraction": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Invalid Test Fraction"
+          },
+          "replicates": {
+            "type": "integer",
+            "minimum": 100.0,
+            "title": "Replicates"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 4294967295.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "significant_two_sided_fraction",
+          "significant_favorable_fraction",
+          "mcse_two_sided",
+          "mcse_favorable",
+          "invalid_test_fraction",
+          "replicates"
+        ],
+        "title": "MonteCarloEvaluation"
+      },
+      "PowerCurvePoint": {
+        "properties": {
+          "p_control": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "P Control"
+          },
+          "power": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Power"
+          },
+          "is_valid": {
+            "type": "boolean",
+            "title": "Is Valid",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "p_control"
+        ],
+        "title": "PowerCurvePoint"
+      },
+      "RelativeRiskEffect": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "relative_risk",
+            "title": "Kind",
+            "default": "relative_risk"
+          },
+          "value": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Value",
+            "description": "Relative risk ratio (0, 1)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "title": "RelativeRiskEffect"
+      },
+      "ScenarioEvaluateRequest": {
+        "properties": {
+          "planned_design": {
+            "$ref": "#/components/schemas/TrialAssumptions"
+          },
+          "fixed_enrollment": {
+            "$ref": "#/components/schemas/ArmCounts"
+          },
+          "stress_scenario": {
+            "$ref": "#/components/schemas/StressScenario"
+          },
+          "simulation": {
+            "$ref": "#/components/schemas/SimulationOptions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "planned_design",
+          "fixed_enrollment",
+          "stress_scenario"
+        ],
+        "title": "ScenarioEvaluateRequest"
+      },
+      "ScenarioEvaluateResponse": {
+        "properties": {
+          "model_version": {
+            "type": "string",
+            "const": "binary-v1",
+            "title": "Model Version",
+            "default": "binary-v1"
+          },
+          "analytic": {
+            "$ref": "#/components/schemas/AnalyticEvaluation"
+          },
+          "monte_carlo": {
+            "$ref": "#/components/schemas/MonteCarloEvaluation"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ScenarioMetadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "analytic",
+          "monte_carlo",
+          "metadata"
+        ],
+        "title": "ScenarioEvaluateResponse"
+      },
+      "ScenarioGridRequest": {
+        "properties": {
+          "planned_design": {
+            "$ref": "#/components/schemas/TrialAssumptions"
+          },
+          "fixed_enrollment": {
+            "$ref": "#/components/schemas/ArmCounts"
+          },
+          "x_baseline": {
+            "$ref": "#/components/schemas/GridAxisSpec"
+          },
+          "y_dropout": {
+            "$ref": "#/components/schemas/GridDropoutAxisSpec"
+          },
+          "effect_override": {
+            "anyOf": [
+              {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/RelativeRiskEffect"
+                  },
+                  {
+                    "$ref": "#/components/schemas/AbsoluteRiskReductionEffect"
+                  }
+                ],
+                "discriminator": {
+                  "propertyName": "kind",
+                  "mapping": {
+                    "absolute_risk_reduction": "#/components/schemas/AbsoluteRiskReductionEffect",
+                    "relative_risk": "#/components/schemas/RelativeRiskEffect"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effect Override"
+          },
+          "selected_scenario": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StressScenario"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Selected stress scenario providing the selected baseline risk and dropout level for selected_point and power_curve"
+          }
+        },
+        "type": "object",
+        "required": [
+          "planned_design",
+          "fixed_enrollment"
+        ],
+        "title": "ScenarioGridRequest",
+        "description": "Request for generating the 2D power grid surface and 1D power curve.\n\nThe power curve slices analytic power across x_baseline holding dropout fixed\nat selected_scenario.dropout (or 0.0 if omitted). Each curve point uses floored\nexpected retention floor(enrolled_n * (1 - dropout)) and the effective effect."
+      },
+      "ScenarioGridResponse": {
+        "properties": {
+          "model_version": {
+            "type": "string",
+            "const": "binary-v1",
+            "title": "Model Version",
+            "default": "binary-v1"
+          },
+          "method": {
+            "type": "string",
+            "const": "cohen_h_normal_v1",
+            "title": "Method",
+            "default": "cohen_h_normal_v1"
+          },
+          "x_baseline": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "X Baseline"
+          },
+          "y_dropout": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Y Dropout"
+          },
+          "power": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Power"
+          },
+          "invalid_mask": {
+            "items": {
+              "items": {
+                "type": "boolean"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Invalid Mask"
+          },
+          "target_power": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Target Power"
+          },
+          "planned_point": {
+            "$ref": "#/components/schemas/GridPoint"
+          },
+          "selected_point": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GridPoint"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "frontier_points": {
+            "items": {
+              "$ref": "#/components/schemas/GridPoint"
+            },
+            "type": "array",
+            "title": "Frontier Points"
+          },
+          "contour_segments": {
+            "items": {
+              "$ref": "#/components/schemas/ContourSegment"
+            },
+            "type": "array",
+            "title": "Contour Segments"
+          },
+          "power_curve": {
+            "items": {
+              "$ref": "#/components/schemas/PowerCurvePoint"
+            },
+            "type": "array",
+            "title": "Power Curve"
+          },
+          "invalid_cell_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Invalid Cell Count"
+          },
+          "worst_case_power": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worst Case Power"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "computed_at": {
+            "type": "string",
+            "title": "Computed At"
+          },
+          "inputs_hash": {
+            "type": "string",
+            "title": "Inputs Hash"
+          }
+        },
+        "type": "object",
+        "required": [
+          "x_baseline",
+          "y_dropout",
+          "power",
+          "invalid_mask",
+          "target_power",
+          "planned_point",
+          "invalid_cell_count",
+          "computed_at",
+          "inputs_hash"
+        ],
+        "title": "ScenarioGridResponse"
+      },
+      "ScenarioMetadata": {
+        "properties": {
+          "computed_at": {
+            "type": "string",
+            "title": "Computed At"
+          },
+          "inputs_hash": {
+            "type": "string",
+            "title": "Inputs Hash"
+          }
+        },
+        "type": "object",
+        "required": [
+          "computed_at",
+          "inputs_hash"
+        ],
+        "title": "ScenarioMetadata"
+      },
+      "SimulationOptions": {
+        "properties": {
+          "replicates": {
+            "type": "integer",
+            "maximum": 50000.0,
+            "minimum": 100.0,
+            "title": "Replicates",
+            "description": "Replication count",
+            "default": 10000
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 4294967295.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed",
+            "description": "Random seed for reproducibility",
+            "default": 42
+          }
+        },
+        "type": "object",
+        "title": "SimulationOptions"
+      },
+      "StressScenario": {
+        "properties": {
+          "control_event_rate": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Control Event Rate",
+            "description": "Hypothetical true control rate"
+          },
+          "dropout": {
+            "$ref": "#/components/schemas/ArmProportions"
+          },
+          "effect_override": {
+            "anyOf": [
+              {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/RelativeRiskEffect"
+                  },
+                  {
+                    "$ref": "#/components/schemas/AbsoluteRiskReductionEffect"
+                  }
+                ],
+                "discriminator": {
+                  "propertyName": "kind",
+                  "mapping": {
+                    "absolute_risk_reduction": "#/components/schemas/AbsoluteRiskReductionEffect",
+                    "relative_risk": "#/components/schemas/RelativeRiskEffect"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effect Override",
+            "description": "Optional effect override"
+          }
+        },
+        "type": "object",
+        "required": [
+          "control_event_rate"
+        ],
+        "title": "StressScenario"
+      },
+      "TrialAssumptions": {
+        "properties": {
+          "model_version": {
+            "type": "string",
+            "const": "binary-v1",
+            "title": "Model Version",
+            "default": "binary-v1"
+          },
+          "control_event_rate": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Control Event Rate",
+            "description": "Baseline control event probability"
+          },
+          "effect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RelativeRiskEffect"
+              },
+              {
+                "$ref": "#/components/schemas/AbsoluteRiskReductionEffect"
+              }
+            ],
+            "title": "Effect",
+            "discriminator": {
+              "propertyName": "kind",
+              "mapping": {
+                "absolute_risk_reduction": "#/components/schemas/AbsoluteRiskReductionEffect",
+                "relative_risk": "#/components/schemas/RelativeRiskEffect"
+              }
+            }
+          },
+          "alpha": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Alpha",
+            "description": "Significance level",
+            "default": 0.05
+          },
+          "target_power": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Target Power",
+            "description": "Target statistical power",
+            "default": 0.8
+          },
+          "allocation_ratio": {
+            "type": "number",
+            "title": "Allocation Ratio",
+            "description": "Allocation ratio (MVP: 1.0)",
+            "default": 1.0
+          },
+          "dropout": {
+            "$ref": "#/components/schemas/ArmProportions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "control_event_rate",
+          "effect"
+        ],
+        "title": "TrialAssumptions"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
