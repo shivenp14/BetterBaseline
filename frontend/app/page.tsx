@@ -31,6 +31,7 @@ export default function Home() {
   const evaluateAbortRef = useRef<AbortController | null>(null);
   const gridAbortRef = useRef<AbortController | null>(null);
   const stressEvaluationPendingRef = useRef(false);
+  const cancelStressDebounceRef = useRef<(() => void) | null>(null);
   const nextRequestRevisionRef = useRef(0);
   const inputGenerationRef = useRef(state.inputGeneration);
 
@@ -59,6 +60,12 @@ export default function Home() {
   const displayedEvaluate = evaluateResult;
   const displayedGrid = gridResult;
 
+  const cancelPendingStressEvaluation = useCallback(() => {
+    stressEvaluationPendingRef.current = false;
+    cancelStressDebounceRef.current?.();
+    cancelStressDebounceRef.current = null;
+  }, []);
+
   function abortAllPending() {
     calculateAbortRef.current?.abort();
     evaluateAbortRef.current?.abort();
@@ -73,14 +80,14 @@ export default function Home() {
   function handleSelectPreset(nextPresetId: string) {
     advanceInputGeneration();
     abortAllPending();
-    stressEvaluationPendingRef.current = false;
+    cancelPendingStressEvaluation();
     dispatch({ type: "LOAD_PRESET", presetId: nextPresetId });
   }
 
   function handleResetPreset() {
     advanceInputGeneration();
     abortAllPending();
-    stressEvaluationPendingRef.current = false;
+    cancelPendingStressEvaluation();
     dispatch({ type: "RESET_TO_PRESET" });
     setFormResetKey((key) => key + 1);
   }
@@ -88,6 +95,7 @@ export default function Home() {
   function handleStressBaselineChange(val: number) {
     advanceInputGeneration();
     abortAllPending();
+    cancelPendingStressEvaluation();
     stressEvaluationPendingRef.current = true;
     dispatch({ type: "UPDATE_STRESS_BASELINE", baseline: val });
   }
@@ -95,13 +103,14 @@ export default function Home() {
   function handleStressDropoutChange(val: number) {
     advanceInputGeneration();
     abortAllPending();
+    cancelPendingStressEvaluation();
     stressEvaluationPendingRef.current = true;
     dispatch({ type: "UPDATE_STRESS_DROPOUT", dropout: val });
   }
 
   function handlePlannedDraftChange(draft: PlanningDraft, changedField: DraftField) {
     advanceInputGeneration();
-    stressEvaluationPendingRef.current = false;
+    cancelPendingStressEvaluation();
     dispatch(plannedFieldUpdateAction(draft, changedField, presetId));
   }
 
@@ -113,7 +122,7 @@ export default function Home() {
     // enrollment lock. Advance synchronously so a pending debounce cannot
     // start against the old lock before React applies the reducer action.
     advanceInputGeneration();
-    stressEvaluationPendingRef.current = false;
+    cancelPendingStressEvaluation();
     abortAllPending();
     const controller = new AbortController();
     calculateAbortRef.current = controller;
@@ -148,6 +157,9 @@ export default function Home() {
     ) return;
     if (designStatus === "calculating" || !frozenEnrollment ||
       (getApiMode() === "live" && designStatus !== "success")) return;
+    // Manual and automatic evaluation consume the same pending stress intent.
+    // Cancel synchronously before START_EVALUATE changes this callback's identity.
+    cancelPendingStressEvaluation();
     evaluateAbortRef.current?.abort();
     const controller = new AbortController();
     evaluateAbortRef.current = controller;
@@ -170,17 +182,28 @@ export default function Home() {
         requestRevision: revision,
       });
     }
-  }, [designStatus, frozenEnrollment, inputGeneration, requestRevision, state]);
+  }, [designStatus, frozenEnrollment, inputGeneration, requestRevision, state, cancelPendingStressEvaluation]);
 
   useEffect(() => {
     if (!stressEvaluationPendingRef.current || !frozenEnrollment || designStatus === "calculating" ||
       (getApiMode() === "live" && designStatus !== "success")) return;
     const expectedInputGeneration = inputGeneration;
-    return scheduleDebounced(() => {
-      if (expectedInputGeneration !== inputGenerationRef.current) return;
-      stressEvaluationPendingRef.current = false;
+    let active = true;
+    const cancelTimer = scheduleDebounced(() => {
+      if (!active || !stressEvaluationPendingRef.current ||
+        expectedInputGeneration !== inputGenerationRef.current) return;
       void handleEvaluate(expectedInputGeneration);
     }, 350);
+    const cancel = () => {
+      // clearTimeout alone cannot reject a callback already queued for delivery.
+      active = false;
+      cancelTimer();
+    };
+    cancelStressDebounceRef.current = cancel;
+    return () => {
+      cancel();
+      if (cancelStressDebounceRef.current === cancel) cancelStressDebounceRef.current = null;
+    };
   }, [stressBaseline, stressDropout, frozenEnrollment, designStatus, inputGeneration, handleEvaluate]);
 
   async function handleLoadGrid() {
