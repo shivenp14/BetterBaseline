@@ -33,7 +33,7 @@ export function StressControls({
   const expectedRetainedTreatment = frozenEnrollment ? expectedRetainedCount(treatmentN, stressDropout) : 0;
 
   return (
-    <section aria-labelledby="stress-heading">
+    <section className={"analytics-panel"} aria-labelledby="stress-heading">
       <h2 id="stress-heading">Stress Controls & Fixed Enrollment Invariant</h2>
       <p>
         Vary underlying control risk or attrition under fixed sample size. Notice that
@@ -41,7 +41,7 @@ export function StressControls({
       </p>
 
       {frozenEnrollment ? (
-        <div style={{ padding: "8px", border: "1px solid #ccc", marginBottom: "12px" }}>
+        <div className={"analytics-enrollment"}>
           <strong>LOCKED ENROLLMENT (Immutable):</strong>{" "}
           <span>Control: {controlN.toLocaleString()} enrolled</span> |{" "}
           <span>Treatment: {treatmentN.toLocaleString()} enrolled</span>
@@ -53,12 +53,12 @@ export function StressControls({
           </small>
         </div>
       ) : (
-        <div style={{ padding: "8px", border: "1px solid #ccc", marginBottom: "12px" }}>
+        <div className={"analytics-enrollment"}>
           <em>No calculated design locked yet. Run calculation to lock enrollment.</em>
         </div>
       )}
 
-      <div>
+      <div className={"analytics-control"}>
         <label htmlFor="stress-baseline-slider">
           <strong>Stress Control Risk (Eligible-Control Event Rate):</strong>{" "}
           {(stressBaseline * 100).toFixed(1)}%
@@ -72,10 +72,11 @@ export function StressControls({
           step="0.01"
           value={stressBaseline}
           onChange={(e) => onBaselineChange(parseFloat(e.target.value))}
-          style={{ width: "300px" }}
+          className={"analytics-slider"}
         />
         <input
           id="stress-baseline-num"
+          aria-label="Stress control risk fraction"
           type="number"
           min="0.01"
           max="0.99"
@@ -85,11 +86,12 @@ export function StressControls({
             const val = parseFloat(e.target.value);
             if (!isNaN(val) && val > 0 && val < 1) onBaselineChange(val);
           }}
-          style={{ width: "70px", marginLeft: "8px" }}
+          className={"analytics-numeric"}
         />
+        <small className={"analytics-unit"}>Numeric value is a fraction (0.10 = 10%). Risk range: 1–99%.</small>
       </div>
 
-      <div style={{ marginTop: "12px" }}>
+      <div className={"analytics-control"}>
         <label htmlFor="stress-dropout-slider">
           <strong>Stress Symmetric Dropout Rate:</strong>{" "}
           {(stressDropout * 100).toFixed(1)}%
@@ -103,10 +105,11 @@ export function StressControls({
           step="0.01"
           value={stressDropout}
           onChange={(e) => onDropoutChange(parseFloat(e.target.value))}
-          style={{ width: "300px" }}
+          className={"analytics-slider"}
         />
         <input
           id="stress-dropout-num"
+          aria-label="Stress symmetric dropout fraction"
           type="number"
           min="0.00"
           max="0.50"
@@ -116,11 +119,12 @@ export function StressControls({
             const val = parseFloat(e.target.value);
             if (!isNaN(val) && val >= 0 && val < 1) onDropoutChange(val);
           }}
-          style={{ width: "70px", marginLeft: "8px" }}
+          className={"analytics-numeric"}
         />
       </div>
 
-      <div style={{ marginTop: "16px" }}>
+      <p className={"analytics-unit"}>Dropout numeric value is a fraction (0.10 = 10%). Slider range: 0–50%.</p>
+      <div className={"analytics-actions"}>
         {onEvaluate && (
           <button
             type="button"
@@ -130,7 +134,7 @@ export function StressControls({
             {evaluateStatus === "evaluating" ? "Evaluating Stress..." : "Evaluate Stress Scenario"}
           </button>
         )}
-        <span style={{ marginLeft: "10px" }}>
+        <span className={evaluateStatus === "stale" ? "analytics-warning" : "analytics-status"}>
           Status:{" "}
           <strong>
             {evaluateStatus === "stale"
@@ -141,7 +145,7 @@ export function StressControls({
       </div>
 
       {evaluateError && (
-        <div style={{ color: "red", marginTop: "8px" }}>
+        <div className={"analytics-error"}>
           <strong>Error:</strong> {evaluateError}
         </div>
       )}

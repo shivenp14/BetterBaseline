@@ -70,7 +70,7 @@ test('disclosures state conditional synthetic scope, distinct methods and null a
 });
 test('native controls show defaults, empty/unavailable and invalid states honestly',()=>{
   const html=render(MonteCarloPanel,{selection,runSimulation:async()=>alternative});assert.ok(html.includes('value="42"')&&html.includes('value="10000"'));
-  assert.ok(html.includes('Run simulation')&&html.includes('No simulation result yet'));assert.ok(!html.includes('class='));
+  assert.ok(html.includes('Run simulation')&&html.includes('No simulation result yet'));
   assert.ok(render(MonteCarloPanel,{selection:null}).includes('Simulation unavailable'));
   const invalid=render(MonteCarloPanel,{selection:{...selection,stress_scenario:{...selection.stress_scenario,effect_override:{kind:'absolute_risk_reduction',value:.2}}},runSimulation:async()=>alternative});
   assert.ok(invalid.includes('role="alert"')&&invalid.includes('disabled='));

@@ -30,10 +30,9 @@ test("form has explicit units, baseline definition, and associated native contro
   assert.match(html, /name="controlPercent"[^>]*value="20"/);
   assert.match(html, /name="relativeRisk"[^>]*value="0.75"/);
   assert.ok(html.includes("aria-describedby="));
-  for (const label of html.matchAll(/<label for="([^"]+)"/g)) {
+  for (const label of html.matchAll(/<label\b[^>]*\bfor="([^"]+)"/g)) {
     assert.ok(html.includes(`id="${label[1]}"`));
   }
-  assert.ok(!html.includes("class="));
 });
 
 test("ARR form displays percentage points without reusing RR", () => {

@@ -20,6 +20,7 @@ export function GridDataTable({ result, onSelectPoint }: {
   const problem = heatmapProblem(result, result);
   if (problem) return <p role="alert">{problem}</p>;
   return <>
+    <div className={"analytics-tableScroll"} role="region" aria-label="Analytic sensitivity grid numerical alternative" tabIndex={0}>
     <table>
       <caption>Analytic power matrix [dropout][baseline], floor-based expected retained counts; selected MC shown separately.</caption>
       <thead><tr><th scope="col">Symmetric dropout ↓ / Baseline →</th>{result.xBaseline.map(baseline =>
@@ -28,7 +29,7 @@ export function GridDataTable({ result, onSelectPoint }: {
         <th scope="row">{percent(result.yDropout[r])} ({result.yDropout[r]} fraction)</th>
         {row.map((power, c) => {
           const selected = result.selectedPoint.baseline === result.xBaseline[c] && result.selectedPoint.dropout === result.yDropout[r];
-          return <td key={result.xBaseline[c]}>
+          return <td className={power === null ? "analytics-invalidCell" : selected ? "analytics-selectedCell" : undefined} key={result.xBaseline[c]}>
             {power === null ? "Invalid scenario (null). ARR requires baseline greater than ARR; expected retained counts must support the analytic test. Unavailable cells cannot be simulated." : `${percent(power)} (${power} fraction)`}
             {selected ? " — selected" : ""}
             {onSelectPoint ? <button type="button" disabled={power === null} aria-pressed={selected}
@@ -39,6 +40,7 @@ export function GridDataTable({ result, onSelectPoint }: {
         })}
       </tr>)}</tbody>
     </table>
+    </div>
     <a download="analytic-grid.csv" href={`data:text/csv;charset=utf-8,${encodeURIComponent(gridCsv(result))}`}>Download analytic grid CSV (fractions, nulls and invalid mask)</a>
   </>;
 }

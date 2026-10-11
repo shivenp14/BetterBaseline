@@ -156,10 +156,10 @@ test("malformed probabilities, ordering, markers and allocation cannot become ch
   }
 });
 
-test("components contain no CSS or network/statistical calculation path", () => {
+test("components contain no network/statistical calculation path", () => {
   for (const name of ["PowerCurve.tsx", "DesignComparison.tsx"]) {
     const source = fs.readFileSync(path.join(__dirname, "../components", name), "utf8");
-    assert.doesNotMatch(source, /className=|style=|fetch\(|axios|monte_carlo|Math\.asin/);
+    assert.doesNotMatch(source, /fetch\(|axios|monte_carlo|Math\.asin/);
   }
 });
 

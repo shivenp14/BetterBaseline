@@ -112,9 +112,9 @@ export function selectGridCell(result: HeatmapSnapshot, row: number, column: num
 export function StressHeatmap({ current, result, status, error, onSelectPoint }: StressHeatmapProps) {
   const id = useId();
   const problem = heatmapProblem(current, result);
-  if (status !== "ready" || problem || !result) return <section aria-labelledby={`${id}-heading`} aria-busy={status === "loading"}>
+  if (status !== "ready" || problem || !result) return <section className={"analytics-panel"} aria-labelledby={`${id}-heading`} aria-busy={status === "loading"}>
     <h2 id={`${id}-heading`}>Sensitivity heatmap</h2>
-    <p role={status === "error" ? "alert" : "status"}>{status === "loading" ? "Loading analytic grid for current inputs."
+    <p className={status === "error" ? "analytics-error" : problem?.startsWith("Stale") ? "analytics-warning" : undefined} role={status === "error" ? "alert" : "status"}>{status === "loading" ? "Loading analytic grid for current inputs."
       : status === "error" ? error || "Analytic grid could not be loaded."
         : status === "idle" ? "Calculate a design and request its analytic grid." : problem}</p>
   </section>;
@@ -127,7 +127,7 @@ export function StressHeatmap({ current, result, status, error, onSelectPoint }:
   const selectedCell = result.selectedPower === undefined && result.invalidMask.some((row, r) => row.some((invalid, c) => invalid
     && result.selectedPoint.baseline >= xs[c] && result.selectedPoint.baseline <= xs[c + 1]
     && result.selectedPoint.dropout >= ys[r] && result.selectedPoint.dropout <= ys[r + 1]));
-  return <section aria-labelledby={`${id}-heading`}>
+  return <section className={"analytics-panel"} aria-labelledby={`${id}-heading`}>
     <h2 id={`${id}-heading`}>Sensitivity heatmap</h2>
     <p role="status">{result.illustrative ? "Illustrative synthetic fixture; not a measured result." : "Supplied analytic grid."}</p>
     <p>Analytic power at floor-based expected retained counts: floor(enrolled × (1 − dropout)) per arm.
@@ -139,7 +139,7 @@ export function StressHeatmap({ current, result, status, error, onSelectPoint }:
       <svg viewBox="0 0 650 345" width="650" height="345" role="img" aria-labelledby={`${id}-title ${id}-desc`}>
         <title id={`${id}-title`}>Analytic sensitivity grid, baseline horizontally and dropout vertically</title>
         <desc id={`${id}-desc`}>Rows are dropout and columns are baseline. Higher dropout is at the top.
-          Gray crossed cells are invalid, never zero power. Darker blue means higher power.
+          Coral crossed cells are invalid, never zero power. Stronger mint means higher power.
           Dashed lines show supplied target frontier segments. Circle marks the selected point. Select cells using the table below.</desc>
         {result.power.map((row, r) => row.map((power, c) => <g key={`${r}-${c}`} data-cell={`${r}-${c}`} data-baseline={result.xBaseline[c]} data-dropout={result.yDropout[r]} data-power={power === null ? "null" : power}
           role={onSelectPoint ? "button" : undefined} tabIndex={onSelectPoint && power !== null ? 0 : undefined}
@@ -153,8 +153,12 @@ export function StressHeatmap({ current, result, status, error, onSelectPoint }:
           <title>{`Baseline ${percent(result.xBaseline[c])}, dropout ${percent(result.yDropout[r])}: ${power === null ? "Invalid scenario (null)" : percent(power)}`}</title>
         </g>))}
         {result.frontierSegments.map((segment, s) => segment.slice(1).map((point, i) => frontierEdgeAllowed(result, segment[i], point)
-          ? <line key={`${s}-${i}`} data-frontier-segment={`${s}-${i}`} data-target-power={result.targetPower}
-            x1={x(segment[i].baseline)} y1={y(segment[i].dropout)} x2={x(point.baseline)} y2={y(point.dropout)} stroke="black" strokeWidth="2" strokeDasharray="5 5" /> : null))}
+          ? <g key={`${s}-${i}`}>
+            <line className="analytics-frontierBacking" aria-hidden="true"
+              x1={x(segment[i].baseline)} y1={y(segment[i].dropout)} x2={x(point.baseline)} y2={y(point.dropout)} stroke="black" strokeWidth="6" strokeDasharray="5 5" />
+            <line data-frontier-segment={`${s}-${i}`} data-target-power={result.targetPower}
+            x1={x(segment[i].baseline)} y1={y(segment[i].dropout)} x2={x(point.baseline)} y2={y(point.dropout)} stroke="black" strokeWidth="2" strokeDasharray="5 5" />
+          </g> : null))}
         {selectedValid && !selectedCell ? <circle data-marker="selected" data-baseline={result.selectedPoint.baseline} data-dropout={result.selectedPoint.dropout}
           cx={x(result.selectedPoint.baseline)} cy={y(result.selectedPoint.dropout)} r="7" fill="none" stroke="black" strokeWidth="3" /> : null}
         {result.xBaseline.map(v => <text key={v} x={x(v)} y={bottom + 20} textAnchor="middle">{percent(v)}</text>)}
@@ -162,12 +166,12 @@ export function StressHeatmap({ current, result, status, error, onSelectPoint }:
         <text x={(left + right) / 2} y={bottom + 50} textAnchor="middle">Control baseline event risk (%)</text>
         <text transform="translate(18 150) rotate(-90)" textAnchor="middle">Symmetric dropout (%)</text>
       </svg>
-      <figcaption>Blue: analytic power (pale = zero, dark = one). Gray with cross: invalid/null.
+      <figcaption>Mint: analytic power (faint = zero, strong = one). Coral with cross: invalid/null.
         Dashed: supplied {percent(result.targetPower)} target frontier; segments never join across invalid cells.
         Circle: selected stress point. Use the native selection buttons below with click, Enter or Space.</figcaption>
     </figure>
-    {!selectedValid || selectedCell ? <p role="status">Selected scenario is invalid; no simulation selection is emitted. ARR requires baseline greater than ARR so treatment risk stays positive; expected retained counts must also support the analytic test.</p> : null}
-    {result.warnings.map((warning, i) => <p key={i}>Warning: {warning}</p>)}
+    {!selectedValid || selectedCell ? <p className={"analytics-error"} role="status">Selected scenario is invalid; no simulation selection is emitted. ARR requires baseline greater than ARR so treatment risk stays positive; expected retained counts must also support the analytic test.</p> : null}
+    {result.warnings.map((warning, i) => <p className={"analytics-warning"} key={i}>Warning: {warning}</p>)}
     {result.diagnostics?.map((diagnostic, i) => <p key={i}>
       {diagnostic.severity}: {diagnostic.code} ({diagnostic.field}, {diagnostic.method}): {diagnostic.message}
     </p>)}

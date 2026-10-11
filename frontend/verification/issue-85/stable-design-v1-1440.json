@@ -1,0 +1,1130 @@
+{
+  "export_schema_version": 1,
+  "model_version": "binary-v1",
+  "planned_design": {
+    "model_version": "binary-v1",
+    "control_event_rate": 0.2,
+    "effect": {
+      "kind": "relative_risk",
+      "value": 0.75
+    },
+    "alpha": 0.05,
+    "target_power": 0.8,
+    "allocation_ratio": 1,
+    "dropout": {
+      "control": 0.05,
+      "treatment": 0.05
+    }
+  },
+  "fixed_enrollment": {
+    "control": 951,
+    "treatment": 951
+  },
+  "stress_scenario": {
+    "control_event_rate": 0.12,
+    "dropout": {
+      "control": 0.25,
+      "treatment": 0.25
+    },
+    "effect_override": null
+  },
+  "design_result": {
+    "model_version": "binary-v1",
+    "method": "cohen_h_normal_v1",
+    "p_treatment": 0.15000000000000002,
+    "evaluable_n": {
+      "control": 903,
+      "treatment": 903
+    },
+    "enrolled_n": {
+      "control": 951,
+      "treatment": 951
+    },
+    "nominal_power_evaluable": 0.8002861288461955,
+    "warnings": [
+      "Dropout inflation represents expected retention, not guaranteed evaluable counts."
+    ],
+    "diagnostics": [
+      {
+        "code": "CONDITIONAL_POWER_ONLY",
+        "severity": "info",
+        "field": "interpretation",
+        "method": "cohen_h_normal",
+        "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+        "arm": null,
+        "outcome": null,
+        "expected_count": null,
+        "threshold": null,
+        "count_basis": null,
+        "invalid_test_fraction": null,
+        "replicates": null,
+        "invalid_test_policy": null
+      }
+    ],
+    "inputs_hash": "8d984070d53c29bf",
+    "provenance": {
+      "/planned_design/model_version": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/control_event_rate": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/effect/kind": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/effect/value": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/alpha": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/target_power": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/allocation_ratio": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/dropout/control": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/dropout/treatment": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/fixed_enrollment/control": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/fixed_enrollment/treatment": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/stress_scenario/control_event_rate": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/stress_scenario/dropout/control": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/stress_scenario/dropout/treatment": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/stress_scenario/effect_override": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/simulation/replicates": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/simulation/seed": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      }
+    }
+  },
+  "evaluation_result": {
+    "model_version": "binary-v1",
+    "monte_carlo": {
+      "method": "pooled_two_proportion_z_v1",
+      "invalid_test_policy": "nonrejection_over_all_replicates",
+      "significant_two_sided_fraction": 0.4582,
+      "significant_favorable_fraction": 0.4582,
+      "mcse_two_sided": 0.004982496964374389,
+      "mcse_favorable": 0.004982496964374389,
+      "invalid_test_fraction": 0,
+      "mean_retained_control": 713.5604,
+      "mean_retained_treatment": 713.1299,
+      "mean_control_events": 85.5669,
+      "mean_treatment_events": 64.0944,
+      "seed": 42,
+      "replicates": 10000,
+      "rng": "numpy.random.PCG64",
+      "software_versions": {
+        "python": "3.12.13",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1"
+      }
+    },
+    "analytic": {
+      "method": "cohen_h_normal_v1",
+      "conditional_power_approx": 0.45716306280280666,
+      "assumed_evaluable_n": {
+        "control": 713,
+        "treatment": 713
+      }
+    },
+    "warnings": [
+      "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+      "Analytic counts are floored expected retention, not actual simulated retained counts.",
+      "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+      "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+    ],
+    "metadata": {
+      "computed_at": "2026-10-11T14:00:46.929586+00:00",
+      "inputs_hash": "sha256:cbfdb7fc45b929ba584ec8c037deebfab2d4fff7852328228e0015b7236f3485",
+      "fixed_enrollment": {
+        "control": 951,
+        "treatment": 951
+      },
+      "software_versions": {
+        "python": "3.12.13",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "statsmodels": "0.15.0"
+      }
+    },
+    "provenance": {
+      "/planned_design/model_version": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/control_event_rate": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/effect/kind": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/effect/value": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/alpha": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/target_power": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/allocation_ratio": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/dropout/control": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/dropout/treatment": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/fixed_enrollment/control": {
+        "source": "synthetic_preset",
+        "description": "Enrollment derived from calculated design 8d984070d53c29bf",
+        "retrieved_at": "2026-10-11T14:00:46.054Z",
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/fixed_enrollment/treatment": {
+        "source": "synthetic_preset",
+        "description": "Enrollment derived from calculated design 8d984070d53c29bf",
+        "retrieved_at": "2026-10-11T14:00:46.054Z",
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/stress_scenario/control_event_rate": {
+        "source": "manual_user",
+        "description": "Stress baseline risk adjusted",
+        "retrieved_at": "2026-10-11T14:00:46.837Z",
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/stress_scenario/dropout/control": {
+        "source": "manual_user",
+        "description": "Stress dropout adjusted",
+        "retrieved_at": "2026-10-11T14:00:46.840Z",
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/stress_scenario/dropout/treatment": {
+        "source": "manual_user",
+        "description": "Stress dropout adjusted",
+        "retrieved_at": "2026-10-11T14:00:46.840Z",
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/stress_scenario/effect_override": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/simulation/replicates": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/simulation/seed": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      }
+    },
+    "diagnostics": [
+      {
+        "code": "CONDITIONAL_POWER_ONLY",
+        "severity": "info",
+        "field": "interpretation",
+        "method": "cohen_h_normal",
+        "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+        "arm": null,
+        "outcome": null,
+        "expected_count": null,
+        "threshold": null,
+        "count_basis": null,
+        "invalid_test_fraction": null,
+        "replicates": null,
+        "invalid_test_policy": null
+      },
+      {
+        "code": "CONDITIONAL_POWER_ONLY",
+        "severity": "info",
+        "field": "interpretation",
+        "method": "pooled_two_proportion_z_v1",
+        "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+        "arm": null,
+        "outcome": null,
+        "expected_count": null,
+        "threshold": null,
+        "count_basis": null,
+        "invalid_test_fraction": null,
+        "replicates": null,
+        "invalid_test_policy": null
+      },
+      {
+        "code": "DISTINCT_METHOD_APPROXIMATIONS",
+        "severity": "info",
+        "field": "method",
+        "method": "pooled_two_proportion_z_v1",
+        "message": "Pooled-z simulation and Cohen's-h analytic power use distinct approximations; Monte Carlo does not remove pooled-z small-sample limits.",
+        "arm": null,
+        "outcome": null,
+        "expected_count": null,
+        "threshold": null,
+        "count_basis": null,
+        "invalid_test_fraction": null,
+        "replicates": null,
+        "invalid_test_policy": null
+      }
+    ]
+  },
+  "grid_result": {
+    "grid_label": "expected_count_approximation",
+    "fixed_enrollment": {
+      "control": 951,
+      "treatment": 951
+    },
+    "below_target": [
+      [
+        true,
+        true,
+        true,
+        false,
+        false,
+        false
+      ],
+      [
+        true,
+        true,
+        true,
+        true,
+        false,
+        false
+      ],
+      [
+        true,
+        true,
+        true,
+        true,
+        false,
+        false
+      ],
+      [
+        true,
+        true,
+        true,
+        true,
+        true,
+        false
+      ]
+    ],
+    "analytic_delta": -0.3431230660433889,
+    "software_versions": {
+      "python": "3.12.13",
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "statsmodels": "0.15.0"
+    },
+    "provenance": {
+      "/planned_design/model_version": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/control_event_rate": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/effect/kind": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/effect/value": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/alpha": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/target_power": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/allocation_ratio": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/dropout/control": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/planned_design/dropout/treatment": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/fixed_enrollment/control": {
+        "source": "synthetic_preset",
+        "description": "Enrollment derived from calculated design 8d984070d53c29bf",
+        "retrieved_at": "2026-10-11T14:00:46.054Z",
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/fixed_enrollment/treatment": {
+        "source": "synthetic_preset",
+        "description": "Enrollment derived from calculated design 8d984070d53c29bf",
+        "retrieved_at": "2026-10-11T14:00:46.054Z",
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/stress_scenario/control_event_rate": {
+        "source": "manual_user",
+        "description": "Stress baseline risk adjusted",
+        "retrieved_at": "2026-10-11T14:00:46.837Z",
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/stress_scenario/dropout/control": {
+        "source": "manual_user",
+        "description": "Stress dropout adjusted",
+        "retrieved_at": "2026-10-11T14:00:46.840Z",
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/stress_scenario/dropout/treatment": {
+        "source": "manual_user",
+        "description": "Stress dropout adjusted",
+        "retrieved_at": "2026-10-11T14:00:46.840Z",
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/stress_scenario/effect_override": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/simulation/replicates": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      },
+      "/simulation/seed": {
+        "source": "synthetic_preset",
+        "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+        "retrieved_at": null,
+        "source_url": null,
+        "source_location": null,
+        "verified_by_user": null,
+        "is_observed_registry_result": null
+      }
+    },
+    "model_version": "binary-v1",
+    "method": "cohen_h_normal_v1",
+    "x_baseline": [
+      0.05,
+      0.1,
+      0.15000000000000002,
+      0.2,
+      0.25,
+      0.3
+    ],
+    "y_dropout": [
+      0,
+      0.09999999999999999,
+      0.19999999999999998,
+      0.3
+    ],
+    "power": [
+      [
+        0.2668048779786924,
+        0.48968136701841053,
+        0.6799072413496354,
+        0.8202101414414197,
+        0.9105830411536187,
+        0.9612624580916285
+      ],
+      [
+        0.24471122518586744,
+        0.44986041703797,
+        0.633701800760813,
+        0.7785008701968433,
+        0.8796300188091043,
+        0.9420814467976428
+      ],
+      [
+        0.22274139374455737,
+        0.4087404652193551,
+        0.5831903518660821,
+        0.729459396139917,
+        0.8398776349014625,
+        0.9147291329407875
+      ],
+      [
+        0.20071446072036597,
+        0.3660716362676386,
+        0.5278828880178529,
+        0.6718867962116102,
+        0.7890636669776974,
+        0.8760300842934846
+      ]
+    ],
+    "invalid_mask": [
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    ],
+    "target_power": 0.8,
+    "planned_point": {
+      "expected_evaluable_n": {
+        "control": 903,
+        "treatment": 903
+      },
+      "invalid_reason": null,
+      "p_control": 0.2,
+      "dropout": 0.05,
+      "power": 0.8002861288461955,
+      "is_safe": true,
+      "is_valid": true
+    },
+    "selected_point": {
+      "expected_evaluable_n": {
+        "control": 713,
+        "treatment": 713
+      },
+      "invalid_reason": null,
+      "p_control": 0.12,
+      "dropout": 0.25,
+      "power": 0.45716306280280666,
+      "is_safe": false,
+      "is_valid": true
+    },
+    "frontier_points": [
+      {
+        "expected_evaluable_n": null,
+        "invalid_reason": null,
+        "p_control": 0.1927976750914634,
+        "dropout": 0,
+        "power": 0.8,
+        "is_safe": true,
+        "is_valid": true
+      },
+      {
+        "expected_evaluable_n": null,
+        "invalid_reason": null,
+        "p_control": 0.2,
+        "dropout": 0.04845479395434811,
+        "power": 0.8,
+        "is_safe": true,
+        "is_valid": true
+      },
+      {
+        "expected_evaluable_n": null,
+        "invalid_reason": null,
+        "p_control": 0.2106295415803343,
+        "dropout": 0.09999999999999999,
+        "power": 0.8,
+        "is_safe": true,
+        "is_valid": true
+      },
+      {
+        "expected_evaluable_n": null,
+        "invalid_reason": null,
+        "p_control": 0.23194246016385914,
+        "dropout": 0.19999999999999998,
+        "power": 0.8,
+        "is_safe": true,
+        "is_valid": true
+      },
+      {
+        "expected_evaluable_n": null,
+        "invalid_reason": null,
+        "p_control": 0.25,
+        "dropout": 0.2784777031411714,
+        "power": 0.8,
+        "is_safe": true,
+        "is_valid": true
+      },
+      {
+        "expected_evaluable_n": null,
+        "invalid_reason": null,
+        "p_control": 0.2562876759557608,
+        "dropout": 0.3,
+        "power": 0.8,
+        "is_safe": true,
+        "is_valid": true
+      }
+    ],
+    "contour_segments": [
+      {
+        "start": {
+          "p_control": 0.1927976750914634,
+          "dropout": 0
+        },
+        "end": {
+          "p_control": 0.2,
+          "dropout": 0.04845479395434811
+        }
+      },
+      {
+        "start": {
+          "p_control": 0.2,
+          "dropout": 0.04845479395434811
+        },
+        "end": {
+          "p_control": 0.2106295415803343,
+          "dropout": 0.09999999999999999
+        }
+      },
+      {
+        "start": {
+          "p_control": 0.2106295415803343,
+          "dropout": 0.09999999999999999
+        },
+        "end": {
+          "p_control": 0.23194246016385914,
+          "dropout": 0.19999999999999998
+        }
+      },
+      {
+        "start": {
+          "p_control": 0.23194246016385914,
+          "dropout": 0.19999999999999998
+        },
+        "end": {
+          "p_control": 0.25,
+          "dropout": 0.2784777031411714
+        }
+      },
+      {
+        "start": {
+          "p_control": 0.25,
+          "dropout": 0.2784777031411714
+        },
+        "end": {
+          "p_control": 0.2562876759557608,
+          "dropout": 0.3
+        }
+      }
+    ],
+    "power_curve": [
+      {
+        "p_control": 0.05,
+        "power": 0.21184780322546562,
+        "is_valid": true
+      },
+      {
+        "p_control": 0.1,
+        "power": 0.38781259215904856,
+        "is_valid": true
+      },
+      {
+        "p_control": 0.15000000000000002,
+        "power": 0.5564238022414678,
+        "is_valid": true
+      },
+      {
+        "p_control": 0.2,
+        "power": 0.7020866599636258,
+        "is_valid": true
+      },
+      {
+        "p_control": 0.25,
+        "power": 0.8162484120130096,
+        "is_valid": true
+      },
+      {
+        "p_control": 0.3,
+        "power": 0.8972151164642553,
+        "is_valid": true
+      }
+    ],
+    "invalid_cell_count": 0,
+    "worst_case_power": 0.20071446072036597,
+    "warnings": [
+      "Expected-count approximation: floored expected retention is not a simulated or guaranteed retained count.",
+      "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation."
+    ],
+    "diagnostics": [
+      {
+        "code": "CONDITIONAL_POWER_ONLY",
+        "severity": "info",
+        "field": "interpretation",
+        "method": "cohen_h_normal",
+        "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+        "arm": null,
+        "outcome": null,
+        "expected_count": null,
+        "threshold": null,
+        "count_basis": null,
+        "invalid_test_fraction": null,
+        "replicates": null,
+        "invalid_test_policy": null
+      },
+      {
+        "code": "CONDITIONAL_POWER_ONLY",
+        "severity": "info",
+        "field": "interpretation",
+        "method": "cohen_h_normal",
+        "message": "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+        "arm": null,
+        "outcome": null,
+        "expected_count": null,
+        "threshold": null,
+        "count_basis": null,
+        "invalid_test_fraction": null,
+        "replicates": null,
+        "invalid_test_policy": null
+      }
+    ],
+    "computed_at": "2026-10-11T14:00:46.925351+00:00",
+    "inputs_hash": "sha256:c8b8bb729cc8b8cc7b8fb38a695b25a2611867394f7f66c8d99042f62763adf0"
+  },
+  "software_versions": {
+    "python": "3.12.13",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "statsmodels": "0.15.0"
+  },
+  "provenance": {
+    "/planned_design/model_version": {
+      "source": "synthetic_preset",
+      "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+      "retrieved_at": null,
+      "source_url": null,
+      "source_location": null,
+      "verified_by_user": null,
+      "is_observed_registry_result": null
+    },
+    "/planned_design/control_event_rate": {
+      "source": "synthetic_preset",
+      "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+      "retrieved_at": null,
+      "source_url": null,
+      "source_location": null,
+      "verified_by_user": null,
+      "is_observed_registry_result": null
+    },
+    "/planned_design/effect/kind": {
+      "source": "synthetic_preset",
+      "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+      "retrieved_at": null,
+      "source_url": null,
+      "source_location": null,
+      "verified_by_user": null,
+      "is_observed_registry_result": null
+    },
+    "/planned_design/effect/value": {
+      "source": "synthetic_preset",
+      "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+      "retrieved_at": null,
+      "source_url": null,
+      "source_location": null,
+      "verified_by_user": null,
+      "is_observed_registry_result": null
+    },
+    "/planned_design/alpha": {
+      "source": "synthetic_preset",
+      "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+      "retrieved_at": null,
+      "source_url": null,
+      "source_location": null,
+      "verified_by_user": null,
+      "is_observed_registry_result": null
+    },
+    "/planned_design/target_power": {
+      "source": "synthetic_preset",
+      "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+      "retrieved_at": null,
+      "source_url": null,
+      "source_location": null,
+      "verified_by_user": null,
+      "is_observed_registry_result": null
+    },
+    "/planned_design/allocation_ratio": {
+      "source": "synthetic_preset",
+      "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+      "retrieved_at": null,
+      "source_url": null,
+      "source_location": null,
+      "verified_by_user": null,
+      "is_observed_registry_result": null
+    },
+    "/planned_design/dropout/control": {
+      "source": "synthetic_preset",
+      "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+      "retrieved_at": null,
+      "source_url": null,
+      "source_location": null,
+      "verified_by_user": null,
+      "is_observed_registry_result": null
+    },
+    "/planned_design/dropout/treatment": {
+      "source": "synthetic_preset",
+      "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+      "retrieved_at": null,
+      "source_url": null,
+      "source_location": null,
+      "verified_by_user": null,
+      "is_observed_registry_result": null
+    },
+    "/fixed_enrollment/control": {
+      "source": "synthetic_preset",
+      "description": "Enrollment derived from calculated design 8d984070d53c29bf",
+      "retrieved_at": "2026-10-11T14:00:46.054Z",
+      "source_url": null,
+      "source_location": null,
+      "verified_by_user": null,
+      "is_observed_registry_result": null
+    },
+    "/fixed_enrollment/treatment": {
+      "source": "synthetic_preset",
+      "description": "Enrollment derived from calculated design 8d984070d53c29bf",
+      "retrieved_at": "2026-10-11T14:00:46.054Z",
+      "source_url": null,
+      "source_location": null,
+      "verified_by_user": null,
+      "is_observed_registry_result": null
+    },
+    "/stress_scenario/control_event_rate": {
+      "source": "manual_user",
+      "description": "Stress baseline risk adjusted",
+      "retrieved_at": "2026-10-11T14:00:46.837Z",
+      "source_url": null,
+      "source_location": null,
+      "verified_by_user": null,
+      "is_observed_registry_result": null
+    },
+    "/stress_scenario/dropout/control": {
+      "source": "manual_user",
+      "description": "Stress dropout adjusted",
+      "retrieved_at": "2026-10-11T14:00:46.840Z",
+      "source_url": null,
+      "source_location": null,
+      "verified_by_user": null,
+      "is_observed_registry_result": null
+    },
+    "/stress_scenario/dropout/treatment": {
+      "source": "manual_user",
+      "description": "Stress dropout adjusted",
+      "retrieved_at": "2026-10-11T14:00:46.840Z",
+      "source_url": null,
+      "source_location": null,
+      "verified_by_user": null,
+      "is_observed_registry_result": null
+    },
+    "/stress_scenario/effect_override": {
+      "source": "synthetic_preset",
+      "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+      "retrieved_at": null,
+      "source_url": null,
+      "source_location": null,
+      "verified_by_user": null,
+      "is_observed_registry_result": null
+    },
+    "/simulation/replicates": {
+      "source": "synthetic_preset",
+      "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+      "retrieved_at": null,
+      "source_url": null,
+      "source_location": null,
+      "verified_by_user": null,
+      "is_observed_registry_result": null
+    },
+    "/simulation/seed": {
+      "source": "synthetic_preset",
+      "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+      "retrieved_at": null,
+      "source_url": null,
+      "source_location": null,
+      "verified_by_user": null,
+      "is_observed_registry_result": null
+    }
+  },
+  "exported_at": "2026-10-11T14:00:46.988Z",
+  "inputs_hash": "sha256:2397089c4fd9d55917c3972fc74e9458e1757f4f3f0d77fdaf969dc4d9624032"
+}

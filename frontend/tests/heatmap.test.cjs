@@ -70,9 +70,9 @@ test("reject malformed masks, shape, powers, ARR, domain and counts",()=>{
  for(const mutate of [p=>p.result.power.pop(),p=>p.result.invalidMask[0].pop(),p=>p.result.power[0][0]=0,p=>p.result.power[0][1]=null,p=>p.result.power[0][1]=NaN,p=>p.result.power[0][1]=1.1,p=>p.result.xBaseline[1]=.05,p=>p.result.yDropout[1]=1,p=>p.current.fixedEnrollment.treatment=p.result.fixedEnrollment.treatment=99,p=>p.current.selectedPoint=p.result.selectedPoint={baseline:.8,dropout:0},p=>p.result.frontierSegments[0][0].baseline=.01,p=>{p.result.invalidMask[0][0]=false;p.result.power[0][0]=.5;}]){
  const p=props();mutate(p);assert.ok(heatmapProblem(p.current,p.result));assert.ok(!render(p).includes("<svg"));}
 });
-test("CSV escapes metadata and render-only components contain no CSS or requests",()=>{
+test("CSV escapes metadata and render-only components contain no requests or statistical calculations",()=>{
  const p=props();p.result.inputsHash='fixture,"quoted"';const before=structuredClone(p.result);assert.ok(gridCsv(p.result).includes('"fixture,""quoted"""'));assert.deepEqual(p.result,before);
- for(const name of ["StressHeatmap.tsx","GridDataTable.tsx"]){const source=fs.readFileSync(path.join(__dirname,"../components",name),"utf8");assert.doesNotMatch(source,/className=|style=|fetch\(|axios|Math\.asin/);}
+ for(const name of ["StressHeatmap.tsx","GridDataTable.tsx"]){const source=fs.readFileSync(path.join(__dirname,"../components",name),"utf8");assert.doesNotMatch(source,/fetch\(|axios|Math\.asin/);}
 });
 
 function handoff() {

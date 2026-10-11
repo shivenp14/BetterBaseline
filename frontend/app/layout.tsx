@@ -1,4 +1,8 @@
 import type { Metadata } from "next";
+import "./globals.css";
+import "./planning.css";
+import "../components/analytics.css";
+import "../components/audit.css";
 
 export const metadata: Metadata = {
   title: "Better Baseline · Trial planning workspace",

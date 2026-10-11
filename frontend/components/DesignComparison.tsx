@@ -15,9 +15,9 @@ export function DesignComparison({ current, result, status, error, plannedPower,
   const id = useId();
   const problem = curveProblem(current, result);
   if (status !== "ready" || problem || !result) {
-    return <section aria-labelledby={`${id}-heading`} aria-busy={status === "loading"}>
+    return <section className={"analytics-panel"} aria-labelledby={`${id}-heading`} aria-busy={status === "loading"}>
       <h2 id={`${id}-heading`}>Planned design and selected analytic scenario</h2>
-      <p role={status === "error" ? "alert" : "status"}>
+      <p className={status === "error" ? "analytics-error" : problem?.startsWith("Stale") ? "analytics-warning" : undefined} role={status === "error" ? "alert" : "status"}>
         {status === "loading" ? "Loading current analytic comparison."
           : status === "error" ? (error || "Analytic comparison could not be loaded.")
             : status === "idle" ? "Calculate a design and evaluate a stress scenario." : problem}
@@ -25,16 +25,17 @@ export function DesignComparison({ current, result, status, error, plannedPower,
     </section>;
   }
   if (plannedDesignHash !== current.designHash) {
-    return <p role="status">Stale planned design: calculate the current design before comparing power.</p>;
+    return <p className="analytics-warning" role="status">Stale planned design: calculate the current design before comparing power.</p>;
   }
   if ((plannedPower !== null && (!Number.isFinite(plannedPower) || plannedPower < 0 || plannedPower > 1))
       || !Number.isFinite(plannedDropout) || plannedDropout < 0 || plannedDropout >= 1) {
-    return <p role="alert">Invalid planned design comparison values.</p>;
+    return <p className="analytics-error" role="alert">Invalid planned design comparison values.</p>;
   }
   const selectedPower = result.selectedPoint.power;
-  return <section aria-labelledby={`${id}-heading`}>
+  return <section className={"analytics-panel"} aria-labelledby={`${id}-heading`}>
     <h2 id={`${id}-heading`}>Planned design and selected analytic scenario</h2>
     <p role="status">Current comparison. {result.illustrative ? "Illustrative synthetic fixture values." : "Supplied analytic API values."}</p>
+    <div className={"analytics-tableScroll"} role="region" aria-label="Planned and selected design comparison" tabIndex={0}>
     <table>
       <caption>Enrollment stays frozen while baseline risk and dropout change</caption>
       <thead><tr><th scope="col">Assumption</th><th scope="col">Original planned design</th><th scope="col">Selected stress scenario</th></tr></thead>
@@ -45,6 +46,7 @@ export function DesignComparison({ current, result, status, error, plannedPower,
         <tr><th scope="row">Approximate conditional power</th><td>{plannedPower === null ? "Unavailable (null)" : percent(plannedPower)}</td><td>{selectedPower === null ? "Invalid scenario (null)" : percent(selectedPower)}</td></tr>
       </tbody>
     </table>
+    </div>
     <p>{selectedPower === null || plannedPower === null ? "Power change is unavailable for an invalid selected scenario."
       : `Power change: ${((selectedPower - plannedPower) * 100).toFixed(1)} percentage points.`}</p>
     <p>Target power: {percent(current.targetPower)}. Method: {result.method}.

@@ -1,5 +1,6 @@
 "use client";
 
+
 import { useId } from "react";
 import type { CalculateResponse } from "../lib/contracts";
 
@@ -25,21 +26,21 @@ function percent(fraction: number) {
 export function DesignSummary({ result, isStale = false, isCalculating = false, error = null }: DesignSummaryProps) {
   const id = useId();
   const stale = isStale || isCalculating || Boolean(error);
-  return <section aria-labelledby={`${id}-summary-heading`} aria-busy={isCalculating}>
+  return <section className="planning-summary" aria-labelledby={`${id}-summary-heading`} aria-busy={isCalculating}>
     <h2 id={`${id}-summary-heading`}>Planned design summary</h2>
     {error && <p role="alert">{error}</p>}
     {isCalculating && <p role="status">Calculating a new planned design.</p>}
     {!result ? <p>No calculated design available. Enter assumptions and calculate a design.</p> : <>
       {stale && <p role="status"><strong>Stale result.</strong> These values belong to the previous calculation; recalculate to match current assumptions.</p>}
       {result.mock && <p><strong>Illustrative mock response.</strong> These fixed fixture values are not a fresh statistical calculation.</p>}
-      <table>
+      <div className="planning-tableScroll" role="region" aria-label="Planned enrollment counts" tabIndex={0}><table>
         <caption>Evaluable requirements and planned enrollment are different counts</caption>
         <thead><tr><th scope="col">Count</th><th scope="col">Control arm</th><th scope="col">Treatment arm</th></tr></thead>
         <tbody>
           <tr><th scope="row">Required evaluable participants</th><td>{result.evaluable_n.control}</td><td>{result.evaluable_n.treatment}</td></tr>
           <tr><th scope="row">Planned enrolled participants</th><td>{result.enrolled_n.control}</td><td>{result.enrolled_n.treatment}</td></tr>
         </tbody>
-      </table>
+      </table></div>
       <p>Enrollment inflation represents expected retention, not guaranteed evaluable counts or observed retained participants.</p>
       <dl>
         <dt>Nominal analytic power at evaluable N</dt><dd>{percent(result.nominal_power_evaluable)}</dd>
