@@ -126,6 +126,16 @@
                 }
               }
             }
+          },
+          "501": {
+            "description": "Not Implemented",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           }
         }
       }
@@ -161,6 +171,16 @@
           },
           "422": {
             "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Not Implemented",
             "content": {
               "application/json": {
                 "schema": {
@@ -206,13 +226,20 @@
             "default": "cohen_h_normal_v1"
           },
           "conditional_power_approx": {
-            "type": "number",
-            "maximum": 1.0,
-            "minimum": 0.0,
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Conditional Power Approx"
           },
           "assumed_evaluable_n": {
-            "$ref": "#/components/schemas/ArmCounts"
+            "$ref": "#/components/schemas/ExpectedRetainedCounts"
           }
         },
         "type": "object",
@@ -471,6 +498,27 @@
           "error"
         ],
         "title": "ErrorEnvelope"
+      },
+      "ExpectedRetainedCounts": {
+        "properties": {
+          "control": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Control"
+          },
+          "treatment": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Treatment"
+          }
+        },
+        "type": "object",
+        "required": [
+          "control",
+          "treatment"
+        ],
+        "title": "ExpectedRetainedCounts",
+        "description": "Floored expected retention, distinct from positive enrollment counts."
       },
       "GridAxisSpec": {
         "properties": {

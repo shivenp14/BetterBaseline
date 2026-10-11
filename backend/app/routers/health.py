@@ -1,10 +1,10 @@
 """Health and metadata routes."""
 
 from typing import Any, Dict
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
-from ..settings import settings
+from ..settings import Settings, settings
 
 router = APIRouter(tags=["health"])
 
@@ -22,15 +22,21 @@ class MetaResponse(BaseModel):
     simulation_method: str = "pooled_two_proportion_z_v1"
 
 
+def _resolve_settings(request: Request) -> Settings:
+    return getattr(request.app.state, "settings", settings)
+
+
 @router.get("/healthz", response_model=HealthResponse)
-def get_health() -> HealthResponse:
-    return HealthResponse(status="ok", model_version=settings.model_version)
+def get_health(request: Request) -> HealthResponse:
+    app_settings = _resolve_settings(request)
+    return HealthResponse(status="ok", model_version=app_settings.model_version)
 
 
 @router.get("/api/v1/meta", response_model=MetaResponse)
-def get_metadata() -> MetaResponse:
+def get_metadata(request: Request) -> MetaResponse:
+    app_settings = _resolve_settings(request)
     return MetaResponse(
-        app_name=settings.app_name,
-        app_version=settings.app_version,
-        model_version=settings.model_version,
+        app_name=app_settings.app_name,
+        app_version=app_settings.app_version,
+        model_version=app_settings.model_version,
     )

@@ -7,7 +7,10 @@ from ..schemas import ErrorEnvelope, ScenarioGridRequest, ScenarioGridResponse
 router = APIRouter(
     prefix="/api/v1/scenarios",
     tags=["grid"],
-    responses={422: {"model": ErrorEnvelope, "description": "Validation Error"}},
+    responses={
+        422: {"model": ErrorEnvelope, "description": "Validation Error"},
+        501: {"model": ErrorEnvelope, "description": "Not Implemented"},
+    },
 )
 
 

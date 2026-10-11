@@ -55,6 +55,10 @@ def calculate_design(request: DesignCalculateRequest) -> DesignCalculateResponse
     )
 
     warnings = []
+    if request.dropout.control > 0.0 or request.dropout.treatment > 0.0:
+        warnings.append(
+            "Dropout inflation represents expected retention, not guaranteed evaluable counts."
+        )
     if request.control_event_rate < 0.05 or request.control_event_rate > 0.40:
         warnings.append(
             f"Control event rate {request.control_event_rate} is near or outside common binary trial planning regimes (0.05 - 0.40)."

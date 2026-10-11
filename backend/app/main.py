@@ -29,6 +29,7 @@ def create_app(app_settings: Optional[Settings] = None) -> FastAPI:
         redoc_url="/redoc",
         openapi_url="/openapi.json",
     )
+    application.state.settings = cfg
 
     # CORS configuration
     application.add_middleware(
@@ -52,11 +53,21 @@ def create_app(app_settings: Optional[Settings] = None) -> FastAPI:
             "description": "Validation Error",
         }
     }
+    scaffold_responses = {
+        422: {
+            "model": ErrorEnvelope,
+            "description": "Validation Error",
+        },
+        501: {
+            "model": ErrorEnvelope,
+            "description": "Not Implemented",
+        },
+    }
 
     application.include_router(health_router)
     application.include_router(design_router, responses=validation_error_responses)
-    application.include_router(scenarios_router, responses=validation_error_responses)
-    application.include_router(grid_router, responses=validation_error_responses)
+    application.include_router(scenarios_router, responses=scaffold_responses)
+    application.include_router(grid_router, responses=scaffold_responses)
 
     return application
 

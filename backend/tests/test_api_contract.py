@@ -64,6 +64,10 @@ def test_design_calculate_reference_scenario(client: TestClient) -> None:
     assert data["nominal_power_evaluable"] >= 0.80
     assert data["nominal_power_evaluable"] == pytest.approx(0.80, abs=0.01)
     assert "inputs_hash" in data and len(data["inputs_hash"]) > 0
+    assert (
+        "Dropout inflation represents expected retention, not guaranteed evaluable counts."
+        in data["warnings"]
+    )
 
 
 def test_design_calculate_arr_effect(client: TestClient) -> None:
@@ -89,6 +93,10 @@ def test_design_calculate_arr_effect(client: TestClient) -> None:
     assert pytest.approx(data["p_treatment"], abs=1e-4) == 0.15
     assert data["evaluable_n"] == {"control": 903, "treatment": 903}
     assert data["enrolled_n"] == {"control": 903, "treatment": 903}
+    assert (
+        "Dropout inflation represents expected retention, not guaranteed evaluable counts."
+        not in data["warnings"]
+    )
 
 
 def test_design_calculate_invalid_arr_returns_structured_422(client: TestClient) -> None:
@@ -286,3 +294,58 @@ def test_design_calculate_routes_through_compute_helper(client: TestClient) -> N
         response = client.post("/api/v1/design/calculate", json=payload)
         assert response.status_code == 200
         assert called is True
+
+
+def test_custom_app_settings_reflected_in_health_and_meta() -> None:
+    """create_app with custom Settings propagates settings to healthz and meta routes."""
+    from app.main import create_app
+    from app.settings import Settings
+
+    custom_settings = Settings(
+        app_name="Custom Clinical Service",
+        app_version="1.2.3",
+        model_version="custom-v2",
+    )
+    custom_app = create_app(custom_settings)
+    custom_client = TestClient(custom_app)
+
+    health_resp = custom_client.get("/healthz")
+    assert health_resp.status_code == 200
+    assert health_resp.json()["model_version"] == "custom-v2"
+
+    meta_resp = custom_client.get("/api/v1/meta")
+    assert meta_resp.status_code == 200
+    meta_data = meta_resp.json()
+    assert meta_data["app_name"] == "Custom Clinical Service"
+    assert meta_data["app_version"] == "1.2.3"
+    assert meta_data["model_version"] == "custom-v2"
+
+
+def test_openapi_scaffold_501_responses() -> None:
+    """OpenAPI schema documents 501 ErrorEnvelope responses for scenarios evaluate and grid."""
+    schema = app.openapi()
+    for endpoint in ["/api/v1/scenarios/evaluate", "/api/v1/scenarios/grid"]:
+        post_op = schema["paths"][endpoint]["post"]
+        assert "501" in post_op["responses"]
+        resp_501 = post_op["responses"]["501"]
+        schema_ref = resp_501["content"]["application/json"]["schema"]["$ref"]
+        assert schema_ref == "#/components/schemas/ErrorEnvelope"
+
+
+def test_dropout_inflation_exact_decimal_boundary() -> None:
+    """Dropout inflation uses exact rational arithmetic to avoid float round-up at decimal boundaries."""
+    from app.statistics.inputs import Dropout as StatDropout
+    from app.statistics.sample_size import minimum_sample_size
+
+    # Evaluated minimum N = 2, dropout = 0.8
+    # In float arithmetic: ceil(2 / (1.0 - 0.8)) == ceil(2 / 0.19999999999999996) == 11
+    # In exact arithmetic: ceil(2 / 0.2) == 10
+    result = minimum_sample_size(
+        p_control=0.99,
+        p_treatment=0.01,
+        target_power=0.50,
+        alpha=0.05,
+        dropout=StatDropout(0.8, 0.8),
+    )
+    assert result.evaluable_per_arm == 2
+    assert result.enrolled_per_arm == 10

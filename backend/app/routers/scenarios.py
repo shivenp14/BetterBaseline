@@ -6,7 +6,10 @@ from ..schemas import ErrorEnvelope, ScenarioEvaluateRequest, ScenarioEvaluateRe
 router = APIRouter(
     prefix="/api/v1/scenarios",
     tags=["scenarios"],
-    responses={422: {"model": ErrorEnvelope, "description": "Validation Error"}},
+    responses={
+        422: {"model": ErrorEnvelope, "description": "Validation Error"},
+        501: {"model": ErrorEnvelope, "description": "Not Implemented"},
+    },
 )
 
 
