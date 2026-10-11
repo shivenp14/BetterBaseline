@@ -7,6 +7,8 @@ from fastapi.testclient import TestClient
 
 from app.cache import BoundedComputeCache, make_cache_key
 from app.main import create_app
+from app.routers import grid as grid_router
+from app.services import grid as grid_service
 from app.services.compute import (
     ComputeResourceGuard,
     execute_guarded_computation,
@@ -356,3 +358,141 @@ def test_identical_seeded_evaluations_reuse_cache():
     assert len(guard.cache) == 1
     # Response content identical
     assert resp1.json() == resp2.json()
+
+
+def _grid_payload():
+    return {
+        "planned_design": {
+            "model_version": "binary-v1",
+            "control_event_rate": 0.20,
+            "effect": {"kind": "relative_risk", "value": 0.75},
+            "alpha": 0.05,
+            "target_power": 0.80,
+            "allocation_ratio": 1.0,
+            "dropout": {"control": 0.1, "treatment": 0.1},
+        },
+        "fixed_enrollment": {"control": 1004, "treatment": 1004},
+        "x_baseline": {"min": 0.1, "max": 0.3, "steps": 3},
+        "y_dropout": {"min": 0.0, "max": 0.2, "steps": 2},
+        "selected_scenario": {
+            "control_event_rate": 0.15,
+            "dropout": {"control": 0.13, "treatment": 0.13},
+        },
+    }
+
+
+def test_grid_uses_app_configured_cell_and_enrollment_limits_before_engine():
+    app = create_app(Settings(max_grid_cells=5, max_enrolled_per_arm=1000))
+    client = TestClient(app)
+    body = _grid_payload()
+
+    # Both app-specific caps are checked by the route before numerical work.
+    from unittest.mock import patch
+    with patch.object(grid_service, "stress_grid") as engine:
+        response = client.post("/api/v1/scenarios/grid", json=body)
+        assert response.status_code == 422
+        assert "Total grid cells exceed maximum limit of 5" in response.json()["error"]["message"]
+        engine.assert_not_called()
+
+        body["x_baseline"]["steps"] = 2
+        response = client.post("/api/v1/scenarios/grid", json=body)
+        assert response.status_code == 422
+        assert "Enrollment exceeds maximum limit of 1000" in response.json()["error"]["message"]
+        engine.assert_not_called()
+
+
+def test_grid_cache_reuses_exact_response_and_keys_full_input_and_versions():
+    from unittest.mock import patch
+
+    app = create_app()
+    guard = app.state.compute_guard
+    guard.cache.clear()
+    client = TestClient(app)
+    baseline = _grid_payload()
+
+    variants = []
+    for change in (
+        lambda p: p["planned_design"].update(target_power=0.75),
+        lambda p: p.update(effect_override={"kind": "relative_risk", "value": 0.7}),
+        lambda p: p["x_baseline"].update(steps=4),
+        lambda p: p["fixed_enrollment"].update(control=1006, treatment=1006),
+        lambda p: p.update(provenance={"control_event_rate": {"source": "manual_user"}}),
+    ):
+        variant = json.loads(json.dumps(baseline))
+        change(variant)
+        variants.append(variant)
+
+    with patch.object(grid_router, "compute_grid", wraps=grid_router.compute_grid) as compute:
+        first = client.post("/api/v1/scenarios/grid", json=baseline)
+        repeated = client.post("/api/v1/scenarios/grid", json=baseline)
+        assert first.status_code == repeated.status_code == 200
+        assert first.json() == repeated.json()
+        assert compute.call_count == 1
+
+        for variant in variants:
+            response = client.post("/api/v1/scenarios/grid", json=variant)
+            assert response.status_code == 200, response.text
+        # Bumping the explicit method version invalidates the same full input.
+        with patch.object(grid_router, "GRID_METHOD_VERSION", "cohen_h_normal_v2"):
+            version_changed = client.post("/api/v1/scenarios/grid", json=baseline)
+        assert version_changed.status_code == 200
+        assert compute.call_count == 7
+
+
+def test_grid_configured_limit_is_checked_even_for_cache_hit():
+    from unittest.mock import patch
+
+    app = create_app()
+    client = TestClient(app)
+    body = _grid_payload()
+    assert client.post("/api/v1/scenarios/grid", json=body).status_code == 200
+    app.state.compute_guard.max_grid_cells = 5
+
+    with patch.object(grid_service, "stress_grid") as engine:
+        response = client.post("/api/v1/scenarios/grid", json=body)
+    assert response.status_code == 422
+    engine.assert_not_called()
+
+
+def test_grid_saturation_is_retryable_and_does_not_call_engine():
+    from unittest.mock import patch
+
+    app = create_app(Settings(max_concurrent_compute=1))
+    guard = app.state.compute_guard
+    assert guard.semaphore.acquire(blocking=False)
+    client = TestClient(app)
+    try:
+        with patch.object(grid_service, "stress_grid") as engine:
+            response = client.post("/api/v1/scenarios/grid", json=_grid_payload())
+        assert response.status_code == 429
+        assert response.headers["Retry-After"] == "1"
+        assert response.json()["error"]["code"] == "RESOURCE_SATURATED"
+        assert response.json()["error"]["recoverable"] is True
+        engine.assert_not_called()
+    finally:
+        guard.semaphore.release()
+
+
+def test_grid_failure_releases_app_permit():
+    from unittest.mock import patch
+
+    app = create_app(Settings(max_concurrent_compute=1))
+    client = TestClient(app, raise_server_exceptions=False)
+    with patch.object(grid_service, "stress_grid", side_effect=RuntimeError("engine failure")):
+        response = client.post("/api/v1/scenarios/grid", json=_grid_payload())
+    assert response.status_code == 500
+    assert app.state.compute_guard.semaphore.acquire(blocking=False)
+    app.state.compute_guard.semaphore.release()
+
+
+def test_grid_guards_and_cache_are_isolated_per_app():
+    strict_app = create_app(Settings(max_grid_cells=5))
+    default_app = create_app(Settings())
+    payload = _grid_payload()
+    with TestClient(strict_app) as strict_client, TestClient(default_app) as default_client:
+        strict_response = strict_client.post("/api/v1/scenarios/grid", json=payload)
+        default_response = default_client.post("/api/v1/scenarios/grid", json=payload)
+    assert strict_response.status_code == 422
+    assert default_response.status_code == 200
+    assert len(strict_app.state.compute_guard.cache) == 0
+    assert len(default_app.state.compute_guard.cache) == 1

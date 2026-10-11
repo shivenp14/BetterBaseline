@@ -1,10 +1,11 @@
 # Better Baseline offline presets
 
 `index.json` lists three self-contained, versioned synthetic presets. Each folder
-contains a manifest, explicit planned/stress inputs, and a **draft mock response**
-for design, selected point, analytic grid, and Monte Carlo display development.
-Read the manifest first and preserve its provenance alongside inputs and exports.
-No network, registry, credentials, patient data, or backend is needed to load them.
+contains a manifest, explicit planned/stress inputs, a **draft mock response**,
+and a separate **generated final response**. Mocks remain for frontend work before
+the backend is available; they are hand-authored illustrations and are never
+measured evidence. Final responses come from the merged backend design,
+evaluation, and grid functions. Read each manifest and response status before use.
 
 | Preset | Planned baseline / dropout | Stress baseline / dropout | Fixed enrollment per arm | Stress expected retained floor |
 | --- | --- | --- | ---: | ---: |
@@ -16,7 +17,8 @@ All inputs use fractions, RR=.75, alpha=.05, target power=.80, equal enrollment,
 and symmetric dropout. Stress inputs never resize the original design. Planned
 evaluable N=903 is the documented Cohen's-h/NormalIndPower reference; the baseline
 shock reference is approximately .470. These are reference expectations from the
-playbook, not measurements made by these fixtures. Enrollment uses
+playbook. Generated results measure backend calculations for synthetic inputs;
+they are not clinical evidence. Enrollment uses
 `ceil(903 / (1 - planned_dropout))`; analytic retention uses
 `floor(enrolled * (1 - stress_dropout))`. The separate 10% dropout example is
 `ceil(903 / .90) = 1004`, not either 5% preset's enrollment.
@@ -27,43 +29,53 @@ origin, not verified clinical evidence; no patient or inferred clinical values
 are included. `inputs_hash` is SHA-256 of UTF-8 JSON with sorted keys and compact
 separators, prefixed by `sha256:`.
 
-## Mock status and consumption
+## Illustrative mock status and consumption
 
-**All numerical response values are hand-authored schematic illustrations.**
-In particular, seed 42 and 10,000 replicates describe the intended future run;
-the Monte Carlo numbers are not seed-42 results. The mock MCSE fields are the
-binomial error formula applied to the illustrative fractions, not observed error.
+**All numerical response values in `mock-response.json` are hand-authored
+schematic illustrations.** Seed 42 and 10,000 replicates describe the intended
+run; those Monte Carlo values are not seed-42 results. Mock MCSE fields are the
+binomial error formula applied to illustrative fractions, not observed error.
 Random retention aggregates are deliberately separate from floored analytic
 counts. Mock nominal power .80 is rounded and cannot prove integer minimality.
 
-The grid is `[dropout_index][baseline_index]`, with explicit axes, target power,
-and a same-shaped invalid mask. These RR presets have valid cells throughout;
-future invalid ARR cells must be `null` with a true mask, never zero power.
-No contour has been computed: `frontier_points` is empty and `frontier_status`
-states this explicitly. Display the analytic label and illustrative warning.
-Do not treat these mocks as API golden snapshots or measured acceptance evidence.
+The mock grid is `[dropout_index][baseline_index]`, with explicit axes, target
+power, and a same-shaped invalid mask. These RR presets have valid cells
+throughout; future invalid ARR cells must be `null` with a true mask, never zero
+power. No contour has been computed: `frontier_points` is empty and
+`frontier_status` states this explicitly. Keep the illustrative warning visible.
+Do not treat mocks as API golden snapshots or measured acceptance evidence.
 
-The draft follows the architecture's field names except the issue's agreed split
-`mcse_two_sided` / `mcse_favorable`, replacing the older ambiguous `mcse` field.
-Contracts are owned by B; align these D-owned fixtures after B1 without modifying
-`contracts/`. Real endpoint responses need an adapter to the mock wrapper's
-`design`, `point`, and `grid` sections; this wrapper is not an endpoint contract.
+## Generated final responses
 
-## Snapshot handoff
+`final-response.json` contains canonical response bodies returned by the merged
+backend design route, evaluation service, and grid service. Each records complete
+requests, seed 42, 10,000 replicates, API input hashes, backend source commit,
+generation command, and Python/NumPy/SciPy/statsmodels/FastAPI/Pydantic versions.
+The design output includes the backend's actual integer sample size and achieved
+power; analytic retention floors and simulated random aggregates remain distinct.
 
-Once A/B functions and frozen contracts exist, generate separate measured
-snapshots from actual design, point, grid, and simulation functions. Record exact
-inputs/hash, seed, replicates, engine commit, Python/NumPy/SciPy/statsmodels and
-backend versions, and generation command. Check documented reference tolerances
-and integer minimality against the engine; never replace measured results with
-rounded values. Keep illustrative fixtures clearly labeled for offline UI work.
-Each manifest records this pending handoff. No measured snapshot ships here.
+Operational `computed_at` timestamps are intentionally omitted from response
+bodies. The omission is listed in each snapshot. Snapshot `--check` compares
+provenance, metadata, inputs, counts, masks, and seeded simulation outputs exactly.
+For continuous analytic outputs only, it allows differences up to 1e-12 relative
+or 1e-15 absolute to account for platform math-library rounding. These are measured
+computations of synthetic inputs, not clinical evidence or independent statistical
+validation.
 
-Run the dependency-free fixture checks from the repository root:
+With the repository's locked Python 3.12 dependencies, regenerate or validate
+snapshots from the repository root:
 
 ```bash
-python3 -m unittest discover -s tests/fixtures -p 'test_demo_presets.py' -v
+uv run --locked --directory backend python ../demo-data/generate_snapshots.py
+uv run --locked --directory backend python ../demo-data/generate_snapshots.py --check
 ```
 
-These checks verify fixture integrity and semantics; live numerical/API/E2E
-acceptance belongs to the later integration issues.
+The fixture suite runs the `--check` command to guard deterministic content.
+Keep `mock-response.json` clearly marked illustrative for build-before-backend
+use; do not overwrite it with generated data.
+
+Run fixture checks in the locked backend environment:
+
+```bash
+uv run --locked --directory backend pytest -q ../tests/fixtures/test_demo_presets.py
+```

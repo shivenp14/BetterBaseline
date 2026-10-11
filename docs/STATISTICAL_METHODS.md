@@ -1,4 +1,7 @@
-# Statistical methods
+# Better Baseline statistical methods
+
+These methods are educational and conditional on the entered assumptions. They
+do not establish treatment efficacy, clinical utility or regulatory validation.
 
 ## Task #56: binary inputs and effect transformation
 
@@ -50,3 +53,234 @@ Run the task's acceptance checks from the repo root:
 ```sh
 PYTHONPATH=backend python3 -m pytest backend/tests/test_effect.py -q
 ```
+
+## Analytical planning and reference fixture
+
+The landed A2 core uses the two-sided Cohen's-h normal approximation. With
+`h = 2 asin(sqrt(pT)) - 2 asin(sqrt(pC))`, equal evaluable N per arm gives
+`delta = abs(h) * sqrt(N/2)`. Power is the sum of both normal rejection tails
+at two-sided alpha. The implementation evaluates the tails without subtracting
+small probabilities from one and handles very small alpha explicitly.
+
+`minimum_sample_size` brackets and searches integers starting at 2, testing the
+inclusive configured ceiling (default 1,000,000 evaluable per arm). Planning
+requires `0 < alpha < target_power < 1`. A null effect or a ceiling below target
+returns `UNBOUNDED_OR_INFEASIBLE`.
+
+The canonical entered assumptions `.20/.15`, alpha `.05`, target `.80` require
+**903 evaluable participants per arm**: 902 misses target and 903 meets it.
+With symmetric 10% planned dropout, `ceil(903/.9) = 1004` **enrolled per arm**.
+At fixed 903 enrolled per arm and zero stress dropout, `.10/.075` yields
+approximately `.470` conditional analytical power. These are model-dependent
+reference values, not observed clinical outcomes. Return computed nominal power
+at the chosen N rather than replacing it with the rounded target `.80`.
+
+The local core reports method `cohen_h_normal`, version `1.0.0`; the landed B1 API schema
+uses `cohen_h_normal_v1`. Preserve the version and use an explicit API adapter,
+not an undocumented method substitution.
+
+## Synthetic Monte Carlo
+
+The landed A3 primitive uses `pooled_two_proportion_z_v1` with explicit NumPy
+PCG64 state. Its draw order is retained control count, retained treatment count,
+control events, then treatment events. Dropout and outcomes are independent
+under the illustrative model. Enrollment remains frozen.
+
+Two-sided significance rejects for either direction. Favorable significance
+also requires fewer observed adverse events in treatment. Under a sufficiently
+large null scenario, expected rates are approximately alpha and alpha/2,
+respectively. Report `mcse_two_sided` and `mcse_favorable` separately, each as
+`sqrt(fraction * (1-fraction) / replicates)`. MCSE is simulation error, not
+uncertainty about real treatment efficacy.
+
+Undefined tests (empty retained arm, zero variance, or nonfinite statistic)
+count as nonrejections over all replicates and contribute to
+`invalid_test_fraction`. Retained/event means are simulated aggregates, distinct
+from deterministic floored expected counts. Rare expected event/non-event
+counts produce warnings; this does not validate the pooled-z approximation in
+that regime.
+
+The Cohen's-h planning approximation and discrete pooled-z simulation are
+different methods; small numerical differences are expected. Reproducibility
+requires identical inputs, seed, RNG draw order, and recorded software versions.
+Simulation is synthetic and conditional; it is not evidence that treatment works.
+
+## Fixed-enrollment analytical grid
+
+The landed A4 core returns a dropout-major matrix `[dropout][baseline]` and
+keeps the declared equal enrollment frozen. Each valid cell uses floored
+expected retained counts. Impossible ARR cells and fewer than two expected
+retained participants per arm are null, with an agreeing invalid mask and
+null target status. These are unavailable scenarios, not zero-power results.
+
+The power curve evaluates every baseline at the exact selected dropout.
+Planned/selected points can be off-axis and are evaluated directly. Every
+point reports `below_target` against the requested target. Analytical delta is
+selected minus planned power as a fraction. All-invalid domains return null
+worst-case power and an empty frontier with a warning. Independent valid off-grid
+points retain their power; the merged #66 API preserves their selected-minus-
+original-planned delta even when the entire grid domain is invalid. The A4 core
+summary alone returns a null delta for an all-invalid domain.
+
+Frontiers use linear interpolation on valid grid edges, restricted to cells
+with four valid corners. Separate connected paths are canonically oriented
+and sorted by coordinates. Exact-target vertices belong to the above-target
+side; isolated vertices and flat plateaus emit no zero-length paths. Saddle
+connectivity uses the mean corner power, with ties above. Branches terminate
+rather than joining arbitrarily. These interpolated contours are approximate,
+not exact roots of the analytical function. Axis size limits and API metadata
+belong to the route adapter, not the numerical grid.
+
+## D6 local core measurements
+
+The commands and retained raw reports are in
+[scripts/benchmarks](../scripts/benchmarks/README.md). These measurements were
+captured on 11 October 2026 against numerical-core commit `98719af`, using the
+synthetic D1 `baseline-collapse-v1` fixture. Each workload had three excluded
+warmups and 30 measured calls; p95 is nearest rank `ceil(.95 * 30)`, the 29th
+sorted observation. Timing uses `perf_counter_ns`, with replay and numerical
+invariant checks outside the timed interval. Timing includes local dataclass
+conversion for design/grid and core-provided metadata for Monte Carlo; it
+excludes HTTP, rendering, fixture/setup work and report serialization.
+
+Recorded environment: macOS 27.0, arm64, eight logical CPUs, Python 3.12.4,
+NumPy 2.5.4, SciPy 1.18.1 and statsmodels 0.15.0. Exact source/harness hashes,
+method identifiers, axes, seed, provenance, inputs and individual nanosecond
+observations are retained in each JSON report. The recorded commit identifies
+the numerical core; the harness was local work identified by its source hash.
+No API cache is involved. These are warm-process, uncached direct calls on
+local hardware under uncontrolled background load.
+
+| Workload | Median (ms) | p95 (ms) | Raw evidence |
+|---|---:|---:|---|
+| Design solver + enrollment inflation | 0.072 | 0.158 | [JSON](../scripts/benchmarks/reports/baseline-collapse-design.json) |
+| 31-baseline × 21-dropout grid | 5.994 | 6.527 | [JSON](../scripts/benchmarks/reports/baseline-collapse-grid.json) |
+| Selected 10,000-replicate Monte Carlo | 1.549 | 1.728 | [JSON](../scripts/benchmarks/reports/baseline-collapse-monte-carlo.json) |
+
+Grid axes are explicit synthetic benchmark inputs: baseline `.05` through
+`.35`, dropout `.00` through `.20`, both in `.01` steps. These axes are not D1
+source assumptions or clinical evidence. The report hashes the axes and method
+alongside the fixture input identity. The canonical fixture has 903 enrolled
+per arm and zero planned dropout; the separate 10% inflation example above
+uses 1004 enrolled per arm and is checked independently.
+
+All three D1 presets pass real design/grid/simulation checks and seed replay.
+The published runtime table reports only the named baseline-collapse condition;
+other presets' checks do not establish their runtime distributions. Seed-42
+engine results are actual draws from the synthetic model, kept distinct from
+D1's hand-authored mock response values.
+
+The original capture above excludes the API/cache/frontend. The later completed
+measurements below use the merged #68 controls and the real production workspace.
+
+This documentation describes tested computational behavior and its limits;
+it makes no speedup, clinical, regulatory, or rare-event validation claim.
+
+
+## D6 real local HTTP measurements before #116
+
+The [HTTP harness](../scripts/benchmarks/README.md#real-uncached-http-benchmark-pre-116)
+measured the merged design/grid/evaluate routes from this checkout on 11 October
+2026. Each workload used its own new single-worker loopback service, a persistent
+HTTP/1.1 connection, three excluded warmups and 30 measured serial requests. The
+process was warm and the compute wrapper was the exact uncached pass-through
+scaffold. These are **not** measurements of #116's cold/warm cache behavior.
+
+Timing covers POST transmission through complete response-body receipt, including
+server validation, numerical work and serialization. Client JSON parsing, result
+checks, server startup and frontend rendering are excluded. Every response was
+checked against its typed response model and actual numerical calculations outside
+timing. Grid checks use each API-returned axis coordinate, including its floating
+representation. The original core reports use explicit decimal axes; the measured
+HTTP route constructs its axes with linspace. Neither check is independent
+scientific validation.
+
+| Real HTTP workload | Median (ms) | p95 (ms) | Raw evidence |
+|---|---:|---:|---|
+| Design calculation | 0.514 | 0.605 | [JSON](../scripts/benchmarks/reports/http/baseline-collapse-design.json) |
+| 31-baseline × 21-dropout grid | 9.704 | 11.453 | [JSON](../scripts/benchmarks/reports/http/baseline-collapse-grid.json) |
+| Selected 10,000-replicate simulation | 4.419 | 4.538 | [JSON](../scripts/benchmarks/reports/http/baseline-collapse-monte-carlo.json) |
+
+The recorded environment is macOS 27.0 arm64 with eight logical CPUs, Python
+3.12.4, NumPy 2.5.4, SciPy 1.18.1 and statsmodels 0.15.0. Reports retain every
+raw duration, source/harness hashes and the exact real response. API timestamps
+vary per computation and are recorded; only those generation timestamps are
+excluded from semantic replay comparison. No cache key or speedup is inferred.
+The HTTP harness deliberately stops when the compute-wrapper source changes.
+
+The original pre-#116 capture stopped at the cache dependency. The following
+measurements were collected after #116 and #105 merged; the historical reports
+remain unchanged.
+
+## D6 merged cache and production frontend measurements
+
+Each condition below contains 30 measured serial actions after one excluded
+priming action and three excluded warmups. Cold means a verified backend-cache
+miss after clearing outside timing; warm means a verified hit. Both run in a warm
+application. These labels do not describe process startup or browser navigation.
+Grid now uses the route cache: cold actions recompute and warm actions reuse the
+complete response, including its original computation timestamp.
+
+### Real loopback HTTP
+
+| Workload | Condition | Median (ms) | p95 (ms) |
+|---|---|---:|---:|
+| Design | cache-cold | 0.839 | 1.341 |
+| Design | cache-warm | 0.805 | 0.981 |
+| 31×21 grid | cache-cold | 10.837 | 11.389 |
+| 31×21 grid | cache-warm | 3.211 | 3.387 |
+| Seed 42 / 10,000 replicates | cache-cold | 4.684 | 4.931 |
+| Seed 42 / 10,000 replicates | cache-warm | 0.729 | 0.810 |
+
+[Raw timings, results and cache witnesses](../scripts/benchmarks/reports/live/http.json).
+
+### Production frontend action to DOM commit
+
+| Workload | Condition | Median (ms) | p95 (ms) |
+|---|---|---:|---:|
+| Design | cache-cold | 2.200 | 2.900 |
+| Design | cache-warm | 1.950 | 2.600 |
+| 6×4 production grid | cache-cold | 7.500 | 8.900 |
+| 6×4 production grid | cache-warm | 4.600 | 5.000 |
+| Seed 42 / 10,000 replicates | cache-cold | 6.500 | 7.100 |
+| Seed 42 / 10,000 replicates | cache-warm | 1.900 | 2.800 |
+| 31×21 benchmark page | cache-cold | 13.000 | 15.100 |
+| 31×21 benchmark page | cache-warm | 4.900 | 5.700 |
+
+[Raw timings, results and cache witnesses](../scripts/benchmarks/reports/live/browser.json).
+
+HTTP timing covers request send through full response receipt. Browser timing
+covers the native action through React result/status DOM commit;
+paint is excluded. Browser navigation, fixture setup, cache reset/inspection,
+result validation and report generation are outside timing. Browser durations
+use performance.now and may be quantized. The browser measures the unchanged
+production workspace (including its 6×4 grid) and an isolated, temporary
+benchmark-owned 31×21 page. Both use the real shared API helper and backend.
+The temporary page is removed after measurement and is not a product change.
+
+Each new report records the actual hardware/software, frontend build ID,
+Chromium and Node versions, complete request/result, source hashes, raw durations
+and per-request observed cache keys. The source commit is the updated checkout;
+local harness code is separately identified by hashes. Measurements are local
+observations under uncontrolled background load. No general speedup or controlled
+before/after comparison with the historical reports is claimed.
+
+Simulation hits preserve the original computed_at timestamp; changed seed or
+replicate count causes an observed miss. Grid hits likewise preserve the original
+timestamp; cold recomputations receive new timestamps. Changed grid axes
+produce observed misses followed by hits on the repeated request.
+Design caches its solver value and builds a new response, without a computation
+timestamp. Design/evaluate keys include route, binary model version and normalized
+request. Grid keys additionally include GRID_METHOD_VERSION and Python, NumPy,
+SciPy and statsmodels versions. Design/evaluate omit these separate signatures.
+Measured services start fresh, so these reports make no cross-upgrade cache claim.
+
+D6's core, merged HTTP/cache and current frontend measurement work is complete.
+Final product screen and downloaded-export acceptance remain with #76; these
+runtime measurements do not establish clinical utility or regulatory validation.
+
+New report source hashes normalize UTF-8 CRLF/CR line endings to LF. Historical
+raw hashes remain capture metadata rather than equality checks against a later
+checkout. Continuous numerical audit comparisons use relative and absolute
+tolerances of 1e-12; counts, masks, shapes and seeds remain exact, as does
+same-environment seeded replay.

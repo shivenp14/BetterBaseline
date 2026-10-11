@@ -10,19 +10,22 @@ import type {
 } from "./contracts";
 import { getPresetById } from "./presets";
 import { getApiMode } from "./api";
+import type { ExtendedEvaluateRequest } from "./api";
 
 export type WorkspaceAction =
   | { type: "LOAD_PRESET"; presetId: string }
   | { type: "UPDATE_PLANNED_FIELD"; fieldPointer: string; fieldPointers?: string[]; update: Partial<TrialAssumptions> }
-  | { type: "START_CALCULATE"; requestRevision: number }
+  | { type: "START_CALCULATE"; requestRevision: number; expectedInputGeneration: number }
   | { type: "CALCULATE_SUCCESS"; response: CalculateResponse; requestRevision: number }
   | { type: "CALCULATE_ERROR"; error: string; requestRevision: number }
   | { type: "UPDATE_STRESS_BASELINE"; baseline: number }
   | { type: "UPDATE_STRESS_DROPOUT"; dropout: number }
-  | { type: "START_EVALUATE" }
+  | { type: "SELECT_STRESS_POINT"; baseline: number; dropout: number }
+  | { type: "UPDATE_SIMULATION_PROVENANCE"; pointers: string[] }
+  | { type: "START_EVALUATE"; requestRevision?: number; expectedInputGeneration: number }
   | { type: "EVALUATE_SUCCESS"; response: EvaluateResponse; requestRevision: number }
   | { type: "EVALUATE_ERROR"; error: string; requestRevision: number }
-  | { type: "START_GRID" }
+  | { type: "START_GRID"; requestRevision?: number; expectedInputGeneration: number }
   | { type: "GRID_SUCCESS"; response: GridResponse; requestRevision: number }
   | { type: "GRID_ERROR"; error: string; requestRevision: number }
   | { type: "RESET_TO_PRESET" };
@@ -58,9 +61,12 @@ export function initializeWorkspaceState(presetId = "baseline-collapse-v1"): Wor
     evaluateResult: initialEvaluate,
     evaluateStatus: "idle",
     evaluateError: null,
+    activeEvaluateRevision: null,
     gridResult: initialGrid,
     gridStatus: "idle",
     gridError: null,
+    activeGridRevision: null,
+    inputGeneration: 0,
     displayedInputsHash: preset.inputs_hash,
     requestRevision: 0,
   };
@@ -82,17 +88,45 @@ export function markFieldManual(
   };
 }
 
+/** Build the real stress request from the current draft and immutable enrollment lock. */
+export function buildStressEvaluationRequest(state: WorkspaceState): ExtendedEvaluateRequest {
+  if (!state.frozenEnrollment) throw new Error("Calculate a design before evaluating stress.");
+  return {
+    planned_design: state.plannedDraft,
+    fixed_enrollment: state.frozenEnrollment,
+    stress_scenario: {
+      control_event_rate: state.stressBaseline,
+      dropout: { control: state.stressDropout, treatment: state.stressDropout },
+      effect_override: null,
+    },
+    simulation: { replicates: 10000, seed: 42 },
+    preset_id: state.presetId,
+    provenance_ledger: state.provenanceLedger,
+  };
+}
+
 export function workspaceReducer(
   state: WorkspaceState,
   action: WorkspaceAction
 ): WorkspaceState {
   switch (action.type) {
     case "LOAD_PRESET": {
-      return initializeWorkspaceState(action.presetId);
+      return {
+        ...initializeWorkspaceState(action.presetId),
+        // Preset changes invalidate every in-flight request. Keep the revision
+        // monotonic so an already-resolving old request can never own the new
+        // preset, even when no request is started after the switch.
+        requestRevision: state.requestRevision + 1,
+        inputGeneration: state.inputGeneration + 1,
+      };
     }
 
     case "RESET_TO_PRESET": {
-      return initializeWorkspaceState(state.presetId);
+      return {
+        ...initializeWorkspaceState(state.presetId),
+        requestRevision: state.requestRevision + 1,
+        inputGeneration: state.inputGeneration + 1,
+      };
     }
 
     case "UPDATE_PLANNED_FIELD": {
@@ -110,25 +144,31 @@ export function workspaceReducer(
         provenanceLedger: nextProvenance,
         designStatus: "idle",
         activeCalculateRevision: null,
+        activeEvaluateRevision: null,
+        activeGridRevision: null,
         evaluateStatus: "stale",
         gridStatus: "stale",
         displayedInputsHash: null,
         requestRevision: state.requestRevision + 1,
+        inputGeneration: state.inputGeneration + 1,
       };
     }
 
     case "START_CALCULATE": {
+      if (action.expectedInputGeneration !== state.inputGeneration) return state;
       return {
         ...state,
-        // Calculation invalidates prior evaluation/grid requests even when the
-        // assumptions did not change. Bump the shared revision so their late
-        // completions cannot overwrite results for the newly locked design.
+        // Calculation replaces the enrollment lock, so evaluation and grid
+        // requests owned by the previous lock can no longer publish results.
         requestRevision: action.requestRevision,
+        inputGeneration: state.inputGeneration + 1,
         designStatus: "calculating",
         designError: null,
         activeCalculateRevision: action.requestRevision,
+        activeEvaluateRevision: null,
         evaluateStatus: state.evaluateStatus === "evaluating" ? "stale" : state.evaluateStatus,
         evaluateError: null,
+        activeGridRevision: null,
         gridStatus: state.gridStatus === "loading" ? "stale" : state.gridStatus,
         gridError: null,
       };
@@ -152,9 +192,19 @@ export function workspaceReducer(
         designStatus: "success",
         designError: null,
         activeCalculateRevision: null,
+        activeEvaluateRevision: null,
+        activeGridRevision: null,
         displayedInputsHash: action.response.inputs_hash,
         evaluateStatus: "stale",
         gridStatus: "stale",
+        provenanceLedger: {
+          ...state.provenanceLedger,
+          ...Object.fromEntries(["control", "treatment"].map(arm => [`/fixed_enrollment/${arm}`, {
+            source: Object.entries(state.provenanceLedger).some(([key, value]) => key.startsWith("/planned_design/") && value.source === "manual_user") ? "manual_user" as const : "synthetic_preset" as const,
+            description: `Enrollment derived from calculated design ${action.response.inputs_hash}`,
+            retrieved_at: new Date().toISOString(), source_url: null,
+          }])),
+        },
       };
     }
 
@@ -173,6 +223,17 @@ export function workspaceReducer(
       };
     }
 
+    case "SELECT_STRESS_POINT": {
+      const baseline = workspaceReducer(state, { type: "UPDATE_STRESS_BASELINE", baseline: action.baseline });
+      const both = workspaceReducer(baseline, { type: "UPDATE_STRESS_DROPOUT", dropout: action.dropout });
+      return { ...both, requestRevision: state.requestRevision + 1, inputGeneration: state.inputGeneration + 1 };
+    }
+    case "UPDATE_SIMULATION_PROVENANCE": {
+      return { ...state, provenanceLedger: action.pointers.reduce((ledger, pointer) => markFieldManual(ledger, pointer, "Selected simulation configuration edited"), state.provenanceLedger),
+        activeCalculateRevision: null, designStatus: state.designStatus === "calculating" ? "idle" : state.designStatus,
+        activeEvaluateRevision: null, activeGridRevision: null, evaluateStatus: "stale", gridStatus: "stale", displayedInputsHash: null,
+        requestRevision: state.requestRevision + 1, inputGeneration: state.inputGeneration + 1 };
+    }
     case "UPDATE_STRESS_BASELINE": {
       const nextProv = markFieldManual(
         state.provenanceLedger,
@@ -185,10 +246,13 @@ export function workspaceReducer(
         provenanceLedger: nextProv,
         designStatus: state.designStatus === "calculating" ? "idle" : state.designStatus,
         activeCalculateRevision: null,
+        activeEvaluateRevision: null,
+        activeGridRevision: null,
         evaluateStatus: "stale",
         gridStatus: "stale",
         displayedInputsHash: null,
         requestRevision: state.requestRevision + 1,
+        inputGeneration: state.inputGeneration + 1,
       };
     }
 
@@ -209,28 +273,41 @@ export function workspaceReducer(
         provenanceLedger: nextProv,
         designStatus: state.designStatus === "calculating" ? "idle" : state.designStatus,
         activeCalculateRevision: null,
+        activeEvaluateRevision: null,
+        activeGridRevision: null,
         evaluateStatus: "stale",
         gridStatus: "stale",
         displayedInputsHash: null,
         requestRevision: state.requestRevision + 1,
+        inputGeneration: state.inputGeneration + 1,
       };
     }
 
     case "START_EVALUATE": {
+      if (action.expectedInputGeneration !== state.inputGeneration) return state;
       if (state.designStatus === "calculating") return state;
+      const requestRevision = action.requestRevision ?? state.requestRevision + 1;
       return {
         ...state,
+        // Keep the operation token separate from other request kinds: evaluation
+        // and grid are valid concurrently for the same frozen inputs.
+        requestRevision,
+        activeEvaluateRevision: requestRevision,
         evaluateStatus: "evaluating",
         evaluateError: null,
       };
     }
 
     case "EVALUATE_SUCCESS": {
-      if (action.requestRevision < state.requestRevision) {
+      if (
+        action.requestRevision !== state.activeEvaluateRevision ||
+        state.evaluateStatus !== "evaluating"
+      ) {
         return state;
       }
       return {
         ...state,
+        activeEvaluateRevision: null,
         evaluateResult: action.response,
         evaluateStatus: "success",
         evaluateError: null,
@@ -239,31 +316,43 @@ export function workspaceReducer(
     }
 
     case "EVALUATE_ERROR": {
-      if (action.requestRevision < state.requestRevision) {
+      if (
+        action.requestRevision !== state.activeEvaluateRevision ||
+        state.evaluateStatus !== "evaluating"
+      ) {
         return state;
       }
       return {
         ...state,
+        activeEvaluateRevision: null,
         evaluateStatus: "error",
         evaluateError: action.error,
       };
     }
 
     case "START_GRID": {
+      if (action.expectedInputGeneration !== state.inputGeneration) return state;
       if (state.designStatus === "calculating") return state;
+      const requestRevision = action.requestRevision ?? state.requestRevision + 1;
       return {
         ...state,
+        requestRevision,
+        activeGridRevision: requestRevision,
         gridStatus: "loading",
         gridError: null,
       };
     }
 
     case "GRID_SUCCESS": {
-      if (action.requestRevision < state.requestRevision) {
+      if (
+        action.requestRevision !== state.activeGridRevision ||
+        state.gridStatus !== "loading"
+      ) {
         return state;
       }
       return {
         ...state,
+        activeGridRevision: null,
         gridResult: action.response,
         gridStatus: "success",
         gridError: null,
@@ -272,11 +361,15 @@ export function workspaceReducer(
     }
 
     case "GRID_ERROR": {
-      if (action.requestRevision < state.requestRevision) {
+      if (
+        action.requestRevision !== state.activeGridRevision ||
+        state.gridStatus !== "loading"
+      ) {
         return state;
       }
       return {
         ...state,
+        activeGridRevision: null,
         gridStatus: "error",
         gridError: action.error,
       };

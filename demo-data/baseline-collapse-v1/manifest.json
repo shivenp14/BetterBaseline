@@ -5,7 +5,7 @@
   "project": "Better Baseline",
   "title": "Baseline Collapse",
   "scenario_origin": "synthetic_preset",
-  "contract_status": "draft_pending_B1",
+  "contract_status": "canonical_backend_v1",
   "inputs_file": "inputs.json",
   "mock_response_file": "mock-response.json",
   "inputs_hash": "sha256:d4dfd5525e9b355437d458dd211996674bd3b263509125fdceaf1b3bf8643380",
@@ -181,16 +181,17 @@
     }
   ],
   "warnings": [
-    "Synthetic example; not a clinical recommendation.",
-    "Hand-authored illustrative mock; not measured engine output or clinical evidence."
+    "All input assumptions are synthetic and are not clinical evidence.",
+    "mock-response.json remains illustrative; final-response.json is generated backend output."
   ],
   "snapshot_requirements": {
-    "status": "pending",
+    "status": "generated_and_reproducible",
     "actual_engine_functions_required": true,
     "fixed_seed": 42,
     "replicates": 10000,
     "record_software_versions": true,
     "record_engine_commit": true,
-    "schema_alignment_gate": "B1; update only D-owned fixtures, not contracts/"
-  }
+    "schema_alignment_gate": "B1 complete; canonical backend v1 response models"
+  },
+  "final_response_file": "final-response.json"
 }
