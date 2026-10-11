@@ -1,123 +1,57 @@
-# D3 integration preparation (#79)
+# Contract integration checks (#79)
 
-This draft prepares external request/result/export invariants. It does not
-close #79 or report live API-to-export acceptance. #65 and #66 are implemented by merged PRs #91/#106; #67/#76
-still gate full integration. Core CI #80 (PR #95) is merged. This draft now adds its own integration.yml
-using the same pinned Python/uv and committed lock. It runs fixture mutation
-checks and the real calculate-to-evaluate-to-grid HTTP handoff, without modifying
-ci.yml/e2e.yml or product source.
-
-Run the standard-library fixture checker regressions from the repository root:
+The checks now cover the assembled production UI and the real calculate/evaluate/
+grid endpoints. Fixture mutation witnesses remain illustrative; measured evidence
+comes from real HTTP responses and independently downloaded browser files.
 
 ```sh
-python3 -m unittest discover -s tests/integration -p 'test_*.py' -v
+python -m unittest discover -s tests/integration -p 'test_*.py' -v
+python tests/integration/run_point_checks.py --base-url http://127.0.0.1:8000
 ```
 
-These tests consume the three committed synthetic presets as read-only inputs.
-Their results remain illustrative. The export witness is explicitly constructed
-checker data, never a measured UI export or a production export implementation.
-Fourteen tests exercise cross-boundary invariants and prove that mutations fail:
-transposed nonsquare matrices, null converted to zero, wrong selected-cell values,
-conflated retained counts, unsplit MCSE, valid-only MCSE denominators, invalid tests
-counted as rejections, seed drift, changed enrollment/results and lost/relabeled
-provenance. No product calculators, FastAPI routes or frontend modules are imported.
-No simulated numeric result is hardcoded as a seed-42 oracle.
+The point checker covers 903/.470, 1,004 enrolled with .10 planned dropout, exact
+seed repeatability, nonsquare 2×3 matrix/point agreement, the off-grid .13 dropout
+curve, original planning comparisons and invalid ARR null cells. Fourteen mutation
+regressions reject transposition, conflated expected/sampled retention, lost MCSE
+splits, wrong denominators, invalid-test rejection, lost provenance and input drift.
 
-## Real captured flow after the handoffs
+## Independently downloaded UI exports
 
-Use the actual configured local API and frontend to calculate, evaluate, grid,
-simulate and download an export. Record a JSON bundle containing:
-
-- `source`: `real_api_and_ui_export`, plus `engine_commit` and `captured_at`.
-- `request`: the exact evaluation body, including frozen equal counts, stress
-  inputs and explicit replicate/seed options.
-- `design_response`, `evaluation_response`, `grid_response`: unmodified network
-  responses from the same run. Use a selected scenario on an exact grid node.
-- `export`: the independently downloaded frontend JSON; do not synthesize it
-  from the response just to make the checker pass.
-- `expected_provenance`: the per-field ledger recorded before export, with its
-  final #67 source tags/URLs/verification semantics. Compare the entire ledger.
-
-Then, with #64's locked dev environment (jsonschema required):
+Install backend's committed lock, frontend lock and this folder's browser lock:
 
 ```sh
-uv run --project backend --locked --extra dev python tests/integration/check_capture.py /path/to/capture.json
+uv sync --project backend --locked --extra dev
+npm ci --prefix frontend
+npm ci --prefix tests/integration
+(cd tests/integration && npx playwright install chromium --with-deps)
+(cd frontend && NEXT_PUBLIC_API_MODE=live NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8765 npm run build)
+bash tests/integration/run_browser_checks.sh
 ```
 
-The tool loads #63's committed JSON schema, validates each named response/export
-model and checks the cross-boundary invariants. A missing schema, field, library
-or capture fails; there is no fixture substitution or successful skip. The
-branch now contains #63 schemas; full capture acceptance still requires the
-independently downloaded UI export and final provenance handoff.
-Proposed count aggregates, optional simulation, RNG/software metadata and richer
-provenance must be aligned with the final contracts through their owners before
-readiness. Current #89 schemas do not yet express all those fields; this draft
-does not edit shared schemas or silently weaken integration expectations.
+The runner starts and cleans up local production frontend/backend processes.
+Backend socket connections outside loopback fail under a test-only startup guard;
+HTTP/WebSocket browser routing allows only the exact two configured origins and
+blocks service workers. This is application-level egress isolation, not a claim
+that the entire CI runner has no internet. Setup/build needs connectivity.
 
-## Remaining mandatory scenarios
+The browser calculates the synthetic preset, runs the explicit seeded simulation,
+downloads/reopens JSON, changes to fresh manual stress inputs and seed/replicates,
+then repeats the seed. It records actual requests and unmodified responses before
+reading the download; it never constructs an export. Every result and all seven
+provenance fields are compared after the documented HTTP-envelope-to-export-map
+normalization. Missing schema fields, malformed downloads or failures return
+nonzero. Null calibration is measured by #109's supported simulation seam, since
+production RR=1 remains intentionally invalid.
 
-- Actual .20/RR=.75 calculation: 903 evaluable/arm and 1,004 enrolled with 10%
-  planned dropout. Evaluate .10/RR=.75 at frozen 903/no dropout: about .470.
-- Change stress baseline/dropout and verify fixed enrollment and planned design
-  survive through the downloaded export unchanged.
-- Compare repeated same-input/seed numeric simulation results in the same
-  recorded environment. Check two-sided versus favorable fractions and separate
-  MCSE, expected floors versus simulated retained means, all-replicate invalid
-  policy and software/RNG metadata. Null calibration (alpha versus alpha/2) must
-  use a supported real calibration seam; current adverse-effect design contracts
-  forbid RR=1. Do not fabricate null API acceptance via an invalid request.
-- Use nonsquare axes and invalid ARR cells to verify orientation, literal nulls
-  and masks. Compare the selected point/curve at exactly the selected dropout.
-- Capture input provenance before API/export processing, then check it survives
-  the real UI export with full method/software/seed metadata. Repeat fresh inputs
-  with external internet disconnected, preserving local API connectivity.
+Artifacts go to `/tmp/betterbaseline-integration`: raw capture bundles, downloaded
+JSON, request counts, versions, hashes, logs and browser report. integration.yml
+builds and runs this flow, then uploads the evidence even on failure. The core CI
+and separate E2E workflow remain unchanged.
 
-Record actual request/response/browser evidence and failures. Fixture checks
-passing alone cannot mark the draft ready or close the issue. This capture tool
-is preparation for assertions on real evidence; it does not drive the browser,
-fetch a backend response, or independently establish that a supplied capture was
-obtained live. The separate point-API orchestration is available now; add full UI-export
-orchestration after #67/#76.
-
-#65 follow-up: expected-retention assertions now follow the shared decimal-floor
-convention and allow null analytic power exactly at zero expected retention.
-The registered point API is implemented in #91; full UI-export acceptance
-still awaits #67/#76 while its point-API workflow runs independently.
-
-## Running the partial HTTP integration
-
-`run_point_checks.py` takes `--base-url http://127.0.0.1:8765` and requires a
-real running local backend. It loads the synthetic assumptions as inputs, then
-uses actual HTTP calculate/evaluate responses and the app’s registered OpenAPI
-response model. It verifies the 903/.470 reference, 1,004 enrollment inflation,
-same-seed repeatability, frozen counts under stress and changing input identity.
-It also checks every cell in a real nonsquare 2×3 grid against separately
-requested point evaluations, the exact curve at off-grid dropout .13, original
-planned comparisons under changed stress effects, and ARR invalid-cell nulls.
-Real grids validate against both the registered OpenAPI and committed schema.
-It never imports an engine or fabricates an export. The workflow starts the real
-uvicorn app, waits up to 30 seconds for health and fails on any mismatch.
-
-Earlier container evidence: the committed lock installs, 292 backend/fixture tests
-(183 subtests) and 12 invariant regressions pass. The HTTP checker passes against the
-locked, non-root backend container: stressed power 0.46999657396642797, seed 42,
-Python 3.12.15 / NumPy 2.5.4 / SciPy 1.18.1 / statsmodels 0.15.0. See
-DEPLOYMENT.md for the tested image and CORS evidence. Current local HTTP evidence after #106 merges: calculate/evaluate/grid checks
-pass on Python 3.12.14 with the same locked numerical library versions; 14
-invariant regressions and 305 backend/fixture tests (201 subtests) pass. Provenance normalization and real browser
-export/offline acceptance remain pending.
-
-
-After merged #72/#68, the current-main locked environment passes 320
-backend/fixture tests (201 subtests), all 14 invariant regressions, and the
-calculate/evaluate/grid HTTP checker against the rebuilt backend container.
-Full provenance/UI-export acceptance still awaits #67/#76. See DEPLOYMENT.md
-for the separate built-container browser smoke; it does not establish exports
-or complete offline acceptance.
-
-
-After merged #60 and the completed #73 standalone handoff, the locked environment
-passes 340 backend/fixture tests (201 subtests), 14 integration invariant tests
-and real calculate/evaluate/grid HTTP checks. The #73 component test's explicit
-live mode also renders raw API curve/comparison data through the merged #72 state.
-Final page/export wiring remains #76's scope.
+`evidence/offline/` preserves the measured production-container rehearsal against
+main 86e834e. Three independent downloads and eight real POST responses passed;
+fresh .12 risk/.13 dropout retained 903 enrolled/arm, seed 43 with 1,000 replicates
+replayed identically, with zero page errors/external browser requests. #94's
+infra/deploy/offline-report.json records healthy non-root containers and a Docker
+internal network with no external route (backend probe failed ENETUNREACH).
+These are synthetic numerical checks, not clinical efficacy evidence.

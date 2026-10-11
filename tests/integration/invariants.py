@@ -84,9 +84,30 @@ def check_export(request, response, exported, expected_provenance):
     require(exported['export_schema_version'] == 1, 'export version')
     for key in ('planned_design', 'fixed_enrollment', 'stress_scenario'):
         require(exported[key] == request[key], f'export mutated {key}')
-    require(exported['evaluation_result'] == response, 'export lost or changed API result/seed/metadata')
+    require(canonical_result(exported['evaluation_result']) == canonical_result(response), 'export lost or changed API result/seed/metadata')
     require(bool(expected_provenance), 'provenance witness must not be empty')
-    require(exported['provenance'] == expected_provenance, 'per-field provenance lost or relabeled')
+    require(canonical_provenance(exported['provenance']) == canonical_provenance(expected_provenance),
+            'per-field provenance lost or relabeled')
+
+
+def canonical_provenance(ledger):
+    # The contract defaults optional audit fields to null. Preserve every field,
+    # including explicit false; never compare just source tags or omit audit data.
+    fields = ('description', 'retrieved_at', 'source_url', 'source_location',
+              'verified_by_user', 'is_observed_registry_result')
+    return {key: {'source': record['source'], **{field: record.get(field) for field in fields}}
+            for key, record in ledger.items()}
+
+
+def canonical_result(response):
+    # HTTP routes use a display provenance envelope; exports use its field map.
+    result = dict(response)
+    if 'provenance' in result:
+        ledger = result['provenance']
+        if 'field_provenance' in ledger:
+            ledger = ledger['field_provenance']
+        result['provenance'] = canonical_provenance(ledger)
+    return result
 
 
 def check_design(planned, design):

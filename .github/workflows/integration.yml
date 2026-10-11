@@ -12,9 +12,11 @@ permissions:
 jobs:
   fixture-and-live-api:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12.13"
@@ -38,5 +40,26 @@ jobs:
             exit 1
           fi
 
-# Partial integration only. Add real provenance/UI-export orchestration
-# after #67/#76. Keep browser E2E and core CI in their separate workflows.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.15.0"
+      - name: Install locked frontend and integration browser dependencies
+        run: |
+          npm ci --prefix frontend
+          npm ci --prefix tests/integration
+          cd tests/integration && npx playwright install chromium --with-deps
+      - name: Build production live frontend
+        working-directory: frontend
+        env:
+          NEXT_PUBLIC_API_MODE: live
+          NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:8765
+        run: npm run build
+      - name: Check independent UI downloads with external traffic blocked
+        run: bash tests/integration/run_browser_checks.sh
+      - name: Retain real requests, responses, downloads and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-integration-evidence
+          path: /tmp/betterbaseline-integration/
+          if-no-files-found: error

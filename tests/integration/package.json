@@ -1,0 +1,6 @@
+{
+  "name": "betterbaseline-contract-integration",
+  "private": true,
+  "type": "module",
+  "dependencies": {"playwright": "1.64.0"}
+}
