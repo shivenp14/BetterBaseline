@@ -148,13 +148,20 @@ def get_current_software_versions() -> Dict[str, str]:
 
 
 def compute_inputs_hash(data: Union[BaseModel, Dict[str, Any]]) -> str:
-    """Generate deterministic sha256 input hash over canonical JSON payload."""
+    """Generate deterministic sha256 input hash over canonical JSON payload.
+
+    Converts both BaseModels and dictionary representations to JSON-compatible
+    data structures and serializes them with sorted keys and compact separators.
+    """
     if isinstance(data, BaseModel):
-        serialized = data.model_dump_json(exclude_none=True)
+        # Convert to JSON-compatible dictionary without stripping explicit model values
+        json_obj = data.model_dump(mode="json")
     elif isinstance(data, dict):
-        serialized = json.dumps(data, sort_keys=True, separators=(",", ":"))
+        json_obj = data
     else:
-        serialized = str(data)
+        json_obj = data
+
+    serialized = json.dumps(json_obj, sort_keys=True, separators=(",", ":"))
     digest = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
     return f"sha256:{digest}"
 

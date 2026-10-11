@@ -192,3 +192,21 @@ def test_inputs_hash_matches_d1_manifest_inputs():
 
         computed = compute_inputs_hash(raw_inputs)
         assert computed == raw_manifest["inputs_hash"]
+
+
+def test_inputs_hash_model_vs_dictionary_equivalence():
+    """Reviewer regression [P2]: BaseModel and equivalent JSON-compatible dictionary produce identical hashes."""
+    from app.schemas import ScenarioEvaluateRequest
+
+    demo_dir = Path(__file__).resolve().parents[2] / "demo-data"
+    inputs_file = demo_dir / "stable-design-v1" / "inputs.json"
+    with open(inputs_file, "r", encoding="utf-8") as f:
+        inputs_dict = json.load(f)
+
+    request_model = ScenarioEvaluateRequest.model_validate(inputs_dict)
+    model_hash = compute_inputs_hash(request_model)
+    dict_hash = compute_inputs_hash(request_model.model_dump(mode="json"))
+    raw_dict_hash = compute_inputs_hash(inputs_dict)
+
+    assert model_hash == dict_hash
+    assert model_hash == raw_dict_hash
