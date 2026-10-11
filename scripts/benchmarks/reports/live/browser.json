@@ -1,0 +1,3131 @@
+{
+  "cache_identity_checks": [
+    {
+      "seed": 42,
+      "replicates": 10000,
+      "expected_condition": "cache-cold",
+      "entries": 1,
+      "events": [
+        {
+          "operation": "get",
+          "key": "sha256:48ce16da306a8550715c39d46976517af684e9a234cc8b7aa6f5d12ded313245",
+          "hit": false
+        },
+        {
+          "operation": "set",
+          "key": "sha256:48ce16da306a8550715c39d46976517af684e9a234cc8b7aa6f5d12ded313245"
+        }
+      ]
+    },
+    {
+      "seed": 42,
+      "replicates": 10000,
+      "expected_condition": "cache-warm",
+      "entries": 1,
+      "events": [
+        {
+          "operation": "get",
+          "key": "sha256:48ce16da306a8550715c39d46976517af684e9a234cc8b7aa6f5d12ded313245",
+          "hit": true
+        }
+      ]
+    },
+    {
+      "seed": 43,
+      "replicates": 10000,
+      "expected_condition": "cache-cold",
+      "entries": 2,
+      "events": [
+        {
+          "operation": "get",
+          "key": "sha256:9682a3aa81fa6a311e8348efc71dc8938b55a6482ee146e56812ea6b8ccedd7d",
+          "hit": false
+        },
+        {
+          "operation": "set",
+          "key": "sha256:9682a3aa81fa6a311e8348efc71dc8938b55a6482ee146e56812ea6b8ccedd7d"
+        }
+      ]
+    },
+    {
+      "seed": 43,
+      "replicates": 10000,
+      "expected_condition": "cache-warm",
+      "entries": 2,
+      "events": [
+        {
+          "operation": "get",
+          "key": "sha256:9682a3aa81fa6a311e8348efc71dc8938b55a6482ee146e56812ea6b8ccedd7d",
+          "hit": true
+        }
+      ]
+    },
+    {
+      "seed": 43,
+      "replicates": 9999,
+      "expected_condition": "cache-cold",
+      "entries": 3,
+      "events": [
+        {
+          "operation": "get",
+          "key": "sha256:be938c3980fada4a61e442e79c775d0ccccf5863fe9c246ed13105ea6a4e0330",
+          "hit": false
+        },
+        {
+          "operation": "set",
+          "key": "sha256:be938c3980fada4a61e442e79c775d0ccccf5863fe9c246ed13105ea6a4e0330"
+        }
+      ]
+    }
+  ],
+  "benchmark_schema_version": 2,
+  "measured_at_utc": "2026-10-11T11:07:54.711790+00:00",
+  "environment": {
+    "python": "3.12.4",
+    "packages": {
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "statsmodels": "0.15.0"
+    },
+    "hardware": {
+      "os": "macOS-27.0-arm64-arm-64bit",
+      "machine": "arm64",
+      "processor": "arm",
+      "logical_cpu_count": 8
+    },
+    "git_commit": "71c9291e246138fceaa70bb2614d5094164864a3",
+    "core_source_sha256": {
+      "backend/app/statistics/__init__.py": "2f670063cc59a0a7f2c7c4d83667e02ee69048cfc7757e5741379daa7defb9b0",
+      "backend/app/statistics/analytic.py": "515dc54d9abd610c9511bd7e2ae149854efec1a825907a024cda95aec1cc1122",
+      "backend/app/statistics/diagnostics.py": "4cd42ff168daec93d4b81ee8e52ad5d52aa569d7bbdd0c44fdcb0e5a61a56b93",
+      "backend/app/statistics/effect.py": "1ead80fe378c265cf4e9f8a4426ce9003dd2c634d859153dc4ce9572b28d2e1a",
+      "backend/app/statistics/errors.py": "2366c276bab469fd2adfd6b448655a3b81a7d2a5cb9eaa41de642bf11bda3cfc",
+      "backend/app/statistics/inputs.py": "b2a6f1a247411ad0a95cc821df2831d4a1725fbee079cc17fa0f6b34e7fc5ab0",
+      "backend/app/statistics/sample_size.py": "613f4a8a6faab1a078f8b750458450f42869352834b8a411c284546a67924139",
+      "backend/app/statistics/simulation.py": "084c16f3834a99d9aa6c4e8dcd8d7e554e5cefbeb5644a1526b41169f6f3a229",
+      "backend/app/statistics/stress_grid.py": "117f67cfad5fad577bbfb904d0c30436038e28eb45b2b11c1388e3e43cb710cd",
+      "backend/app/statistics/validation.py": "19faa5c5c902cf26752e57910b430fa83aad39ec52c18f8dbb7adfe4f2d354b6"
+    },
+    "harness_source_sha256": "ac7fc62c0c16b11422d14b99639df257d77e8d089ac4aa26d9e5db6fed47ba49"
+  },
+  "frontend_runtime": {
+    "node": "v22.14.0",
+    "build_id": "YgFGFD9n1ewoWWlpsbvEU",
+    "packages": {
+      "next": "16.4.0",
+      "react": "19.3.0",
+      "react-dom": "19.3.0"
+    }
+  },
+  "source_sha256": {
+    "backend/app/__init__.py": "09f8ff1d9c784fcf40437217d88364106bdc6769c4b649449b2f6ff9784c954a",
+    "backend/app/cache.py": "2d524ac5e284cdc534f5877d6708f1249732bbd8841499d13f0c7f4628c24745",
+    "backend/app/data/__init__.py": "890246426da36600cf97146d7019ca0909f1c83573dbfacba37036b02955898c",
+    "backend/app/data/provenance.py": "83aab0d273b1176c250324e7dfd3960f4ba286818432a07c9cf1a08a2d053538",
+    "backend/app/errors.py": "44bf87cbbe5548f07712e31a6bdf1e2a715b8b1b14de1f56cb5051f7e28e0090",
+    "backend/app/main.py": "b80b228c38cc3d00dba8d5ee54c21cf5377940729153083601564c994b6c9119",
+    "backend/app/middleware/compute.py": "6c6f806987b56f84177a5033a3b4740cc80d12e9375302cd7d01d9e28f84244d",
+    "backend/app/routers/__init__.py": "7271ba7dd55248bfa5256476fab9d8985c3592b475e0d156cfee86d27c1b9370",
+    "backend/app/routers/design.py": "4c172f668f24e91562afed98b2803936152756536d4f67ebb6a42bac87a18241",
+    "backend/app/routers/grid.py": "29deffccc81ad603c90b40e83f70273966bea597c56bf21947d25ff7b7931931",
+    "backend/app/routers/health.py": "640b9358f2df618104c935cdc2ed025aae4e81e778dfcc22adf1fc0437857fb1",
+    "backend/app/routers/scenarios.py": "5f01437317b1169be4feb152fbabc1175e16c41b602e025a27cd21bbad8f91c7",
+    "backend/app/schemas.py": "f3ff01420ea21b488a125a4c25b26341f83d909ba9099279788b79a24bf8a5d8",
+    "backend/app/services/__init__.py": "6e8bfe65afc982a683ae4fa244065e87bad6c809bdeef51b74911506f5abd786",
+    "backend/app/services/compute.py": "5a43f48bf78ca9251d0169a8f826566d7f3b8e098a599e7f50aa04a1dcd34087",
+    "backend/app/services/grid.py": "658b4a5f4794005f7ac7025d40bbe56ecafe80bd17f4abfc62037a08aaf799f9",
+    "backend/app/settings.py": "40fa2c52b1e31c6b5327bed1a4efd87849089018fd23cf55e071f3f1b77bc948",
+    "backend/app/statistics/__init__.py": "2f670063cc59a0a7f2c7c4d83667e02ee69048cfc7757e5741379daa7defb9b0",
+    "backend/app/statistics/analytic.py": "515dc54d9abd610c9511bd7e2ae149854efec1a825907a024cda95aec1cc1122",
+    "backend/app/statistics/diagnostics.py": "4cd42ff168daec93d4b81ee8e52ad5d52aa569d7bbdd0c44fdcb0e5a61a56b93",
+    "backend/app/statistics/effect.py": "1ead80fe378c265cf4e9f8a4426ce9003dd2c634d859153dc4ce9572b28d2e1a",
+    "backend/app/statistics/errors.py": "2366c276bab469fd2adfd6b448655a3b81a7d2a5cb9eaa41de642bf11bda3cfc",
+    "backend/app/statistics/inputs.py": "b2a6f1a247411ad0a95cc821df2831d4a1725fbee079cc17fa0f6b34e7fc5ab0",
+    "backend/app/statistics/sample_size.py": "613f4a8a6faab1a078f8b750458450f42869352834b8a411c284546a67924139",
+    "backend/app/statistics/simulation.py": "084c16f3834a99d9aa6c4e8dcd8d7e554e5cefbeb5644a1526b41169f6f3a229",
+    "backend/app/statistics/stress_grid.py": "117f67cfad5fad577bbfb904d0c30436038e28eb45b2b11c1388e3e43cb710cd",
+    "backend/app/statistics/validation.py": "19faa5c5c902cf26752e57910b430fa83aad39ec52c18f8dbb7adfe4f2d354b6",
+    "frontend/app/layout.tsx": "5fe9dc36363ddf6343f71de6eee84ae9878333476ef6cb1c2ca36d1b22408086",
+    "frontend/app/page.tsx": "f79dc769f8cfaea0d24ceb0853487037a0d219fa1d07d49e80b394e75e7e037b",
+    "frontend/lib/api.ts": "98cf604ed01d4527b96f36f62fccf9000a6ae4df2de7f86496f08be5eb87f0e1",
+    "frontend/lib/contracts.ts": "a0babcb1d55fc071ef199189f48d660b1fad799d388932de34aa52e1f4d3a279",
+    "frontend/lib/mocks.ts": "93177ae9035bfd0ee08690c4918ff7b09ce8ad143fd1c61e3df1f2c74900db1c",
+    "frontend/lib/presets.ts": "987c27a2ed4b30e0161bfbd7bf02a5c184efc525addbeb9f049298ef3bd8129e",
+    "frontend/lib/statistical-engine.ts": "d8ba2aa604340d6ffb77f74f6e64befcd898ef343706f2e2ef08658d52403a4d",
+    "frontend/lib/validation.ts": "317f8b06df265fc6e07b99153b64c3815aa27142aca7c6250849929d446b38eb",
+    "frontend/lib/workspace-contracts.ts": "d2a6f45a7d66395f1140122eb709d3684b664c2c8597891bb33ce57f4f9f4a86",
+    "frontend/lib/workspace-planning.ts": "ae1ed494e3941feadfc93fa4743ab3fbd50401364c076cc3ead10ce8002e97ca",
+    "frontend/lib/workspace-state.ts": "22c384eb9bd1d4cb86a8945960e41e866e82f27a248c8a8d3485049a0ec70d7d",
+    "frontend/components/DesignForm.tsx": "d55271cd8d9d09afe99aadd86c0763d8210ac0a0fc5a2f8da6befbad6e4a2095",
+    "frontend/components/DesignSummary.tsx": "2e85d7e24876ee7cbbf8a6331080197bab6e685ec7b63e88b39ac656cefa4622",
+    "frontend/components/PresetSelector.tsx": "c84ad04908e3928a6a22e6dd53309a72e47c0d2d8dd9a2adb1e4da4620b6cc05",
+    "frontend/components/StressControls.tsx": "6e316f390fbe28388d78ead6e66f65b681a4e93faec9d0853b1658356bc84348",
+    "scripts/benchmarks/browser.mjs": "c62514061ec8b4681c0b5f985920ca081bbdb8a97dd22631d570abcc47a6ade9",
+    "scripts/benchmarks/core.py": "ac7fc62c0c16b11422d14b99639df257d77e8d089ac4aa26d9e5db6fed47ba49",
+    "scripts/benchmarks/http_uncached.py": "4c1288b0ca7c6f749528d362bc68915e88bfa4683feecb7d1f69de0bc51d96d9",
+    "scripts/benchmarks/live.py": "2e7695bd754d63ef83a02273343bceba25712165a816b2e18f07105c3ae1a67c",
+    "scripts/benchmarks/test_core.py": "3ff581819b75f87c79fe78ab91f0b625d56b1f1eeb79776d1e3a029b8f89a565",
+    "scripts/benchmarks/test_http_uncached.py": "dad81ea4c3e18715b04346672a930abe4dad6ad9594f3e2715db0ed3f4e9d9f1",
+    "scripts/benchmarks/test_live.py": "d3bb8222631a99a1c72b9e15210f282a8ac3c0f488be78d744fdff9de1adc7d7"
+  },
+  "instrumentation": "Benchmark-only delegating cache observer; real get/set/clear/len methods. Single serial request. Clear and inspection outside timing; no HTTP control endpoint or product-source edits.",
+  "cache_key_policy": "Current design/evaluate routes use route + model_version + normalized request (effective defaults included). No separate software signature or numerical method version is embedded; fresh processes are used for each report. Grid supplies no key.",
+  "timing_notice": "Local hardware/load-dependent observations; no general speedup or clinical validation claim.",
+  "frontend": true,
+  "scope": "Production workspace native action through DOM result commit; excludes navigation, setup, cache reset/inspection and result validation. Includes client helper, HTTP and React DOM commit; excludes paint.",
+  "measurements": [
+    {
+      "workload": "design",
+      "condition": "cache-cold",
+      "measured_runs": 30,
+      "excluded_warmups": 3,
+      "excluded_priming_requests": 1,
+      "raw_elapsed_ns": [
+        2800000,
+        2600000,
+        2200000,
+        2400000,
+        2000000,
+        2200000,
+        2100000,
+        2500000,
+        2500000,
+        2300000,
+        3200000,
+        2400000,
+        2000000,
+        1800000,
+        2000000,
+        3100000,
+        2300000,
+        2000000,
+        2300000,
+        2200000,
+        2300000,
+        2000000,
+        2500000,
+        2000000,
+        2000000,
+        2800000,
+        2800000,
+        2600000,
+        1800000,
+        2300000
+      ],
+      "median_ms": 2.3,
+      "p95_ms": 3.1,
+      "p95_definition": "nearest rank, ceil(0.95*runs), one-based",
+      "cache_observations": [
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010"
+            }
+          ]
+        }
+      ],
+      "computed_at_samples": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "representative_result": {
+        "model_version": "binary-v1",
+        "method": "cohen_h_normal_v1",
+        "p_treatment": 0.15000000000000002,
+        "evaluable_n": {
+          "control": 903,
+          "treatment": 903
+        },
+        "enrolled_n": {
+          "control": 903,
+          "treatment": 903
+        },
+        "nominal_power_evaluable": 0.8002861288461955,
+        "warnings": [],
+        "inputs_hash": "09bfe0b8e4990005"
+      },
+      "request": {
+        "model_version": "binary-v1",
+        "allocation_ratio": 1,
+        "control_event_rate": 0.2,
+        "effect": {
+          "kind": "relative_risk",
+          "value": 0.75
+        },
+        "alpha": 0.05,
+        "target_power": 0.8,
+        "dropout": {
+          "control": 0,
+          "treatment": 0
+        }
+      },
+      "identical_semantic_results": true,
+      "browser": "156.0.8078.4",
+      "frontend_mode": "next start production; live API; existing production workspace",
+      "semantic_result_sha256": "456c5cff213e37b2a0802a345f72c28362ab89e83fee648b1ec37c7d45399649"
+    },
+    {
+      "workload": "design",
+      "condition": "cache-warm",
+      "measured_runs": 30,
+      "excluded_warmups": 3,
+      "excluded_priming_requests": 1,
+      "raw_elapsed_ns": [
+        2000000,
+        2000000,
+        21400000,
+        2400000,
+        2100000,
+        1800000,
+        2100000,
+        2000000,
+        1900000,
+        2000000,
+        2600000,
+        2100000,
+        1900000,
+        1700000,
+        2700000,
+        1900000,
+        2300000,
+        2300000,
+        2500000,
+        2200000,
+        2000000,
+        2300000,
+        1800000,
+        2000000,
+        2900000,
+        2400000,
+        1900000,
+        1800000,
+        1700000,
+        2000000
+      ],
+      "median_ms": 2,
+      "p95_ms": 2.9,
+      "p95_definition": "nearest rank, ceil(0.95*runs), one-based",
+      "cache_observations": [
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:256add9c0d9390320daa1cacca956bec2c20d43816260f0e6c210191ccb68010",
+              "hit": true
+            }
+          ]
+        }
+      ],
+      "computed_at_samples": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "representative_result": {
+        "model_version": "binary-v1",
+        "method": "cohen_h_normal_v1",
+        "p_treatment": 0.15000000000000002,
+        "evaluable_n": {
+          "control": 903,
+          "treatment": 903
+        },
+        "enrolled_n": {
+          "control": 903,
+          "treatment": 903
+        },
+        "nominal_power_evaluable": 0.8002861288461955,
+        "warnings": [],
+        "inputs_hash": "09bfe0b8e4990005"
+      },
+      "request": {
+        "model_version": "binary-v1",
+        "allocation_ratio": 1,
+        "control_event_rate": 0.2,
+        "effect": {
+          "kind": "relative_risk",
+          "value": 0.75
+        },
+        "alpha": 0.05,
+        "target_power": 0.8,
+        "dropout": {
+          "control": 0,
+          "treatment": 0
+        }
+      },
+      "identical_semantic_results": true,
+      "browser": "156.0.8078.4",
+      "frontend_mode": "next start production; live API; existing production workspace",
+      "semantic_result_sha256": "456c5cff213e37b2a0802a345f72c28362ab89e83fee648b1ec37c7d45399649"
+    },
+    {
+      "workload": "grid",
+      "condition": "uncached-grid",
+      "measured_runs": 30,
+      "excluded_warmups": 3,
+      "excluded_priming_requests": 1,
+      "raw_elapsed_ns": [
+        4800000,
+        5100000,
+        4800000,
+        5600000,
+        4600000,
+        4900000,
+        5100000,
+        5000000,
+        4900000,
+        5000000,
+        4900000,
+        4800000,
+        5000000,
+        4800000,
+        5000000,
+        5300000,
+        5500000,
+        4600000,
+        5300000,
+        4500000,
+        5000000,
+        4500000,
+        5000000,
+        4500000,
+        4900000,
+        4600000,
+        5100000,
+        4600000,
+        5200000,
+        4700000
+      ],
+      "median_ms": 4.9,
+      "p95_ms": 5.5,
+      "p95_definition": "nearest rank, ceil(0.95*runs), one-based",
+      "cache_observations": [
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        },
+        {
+          "entries": 0,
+          "events": []
+        }
+      ],
+      "computed_at_samples": [
+        "2026-10-11T11:07:53.864498+00:00",
+        "2026-10-11T11:07:53.873607+00:00",
+        "2026-10-11T11:07:53.882753+00:00",
+        "2026-10-11T11:07:53.891922+00:00",
+        "2026-10-11T11:07:53.900824+00:00",
+        "2026-10-11T11:07:53.909702+00:00",
+        "2026-10-11T11:07:53.917868+00:00",
+        "2026-10-11T11:07:53.926956+00:00",
+        "2026-10-11T11:07:53.935600+00:00",
+        "2026-10-11T11:07:53.944666+00:00",
+        "2026-10-11T11:07:53.952927+00:00",
+        "2026-10-11T11:07:53.962027+00:00",
+        "2026-10-11T11:07:53.970120+00:00",
+        "2026-10-11T11:07:53.979173+00:00",
+        "2026-10-11T11:07:53.987420+00:00",
+        "2026-10-11T11:07:53.996482+00:00",
+        "2026-10-11T11:07:54.005382+00:00",
+        "2026-10-11T11:07:54.014314+00:00",
+        "2026-10-11T11:07:54.022676+00:00",
+        "2026-10-11T11:07:54.031415+00:00",
+        "2026-10-11T11:07:54.040175+00:00",
+        "2026-10-11T11:07:54.048959+00:00",
+        "2026-10-11T11:07:54.057536+00:00",
+        "2026-10-11T11:07:54.065647+00:00",
+        "2026-10-11T11:07:54.074010+00:00",
+        "2026-10-11T11:07:54.082099+00:00",
+        "2026-10-11T11:07:54.090703+00:00",
+        "2026-10-11T11:07:54.098900+00:00",
+        "2026-10-11T11:07:54.107510+00:00",
+        "2026-10-11T11:07:54.115670+00:00"
+      ],
+      "representative_result": {
+        "grid_label": "expected_count_approximation",
+        "fixed_enrollment": {
+          "control": 903,
+          "treatment": 903
+        },
+        "below_target": [
+          [
+            true,
+            true,
+            true,
+            false,
+            false,
+            false
+          ],
+          [
+            true,
+            true,
+            true,
+            true,
+            false,
+            false
+          ],
+          [
+            true,
+            true,
+            true,
+            true,
+            false,
+            false
+          ],
+          [
+            true,
+            true,
+            true,
+            true,
+            true,
+            false
+          ]
+        ],
+        "analytic_delta": -0.3302895548797667,
+        "software_versions": {
+          "python": "3.12.4",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1",
+          "statsmodels": "0.15.0"
+        },
+        "provenance": {},
+        "model_version": "binary-v1",
+        "method": "cohen_h_normal_v1",
+        "x_baseline": [
+          0.05,
+          0.1,
+          0.15000000000000002,
+          0.2,
+          0.25,
+          0.3
+        ],
+        "y_dropout": [
+          0,
+          0.09999999999999999,
+          0.19999999999999998,
+          0.3
+        ],
+        "power": [
+          [
+            0.2557744840115366,
+            0.46999657396642885,
+            0.6574053044586132,
+            0.8002861288461955,
+            0.896144552055441,
+            0.9525691925528206
+          ],
+          [
+            0.23477725993819978,
+            0.4314511592894823,
+            0.6114337507729185,
+            0.7573115795591798,
+            0.8628772200619825,
+            0.9308984513115238
+          ],
+          [
+            0.21393460818068302,
+            0.3918484205513367,
+            0.5616400927366462,
+            0.7074941754727203,
+            0.8209942901748312,
+            0.9008023755870377
+          ],
+          [
+            0.1930592014210558,
+            0.350923667985993,
+            0.5075649227287108,
+            0.6497701773098563,
+            0.7684483982269131,
+            0.8592792969527617
+          ]
+        ],
+        "invalid_mask": [
+          [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ]
+        ],
+        "target_power": 0.8,
+        "planned_point": {
+          "expected_evaluable_n": {
+            "control": 903,
+            "treatment": 903
+          },
+          "invalid_reason": null,
+          "p_control": 0.2,
+          "dropout": 0,
+          "power": 0.8002861288461955,
+          "is_safe": true,
+          "is_valid": true
+        },
+        "selected_point": {
+          "expected_evaluable_n": {
+            "control": 903,
+            "treatment": 903
+          },
+          "invalid_reason": null,
+          "p_control": 0.1,
+          "dropout": 0,
+          "power": 0.46999657396642885,
+          "is_safe": false,
+          "is_valid": true
+        },
+        "frontier_points": [
+          {
+            "expected_evaluable_n": null,
+            "invalid_reason": null,
+            "p_control": 0.19989987150220406,
+            "dropout": 0,
+            "power": 0.8,
+            "is_safe": true,
+            "is_valid": true
+          },
+          {
+            "expected_evaluable_n": null,
+            "invalid_reason": null,
+            "p_control": 0.2,
+            "dropout": 0.0006658099990404083,
+            "power": 0.8,
+            "is_safe": true,
+            "is_valid": true
+          },
+          {
+            "expected_evaluable_n": null,
+            "invalid_reason": null,
+            "p_control": 0.22021889898905453,
+            "dropout": 0.09999999999999999,
+            "power": 0.8,
+            "is_safe": true,
+            "is_valid": true
+          },
+          {
+            "expected_evaluable_n": null,
+            "invalid_reason": null,
+            "p_control": 0.24075142336642913,
+            "dropout": 0.19999999999999998,
+            "power": 0.8,
+            "is_safe": true,
+            "is_valid": true
+          },
+          {
+            "expected_evaluable_n": null,
+            "invalid_reason": null,
+            "p_control": 0.25,
+            "dropout": 0.2399541988851194,
+            "power": 0.8,
+            "is_safe": true,
+            "is_valid": true
+          },
+          {
+            "expected_evaluable_n": null,
+            "invalid_reason": null,
+            "p_control": 0.2673683197104093,
+            "dropout": 0.3,
+            "power": 0.8,
+            "is_safe": true,
+            "is_valid": true
+          }
+        ],
+        "contour_segments": [
+          {
+            "start": {
+              "p_control": 0.19989987150220406,
+              "dropout": 0
+            },
+            "end": {
+              "p_control": 0.2,
+              "dropout": 0.0006658099990404083
+            }
+          },
+          {
+            "start": {
+              "p_control": 0.2,
+              "dropout": 0.0006658099990404083
+            },
+            "end": {
+              "p_control": 0.22021889898905453,
+              "dropout": 0.09999999999999999
+            }
+          },
+          {
+            "start": {
+              "p_control": 0.22021889898905453,
+              "dropout": 0.09999999999999999
+            },
+            "end": {
+              "p_control": 0.24075142336642913,
+              "dropout": 0.19999999999999998
+            }
+          },
+          {
+            "start": {
+              "p_control": 0.24075142336642913,
+              "dropout": 0.19999999999999998
+            },
+            "end": {
+              "p_control": 0.25,
+              "dropout": 0.2399541988851194
+            }
+          },
+          {
+            "start": {
+              "p_control": 0.25,
+              "dropout": 0.2399541988851194
+            },
+            "end": {
+              "p_control": 0.2673683197104093,
+              "dropout": 0.3
+            }
+          }
+        ],
+        "power_curve": [
+          {
+            "p_control": 0.05,
+            "power": 0.2557744840115366,
+            "is_valid": true
+          },
+          {
+            "p_control": 0.1,
+            "power": 0.46999657396642885,
+            "is_valid": true
+          },
+          {
+            "p_control": 0.15000000000000002,
+            "power": 0.6574053044586132,
+            "is_valid": true
+          },
+          {
+            "p_control": 0.2,
+            "power": 0.8002861288461955,
+            "is_valid": true
+          },
+          {
+            "p_control": 0.25,
+            "power": 0.896144552055441,
+            "is_valid": true
+          },
+          {
+            "p_control": 0.3,
+            "power": 0.9525691925528206,
+            "is_valid": true
+          }
+        ],
+        "invalid_cell_count": 0,
+        "worst_case_power": 0.1930592014210558,
+        "warnings": [
+          "Expected-count approximation: floored expected retention is not a simulated or guaranteed retained count.",
+          "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation."
+        ],
+        "computed_at": "2026-10-11T11:07:53.814925+00:00",
+        "inputs_hash": "sha256:2102777f0d3b6812d2628401c8f692cefa4dcbd0fd94c45ce14ac2f64cfb3b43"
+      },
+      "request": {
+        "planned_design": {
+          "model_version": "binary-v1",
+          "control_event_rate": 0.2,
+          "effect": {
+            "kind": "relative_risk",
+            "value": 0.75
+          },
+          "alpha": 0.05,
+          "target_power": 0.8,
+          "allocation_ratio": 1,
+          "dropout": {
+            "control": 0,
+            "treatment": 0
+          }
+        },
+        "fixed_enrollment": {
+          "control": 903,
+          "treatment": 903
+        },
+        "x_baseline": {
+          "min": 0.05,
+          "max": 0.3,
+          "steps": 6
+        },
+        "y_dropout": {
+          "min": 0,
+          "max": 0.3,
+          "steps": 4
+        },
+        "selected_scenario": {
+          "control_event_rate": 0.1,
+          "dropout": {
+            "control": 0,
+            "treatment": 0
+          },
+          "effect_override": null
+        }
+      },
+      "identical_semantic_results": true,
+      "browser": "156.0.8078.4",
+      "frontend_mode": "next start production; live API; existing production workspace",
+      "semantic_result_sha256": "89e4081f2c8202e7c8d28fcbac683dd1a5501803464fb3fdf614fdffbfe6471c"
+    },
+    {
+      "workload": "monte-carlo",
+      "condition": "cache-cold",
+      "measured_runs": 30,
+      "excluded_warmups": 3,
+      "excluded_priming_requests": 1,
+      "raw_elapsed_ns": [
+        6700000,
+        6600000,
+        6400000,
+        6500000,
+        6300000,
+        6000000,
+        6500000,
+        7100000,
+        6600000,
+        6600000,
+        6500000,
+        6600000,
+        6600000,
+        5900000,
+        6600000,
+        6600000,
+        6400000,
+        6200000,
+        7200000,
+        6300000,
+        6400000,
+        6400000,
+        6500000,
+        5700000,
+        6500000,
+        5900000,
+        6300000,
+        6100000,
+        6600000,
+        6200000
+      ],
+      "median_ms": 6.5,
+      "p95_ms": 7.1,
+      "p95_definition": "nearest rank, ceil(0.95*runs), one-based",
+      "cache_observations": [
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": false
+            },
+            {
+              "operation": "set",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108"
+            }
+          ]
+        }
+      ],
+      "computed_at_samples": [
+        "2026-10-11T11:07:54.163128+00:00",
+        "2026-10-11T11:07:54.171414+00:00",
+        "2026-10-11T11:07:54.179442+00:00",
+        "2026-10-11T11:07:54.186963+00:00",
+        "2026-10-11T11:07:54.195360+00:00",
+        "2026-10-11T11:07:54.203028+00:00",
+        "2026-10-11T11:07:54.212099+00:00",
+        "2026-10-11T11:07:54.219817+00:00",
+        "2026-10-11T11:07:54.228891+00:00",
+        "2026-10-11T11:07:54.236702+00:00",
+        "2026-10-11T11:07:54.245612+00:00",
+        "2026-10-11T11:07:54.253283+00:00",
+        "2026-10-11T11:07:54.261929+00:00",
+        "2026-10-11T11:07:54.269623+00:00",
+        "2026-10-11T11:07:54.279399+00:00",
+        "2026-10-11T11:07:54.287337+00:00",
+        "2026-10-11T11:07:54.296055+00:00",
+        "2026-10-11T11:07:54.303897+00:00",
+        "2026-10-11T11:07:54.312712+00:00",
+        "2026-10-11T11:07:54.320897+00:00",
+        "2026-10-11T11:07:54.329163+00:00",
+        "2026-10-11T11:07:54.336810+00:00",
+        "2026-10-11T11:07:54.345146+00:00",
+        "2026-10-11T11:07:54.352594+00:00",
+        "2026-10-11T11:07:54.360784+00:00",
+        "2026-10-11T11:07:54.368363+00:00",
+        "2026-10-11T11:07:54.376069+00:00",
+        "2026-10-11T11:07:54.384124+00:00",
+        "2026-10-11T11:07:54.392019+00:00",
+        "2026-10-11T11:07:54.400211+00:00"
+      ],
+      "representative_result": {
+        "model_version": "binary-v1",
+        "analytic": {
+          "method": "cohen_h_normal_v1",
+          "conditional_power_approx": 0.46999657396642885,
+          "assumed_evaluable_n": {
+            "control": 903,
+            "treatment": 903
+          }
+        },
+        "monte_carlo": {
+          "method": "pooled_two_proportion_z_v1",
+          "significant_two_sided_fraction": 0.4702,
+          "significant_favorable_fraction": 0.4702,
+          "mcse_two_sided": 0.004991111699811977,
+          "mcse_favorable": 0.004991111699811977,
+          "invalid_test_fraction": 0,
+          "replicates": 10000,
+          "seed": 42,
+          "invalid_test_policy": "nonrejection_over_all_replicates",
+          "mean_retained_control": 903,
+          "mean_retained_treatment": 903,
+          "mean_control_events": 90.2709,
+          "mean_treatment_events": 67.7956,
+          "rng": "numpy.random.PCG64",
+          "software_versions": {
+            "python": "3.12.4",
+            "numpy": "2.5.4",
+            "scipy": "1.18.1"
+          }
+        },
+        "warnings": [
+          "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+          "Analytic counts are floored expected retention, not actual simulated retained counts.",
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ],
+        "metadata": {
+          "computed_at": "2026-10-11T11:07:54.130298+00:00",
+          "inputs_hash": "sha256:93bfd2581287630e06148890e8e1094894423879c8be17753ebe2917d561209d",
+          "software_versions": {
+            "python": "3.12.4",
+            "numpy": "2.5.4",
+            "scipy": "1.18.1",
+            "statsmodels": "0.15.0"
+          },
+          "fixed_enrollment": {
+            "control": 903,
+            "treatment": 903
+          }
+        },
+        "provenance": {
+          "/planned_design/model_version": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/control_event_rate": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/effect/kind": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/effect/value": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/alpha": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/target_power": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/allocation_ratio": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/dropout/control": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/dropout/treatment": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/fixed_enrollment/control": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/fixed_enrollment/treatment": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/stress_scenario/control_event_rate": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/stress_scenario/dropout/control": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/stress_scenario/dropout/treatment": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/stress_scenario/effect_override": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/simulation/replicates": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/simulation/seed": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          }
+        }
+      },
+      "request": {
+        "planned_design": {
+          "model_version": "binary-v1",
+          "control_event_rate": 0.2,
+          "effect": {
+            "kind": "relative_risk",
+            "value": 0.75
+          },
+          "alpha": 0.05,
+          "target_power": 0.8,
+          "allocation_ratio": 1,
+          "dropout": {
+            "control": 0,
+            "treatment": 0
+          }
+        },
+        "fixed_enrollment": {
+          "control": 903,
+          "treatment": 903
+        },
+        "stress_scenario": {
+          "control_event_rate": 0.1,
+          "dropout": {
+            "control": 0,
+            "treatment": 0
+          },
+          "effect_override": null
+        },
+        "simulation": {
+          "replicates": 10000,
+          "seed": 42
+        },
+        "provenance": {
+          "/planned_design/model_version": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/control_event_rate": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/effect/kind": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/effect/value": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/alpha": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/target_power": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/allocation_ratio": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/dropout/control": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/dropout/treatment": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/fixed_enrollment/control": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/fixed_enrollment/treatment": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/stress_scenario/control_event_rate": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/stress_scenario/dropout/control": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/stress_scenario/dropout/treatment": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/stress_scenario/effect_override": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/simulation/replicates": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/simulation/seed": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          }
+        }
+      },
+      "identical_semantic_results": true,
+      "browser": "156.0.8078.4",
+      "frontend_mode": "next start production; live API; existing production workspace",
+      "semantic_result_sha256": "8fafee9aa053b51f3bd1b4f498545c11a6aef358f3e6eff5b64ef9c63199b05a"
+    },
+    {
+      "workload": "monte-carlo",
+      "condition": "cache-warm",
+      "measured_runs": 30,
+      "excluded_warmups": 3,
+      "excluded_priming_requests": 1,
+      "raw_elapsed_ns": [
+        2200000,
+        1800000,
+        1800000,
+        1800000,
+        1700000,
+        1800000,
+        2100000,
+        1900000,
+        1800000,
+        2600000,
+        2800000,
+        2200000,
+        1900000,
+        2100000,
+        2500000,
+        2000000,
+        1700000,
+        1900000,
+        1900000,
+        1900000,
+        1900000,
+        1700000,
+        1900000,
+        2000000,
+        2000000,
+        1800000,
+        1900000,
+        1900000,
+        2100000,
+        2000000
+      ],
+      "median_ms": 1.9,
+      "p95_ms": 2.6,
+      "p95_definition": "nearest rank, ceil(0.95*runs), one-based",
+      "cache_observations": [
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        },
+        {
+          "entries": 1,
+          "events": [
+            {
+              "operation": "get",
+              "key": "sha256:81f48f4b8d7d64d460ce21571a5025c47e16818cbeb36d499c22c750e51e1108",
+              "hit": true
+            }
+          ]
+        }
+      ],
+      "computed_at_samples": [
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00",
+        "2026-10-11T11:07:54.408047+00:00"
+      ],
+      "representative_result": {
+        "model_version": "binary-v1",
+        "analytic": {
+          "method": "cohen_h_normal_v1",
+          "conditional_power_approx": 0.46999657396642885,
+          "assumed_evaluable_n": {
+            "control": 903,
+            "treatment": 903
+          }
+        },
+        "monte_carlo": {
+          "method": "pooled_two_proportion_z_v1",
+          "significant_two_sided_fraction": 0.4702,
+          "significant_favorable_fraction": 0.4702,
+          "mcse_two_sided": 0.004991111699811977,
+          "mcse_favorable": 0.004991111699811977,
+          "invalid_test_fraction": 0,
+          "replicates": 10000,
+          "seed": 42,
+          "invalid_test_policy": "nonrejection_over_all_replicates",
+          "mean_retained_control": 903,
+          "mean_retained_treatment": 903,
+          "mean_control_events": 90.2709,
+          "mean_treatment_events": 67.7956,
+          "rng": "numpy.random.PCG64",
+          "software_versions": {
+            "python": "3.12.4",
+            "numpy": "2.5.4",
+            "scipy": "1.18.1"
+          }
+        },
+        "warnings": [
+          "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+          "Analytic counts are floored expected retention, not actual simulated retained counts.",
+          "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+          "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+        ],
+        "metadata": {
+          "computed_at": "2026-10-11T11:07:54.408047+00:00",
+          "inputs_hash": "sha256:93bfd2581287630e06148890e8e1094894423879c8be17753ebe2917d561209d",
+          "software_versions": {
+            "python": "3.12.4",
+            "numpy": "2.5.4",
+            "scipy": "1.18.1",
+            "statsmodels": "0.15.0"
+          },
+          "fixed_enrollment": {
+            "control": 903,
+            "treatment": 903
+          }
+        },
+        "provenance": {
+          "/planned_design/model_version": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/control_event_rate": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/effect/kind": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/effect/value": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/alpha": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/target_power": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/allocation_ratio": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/dropout/control": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/dropout/treatment": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/fixed_enrollment/control": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/fixed_enrollment/treatment": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/stress_scenario/control_event_rate": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/stress_scenario/dropout/control": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/stress_scenario/dropout/treatment": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/stress_scenario/effect_override": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/simulation/replicates": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/simulation/seed": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          }
+        }
+      },
+      "request": {
+        "planned_design": {
+          "model_version": "binary-v1",
+          "control_event_rate": 0.2,
+          "effect": {
+            "kind": "relative_risk",
+            "value": 0.75
+          },
+          "alpha": 0.05,
+          "target_power": 0.8,
+          "allocation_ratio": 1,
+          "dropout": {
+            "control": 0,
+            "treatment": 0
+          }
+        },
+        "fixed_enrollment": {
+          "control": 903,
+          "treatment": 903
+        },
+        "stress_scenario": {
+          "control_event_rate": 0.1,
+          "dropout": {
+            "control": 0,
+            "treatment": 0
+          },
+          "effect_override": null
+        },
+        "simulation": {
+          "replicates": 10000,
+          "seed": 42
+        },
+        "provenance": {
+          "/planned_design/model_version": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/control_event_rate": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/effect/kind": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/effect/value": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/alpha": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/target_power": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/allocation_ratio": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/dropout/control": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/planned_design/dropout/treatment": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/fixed_enrollment/control": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/fixed_enrollment/treatment": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/stress_scenario/control_event_rate": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/stress_scenario/dropout/control": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/stress_scenario/dropout/treatment": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/stress_scenario/effect_override": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/simulation/replicates": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          },
+          "/simulation/seed": {
+            "source": "synthetic_preset",
+            "description": "Hand-authored synthetic assumption from playbook; no clinical source",
+            "retrieved_at": null,
+            "source_url": null
+          }
+        }
+      },
+      "identical_semantic_results": true,
+      "browser": "156.0.8078.4",
+      "frontend_mode": "next start production; live API; existing production workspace",
+      "semantic_result_sha256": "8fafee9aa053b51f3bd1b4f498545c11a6aef358f3e6eff5b64ef9c63199b05a"
+    }
+  ]
+}

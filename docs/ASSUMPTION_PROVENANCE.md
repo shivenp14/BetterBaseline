@@ -77,8 +77,8 @@ Each report includes the numerical-core commit, per-module and harness source
 hashes, UTC capture time, environment, raw timings, seed/replicates when used,
 and the hash of a real representative result. Replayed outputs must match that
 result throughout measurement. These report hashes are local benchmark audit
-identities, not B6 cache keys or export provenance propagation evidence. API
-cache identity and actual frontend-export traceability remain integration gates.
+identities, not B6 cache keys or export provenance propagation evidence. API cache behavior is recorded in the merged live reports below. Actual
+frontend-export traceability remains with #76.
 
 
 ## D6 real HTTP report identity
@@ -94,5 +94,28 @@ Only generation timestamps are excluded from deterministic replay comparison;
 actual timestamps are retained separately. Hashes, software/method identifiers,
 seed/replicates, warnings and numerical values remain part of the semantic result
 identity. Service source hashes and harness hashes identify the measured local
-code. Cache identity, cache timestamp behavior and UI-export traceability await
-#116 and the live frontend/export handoffs.
+code. That capture predates #116. The current cache measurements below resolve the
+cache boundary; UI-export traceability remains with #76.
+
+
+## D6 merged cache and browser evidence
+
+Current reports in scripts/benchmarks/reports/live retain the real route request
+and response separately from their observed cache keys. The frontend calls the
+shared API helper: UI-only preset identity is stripped, and evaluation field
+provenance is mapped to the backend ledger. Cache keys, result input hashes and
+fixture hashes have distinct meanings; none verifies clinical assumptions.
+
+For every measured request, an isolated observer records actual cache reads and
+writes while forwarding to the real cache. Cold resets and observation resets
+are outside timing. Same-seed hits preserve the evaluation response's original
+computed timestamp. Changed seed or replicates produce distinct keys/misses.
+Grid requests have no cache activity and fresh timestamps. The design route
+caches the solver result and reconstructs its response without a timestamp.
+
+Current route keys include route, model version and normalized request defaults;
+they do not separately identify software or numerical method versions. The
+reports use fresh services, preserve software/source hashes, and make no claim
+that an older cache entry is valid after a software change. Final UI export
+assembly, field-source preservation in a downloaded export and replay of that
+export remain the responsibility of #76.

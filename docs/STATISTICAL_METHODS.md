@@ -167,17 +167,8 @@ other presets' checks do not establish their runtime distributions. Seed-42
 engine results are actual draws from the synthetic model, kept distinct from
 D1's hand-authored mock response values.
 
-| Remaining measurement | Status |
-|---|---|
-| API cold/warm compute cache | Not yet measured; requires B6 #68 controls (PR #116) |
-| Fresh frontend round trip | Not yet measured; requires live frontend/API integration and B6 cache identity |
-
-D6 remains incomplete at the B6 dependency boundary (PR #116). Cold/warm API conditions
-must use B6's supported reset and inspection controls, with cache clearing
-outside timing. A browser cache reset does not clear the backend cache. Frontend
-measurements must cover a fresh request through rendered real output, retain
-scenario identity, and include at least 30 observations per condition. No
-fixture-only shell or cached result can establish that acceptance.
+The original capture above excludes the API/cache/frontend. The later completed
+measurements below use the merged #68 controls and the real production workspace.
 
 This documentation describes tested computational behavior and its limits;
 it makes no speedup, clinical, regulatory, or rare-event validation claim.
@@ -214,8 +205,64 @@ vary per computation and are recorded; only those generation timestamps are
 excluded from semantic replay comparison. No cache key or speedup is inferred.
 The HTTP harness deliberately stops when the compute-wrapper source changes.
 
-**Stop boundary:** #68 / PR #116 must merge before implementing its supported
-cold/warm cache conditions, reset/inspection behavior and cache timestamp claims.
-Fresh frontend request-to-render measurements additionally require the real
-frontend/API handoff. Neither remaining condition has been measured; #82 stays
-open and its delivery PR stays a draft.
+The original pre-#116 capture stopped at the cache dependency. The following
+measurements were collected after #116 and #105 merged; the historical reports
+remain unchanged.
+
+## D6 merged cache and production frontend measurements
+
+Each condition below contains 30 measured serial actions after one excluded
+priming action and three excluded warmups. Cold means a verified backend-cache
+miss after clearing outside timing; warm means a verified hit. Both run in a warm
+application. These labels do not describe process startup or browser navigation.
+Grid remains uncached because the route currently supplies no cache key.
+
+### Real loopback HTTP
+
+| Workload | Condition | Median (ms) | p95 (ms) |
+|---|---|---:|---:|
+| Design | cache-cold | 0.853 | 1.019 |
+| Design | cache-warm | 0.783 | 1.177 |
+| 31×21 grid | uncached-grid | 9.232 | 9.543 |
+| Seed 42 / 10,000 replicates | cache-cold | 4.582 | 4.732 |
+| Seed 42 / 10,000 replicates | cache-warm | 0.739 | 0.846 |
+
+[Raw timings, results and cache witnesses](../scripts/benchmarks/reports/live/http.json).
+
+### Production frontend action to DOM commit
+
+| Workload | Condition | Median (ms) | p95 (ms) |
+|---|---|---:|---:|
+| Design | cache-cold | 2.300 | 3.100 |
+| Design | cache-warm | 2.000 | 2.900 |
+| 6×4 production grid | uncached-grid | 4.900 | 5.500 |
+| Seed 42 / 10,000 replicates | cache-cold | 6.500 | 7.100 |
+| Seed 42 / 10,000 replicates | cache-warm | 1.900 | 2.600 |
+
+[Raw timings, results and cache witnesses](../scripts/benchmarks/reports/live/browser.json).
+
+HTTP timing covers request send through full response receipt. Browser timing
+covers the native production action through React result/status DOM commit;
+paint is excluded. Browser navigation, fixture setup, cache reset/inspection,
+result validation and report generation are outside timing. Browser durations
+use performance.now and may be quantized. The browser uses the unchanged
+production page and shared helper, not fixture responses or a temporary page.
+The 6×4 browser grid is distinct from the required 31×21 HTTP workload.
+
+Each new report records the actual hardware/software, frontend build ID,
+Chromium and Node versions, complete request/result, source hashes, raw durations
+and per-request observed cache keys. The source commit is the updated checkout;
+local harness code is separately identified by hashes. Measurements are local
+observations under uncontrolled background load. No general speedup or controlled
+before/after comparison with the historical reports is claimed.
+
+Simulation hits preserve the original computed_at timestamp; changed seed or
+replicate count causes an observed miss. Grid timestamps change on recomputation.
+Design caches its solver value and builds a new response, without a computation
+timestamp. Current cache keys include route, binary model version and normalized
+request; they do not separately embed software or numerical method versions.
+Measured services start fresh, so these reports make no cross-upgrade cache claim.
+
+D6's core, merged HTTP/cache and current frontend measurement work is complete.
+Final product screen and downloaded-export acceptance remain with #76; these
+runtime measurements do not establish clinical utility or regulatory validation.
