@@ -1,13 +1,14 @@
-# Deployment draft (#81)
+# Deployment and offline fallback (#81)
 
-The backend builds and serves real calculate/evaluate requests from the committed
-dependency lock. The merged workspace now makes live calculate/evaluate/grid calls. Export and
-fresh offline acceptance await #76; this draft does not close #81.
-No public deployment has been verified.
+The assembled LIVE application has been built and verified against the local
+backend, including fresh inputs, seeded simulation and independently downloaded
+JSON exports. No public hosting account/project or target is configured in this
+task, so no public URL is claimed. The verified judge-device fallback uses
+preinstalled container images and bundled synthetic presets.
 
 ## Local startup
 
-From the repository root, once the frontend live adapter is available:
+From a clean checkout with Docker installed:
 
 ```sh
 python3 infra/deploy/check_prerequisites.py
@@ -48,86 +49,51 @@ docker build --secret id=proxy_ca,src="$CODEX_PROXY_CERT" --build-arg NEXT_PUBLI
 Secrets are mounted only during dependency installation and are not copied into
 images. Ordinary Compose builds target devices with standard public CA trust.
 
-## Verified local evidence (2026-10-11 UTC)
+## Verified complete offline rehearsal
 
-- The committed lock installs; 292 backend/fixture tests and 183 subtests pass.
-- Docker 28.4.0 builds the backend from Python base digest
-  `sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258`.
-  Tested local image ID:
-  `sha256:d21482240c4baea55044b86c45c4c9954a3620a2cb4b7b333c737bf1176eede9`.
-  Container UID 10001; built-in health check healthy.
-- Real HTTP calculate/evaluate checks pass: 903 evaluable per arm, 1,004 enrolled
-  with planned dropout .10, and stressed analytic power 0.46999657396642797.
-  Repeated seed 42 results match; changed dropout preserves enrolled counts and
-  changes the input hash. Responses validate against the running app's OpenAPI.
-  Software: Python 3.12.15, NumPy 2.5.4, SciPy 1.18.1, statsmodels 0.15.0.
-- CORS preflight allows http://localhost:3000 (HTTP 200 with that exact origin)
-  and rejects https://not-allowed.example (HTTP 400).
-- Earlier frontend preparation built image
-  `sha256:488bdc479ac8568051aee20d8d660aa8af28023093fe277ded11d0a7c3a42f72`
-  from Node base digest
-  `sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20`.
-  UID 1000, healthy, GET / HTTP 200; Chromium rendered the fixture shell.
-  This was not live UI or offline acceptance.
+The product source is main `86e834efd50aba6ba1951c5bb0f052c463846867`.
+[Recorded evidence](../infra/deploy/offline-report.json) contains the exact image
+IDs, browser version, counts, seeds, request totals and export hashes. Backend
+and frontend images build successfully, run as app (UID 10001) and node (UID
+1000), and report healthy. The frontend production build includes TypeScript.
 
-Run the point checker against a locally running backend:
+The two prebuilt containers ran on a Docker internal network with no external
+route. A backend socket probe to 1.1.1.1:443 failed with ENETUNREACH (101).
+Loopback TCP relays exposed their internal API/UI ports for Chromium; these
+relays only carry local connections. Browser HTTP and WebSocket routing allowed
+only the exact local frontend/backend origins and blocked service workers.
+
+Eight real browser POST responses succeeded. Calculate locked 903 enrolled per
+arm; the baseline-collapse analytic power was approximately .470. Fresh stress
+inputs (.12 risk, .13 dropout), seed 43 and 1,000 replicates preserved enrollment
+and recorded manual provenance. Repeating that seed produced identical complete
+Monte Carlo aggregates. Three real JSON downloads passed the committed schemas,
+complete response/provenance checks and the UI reopen validator. There were zero
+page errors or external browser requests. This verifies fresh local calculations,
+not cached illustrative output. Separate HTTP checks passed 1,004 enrollment
+inflation, nonsquare 2×3 grid/point agreement, exact .13 dropout curves and two
+invalid ARR cells. Backend software: Python 3.12.15, NumPy 2.5.4, SciPy 1.18.1,
+statsmodels 0.15.0. Compose configuration and source prerequisites pass.
+
+## Judge-device rehearsal
+
+Build and install dependencies while online using the local startup above. Then
+disconnect external connectivity, preserving loopback, and start without a pull
+or rebuild:
 
 ```sh
-uv run --project backend --locked --extra dev python tests/integration/run_point_checks.py --base-url http://127.0.0.1:8000
+docker compose up -d --no-build --pull never --wait
 ```
 
-## Remaining acceptance
+Open http://localhost:3000. Calculate & Lock Design, change stress baseline and
+dropout, inspect the heatmap/curve, select seed/replicates and click Run simulation.
+Download current scenario JSON and reopen it through the file control. Verify
+that fresh values change results, enrollment stays frozen, MCSE fields remain
+separate and field provenance survives. Manual input and presets require no
+registry service. Stop with `docker compose down`.
 
-Record commit, image digests, software/browser versions, date and actual requests
-and results. Hand-authored presets are inputs, not measured output.
-
-1. In the real browser, calculate .20/RR=.75: 903 evaluable per arm and 1,004
-   enrolled with planned dropout .10. Stress .10 at frozen 903/no dropout: ~.470.
-2. Simulate with seed 42; inspect separate MCSE fields, retained means,
-   method/software/RNG metadata and finite JSON.
-3. Exercise nonsquare grid axes and an invalid ARR cell; verify null masking
-   and agreement with the selected point at the same dropout.
-4. Independently download the UI export; inspect assumptions, fixed counts,
-   seed/method metadata and per-field provenance. Confirm real API network calls.
-5. Prebuild dependencies/images, disconnect external internet but preserve
-   loopback, then run `docker compose up -d --no-build --pull never --wait`.
-   Change to fresh inputs and repeat calculate/stress/grid/simulate/export.
-   Registry lookup may fail; manual inputs and synthetic presets must work.
-   Cached results alone do not pass. Do not rebuild or pull during this check.
-
-Record failures explicitly. Hosted acceptance needs reachable services and a
-browser CORS smoke. A complete local fallback still needs the live UI and fresh
-offline flow. Stop services with `docker compose down`; no database is required.
-
-
-## Live workspace verification after #72/#68 (2026-10-11 UTC)
-
-Source base: main `9bedacc16fd8deb23b6f7ea5a9613518d6ff0818` plus this
-PR's scoped container files. Both frontend build/runtime stages now pin the
-Node digest recorded above. No external preset JSON is imported by the frontend;
-its typed synthetic preset data are included in the bundle.
-
-- Backend image: `sha256:8468a215586d729a99f81ac66b178cde4f93f05226adf645c4ca4b9390228698`.
-- Frontend image: `sha256:580636b64db4bc94864b45178b8811aeb2b3e259c58c40db12da3000290137a2`.
-  This smoke build embeds `NEXT_PUBLIC_API_BASE_URL=http://localhost:8104`;
-  tested UI origin is http://localhost:3104 and backend ALLOWED_ORIGINS matches it.
-  Compose defaults remain the standard 3000/8000 ports.
-- Both health checks report healthy; runtime users are app (UID 10001) and
-  node (UID 1000). Headless Chromium 154.0.8037.57 opens the built LIVE workspace.
-- Click Calculate & Lock Design: real POST returns HTTP 200 and locks 903/arm.
-  Set stress risk .12 and dropout .13, then Evaluate Stress: HTTP 200, enrollment
-  stays 903/arm, expected retained counts are 785/arm, analytic power is
-  0.4934706317083679, and 10,000 Monte Carlo replicates use seed 42.
-  Load grid response from backend: HTTP 200, selected risk/dropout .12/.13 and
-  the same frozen counts. No browser page errors occur.
-- Real calculate/evaluate/grid HTTP integration also passes against this backend
-  image, including the canonical ~.470 case, 2×3 cell/point agreement, exact .13
-  dropout curves and two invalid ARR cells. Software is Python 3.12.15 / NumPy
-  2.5.4 / SciPy 1.18.1 / statsmodels 0.15.0.
-- Refreshed locked host environment: 320 backend/fixture tests, 201 subtests and
-  14 invariant regressions pass. Compose configuration and prerequisites pass.
-
-This verifies live container/browser calculations and seeded simulation, not
-final chart assembly, independently downloaded exports, public hosting or a
-complete fresh offline rehearsal. The earlier fixture-shell evidence is
-historical; the LIVE browser checks above establish the current tested scope.
+PR #100 adds an independently repeatable production-browser capture runner under
+`tests/integration/`, with real HTTP/download validation and an offline socket
+guard. It owns the CI version of this acceptance flow. Its recorded artifacts
+retain raw requests, responses and downloaded files; this deployment report
+records the separate container build and isolation evidence.
