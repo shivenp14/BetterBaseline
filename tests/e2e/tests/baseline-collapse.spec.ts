@@ -93,9 +93,16 @@ async function requireUiApiResponse(
 }
 
 async function selectPreset(page: Page, id = PRESET_ID): Promise<void> {
-  await page.goto("/");
-  await expect(page.getByRole("heading", { name: /better baseline/i })).toBeVisible();
-  await page.getByLabel("Select Preset:").selectOption(id);
+  await page.goto("/plan");
+  await expect(page.getByRole("heading", { name: "Plan a trial", exact: true })).toBeVisible();
+  await page.getByLabel("Starting example:").selectOption(id);
+}
+
+async function goToStep(page: Page, label: "Plan" | "Stress-test" | "Simulation" | "Methods"): Promise<void> {
+  const link = page.getByRole("navigation", { name: "Workspace pages", exact: true })
+    .getByRole("link", { name: label, exact: true });
+  await link.click();
+  await expect(link).toHaveAttribute("aria-current", "step");
 }
 
 async function calculateFromUi(page: Page): Promise<Record<string, any>> {
@@ -112,7 +119,7 @@ async function evaluateFromUi(page: Page): Promise<{ response: Response; body: R
   const response = await requireUiApiResponse(
     page,
     "/api/v1/scenarios/evaluate",
-    () => page.getByRole("button", { name: "Evaluate Stress Scenario", exact: true }).click(),
+    () => page.getByRole("button", { name: "Update estimate now", exact: true }).click(),
     (request) => request.simulation === null,
   );
   return { response, body: await response.json() };
@@ -127,6 +134,7 @@ function resultValue(page: Page, label: string) {
 }
 
 async function simulateFromUi(page: Page): Promise<{ response: Response; body: Record<string, any> }> {
+  await goToStep(page, "Simulation");
   const region = simulationRegion(page);
   await region.getByLabel("Simulation seed", { exact: true }).fill("42");
   await region.getByLabel("Simulation replicates", { exact: true }).fill("10000");
@@ -172,13 +180,15 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
     expect(design.enrolled_n).toEqual({ control: REFERENCE_N, treatment: REFERENCE_N });
     expect(design.method).toBe("cohen_h_normal_v1");
     expect(design).not.toHaveProperty("mock");
-    await expect(page.getByRole("region", { name: "Planned design summary", exact: true })).toContainText("903");
-    await expect(page.getByRole("region", { name: "Planned design summary", exact: true })).toContainText(design.method);
+    const summary = page.locator("section").filter({ has: page.getByRole("heading", { name: "Enrollment estimate", exact: true }) });
+    await expect(summary).toContainText("903");
+    await expect(summary).toContainText(design.method);
   });
 
   test("Analytic Evaluate and explicit simulation send frozen enrollment and current stress", async ({ page }) => {
     await selectPreset(page);
     const design = await calculateFromUi(page);
+    await goToStep(page, "Stress-test");
     await page.locator("#stress-baseline-num").fill("0.10");
 
     const analytic = await evaluateFromUi(page);
@@ -209,6 +219,7 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
   test("changed stress produces a fresh backend calculation and updated MC fields", async ({ page }) => {
     await selectPreset(page);
     const design = await calculateFromUi(page);
+    await goToStep(page, "Stress-test");
     await page.locator("#stress-baseline-num").fill("0.10");
     const first = await simulateFromUi(page);
     expect(first.response.status()).toBe(200);
@@ -216,6 +227,7 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
     expect(firstRequest.fixed_enrollment).toEqual(design.enrolled_n);
     expect(firstRequest.stress_scenario.control_event_rate).toBe(0.1);
 
+    await goToStep(page, "Stress-test");
     await page.locator("#stress-baseline-num").fill("0.15");
     const changed = await simulateFromUi(page);
     expect(changed.response.status()).toBe(200);
@@ -243,10 +255,12 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
   test("grid action calls the local API with frozen enrollment and displays its response", async ({ page }) => {
     await selectPreset(page);
     const design = await calculateFromUi(page);
+    await goToStep(page, "Stress-test");
+    await page.getByText("Advanced: inspect range charts and grid data", { exact: true }).click();
     const response = await requireUiApiResponse(
       page,
       "/api/v1/scenarios/grid",
-      () => page.getByRole("button", { name: "Load grid response from backend", exact: true }).click(),
+      () => page.getByRole("button", { name: "Load range analysis", exact: true }).click(),
     );
     expect(response.status()).toBe(200);
     const request = response.request().postDataJSON();
@@ -287,9 +301,10 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
   test("invalid ARR reaches FastAPI and displays the actual 422 validation error", async ({ page }) => {
     await selectPreset(page);
     // All shipped presets use RR; select ARR explicitly in the planning form.
-    await page.getByLabel("Hypothetical treatment effect").selectOption("absolute_risk_reduction");
+    await page.getByLabel("Assumed difference between groups").selectOption("absolute_risk_reduction");
     await page.locator('[name="reductionPoints"]').fill("5");
     const design = await calculateFromUi(page);
+    await goToStep(page, "Stress-test");
     await page.locator("#stress-baseline-num").fill("0.05");
 
     const { response, body } = await evaluateFromUi(page);
@@ -302,23 +317,27 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
 
     const errorSection = page.locator('section[aria-labelledby="stress-heading"]');
     await expect(errorSection, "the visible UI must expose the backend's invalid ARR 422").toContainText(body.error.message);
-    await expect(errorSection.getByText(/Error:/)).toBeVisible();
-    await expect(page.getByRole("heading", { name: /better baseline/i })).toBeVisible();
+    await expect(errorSection.getByText(/Could not update this estimate:/)).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Stress-test the plan", exact: true })).toBeVisible();
   });
 
   test("export is available and downloads JSON containing provenance and real calculation metadata", async ({ page }, testInfo) => {
     await selectPreset(page);
+    await goToStep(page, "Methods");
     await expect(page.getByRole("region", { name: "Scenario export", exact: true })
       .getByRole("button", { name: "Download current scenario JSON", exact: true })).toBeDisabled();
-    const exportButton = exportLink(page);
-
+    await goToStep(page, "Plan");
     const design = await calculateFromUi(page);
-    const evaluation = await simulateFromUi(page);
-    expect(evaluation.response.status()).toBe(200);
+    await goToStep(page, "Stress-test");
+    await page.getByText("Advanced: inspect range charts and grid data", { exact: true }).click();
     const gridResponse = await requireUiApiResponse(page, "/api/v1/scenarios/grid",
-      () => page.getByRole("button", { name: "Load grid response from backend", exact: true }).click());
+      () => page.getByRole("button", { name: "Load range analysis", exact: true }).click());
     expect(gridResponse.status()).toBe(200);
     const grid = await gridResponse.json();
+    const evaluation = await simulateFromUi(page);
+    expect(evaluation.response.status()).toBe(200);
+    await goToStep(page, "Methods");
+    const exportButton = exportLink(page);
     await expect(exportButton).toBeEnabled();
     const [download] = await Promise.all([
       page.waitForEvent("download"),
@@ -355,13 +374,16 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
   test("complete workflow makes no requests outside the exact local server origins", async ({ page }) => {
     await selectPreset(page);
     await calculateFromUi(page);
-    await evaluateFromUi(page);
-    await simulateFromUi(page);
+    await goToStep(page, "Stress-test");
+    await page.getByText("Advanced: inspect range charts and grid data", { exact: true }).click();
     await requireUiApiResponse(
       page,
       "/api/v1/scenarios/grid",
-      () => page.getByRole("button", { name: "Load grid response from backend", exact: true }).click(),
+      () => page.getByRole("button", { name: "Load range analysis", exact: true }).click(),
     );
+    await evaluateFromUi(page);
+    await simulateFromUi(page);
+    await goToStep(page, "Methods");
     const exportButton = exportLink(page);
     await expect(exportButton, "current seeded results must provide a download link").toBeVisible();
     await expect(exportButton).toBeEnabled();

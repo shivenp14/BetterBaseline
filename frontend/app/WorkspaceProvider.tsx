@@ -77,6 +77,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     } catch (error) { if (!controller.signal.aborted && captured.inputGeneration === generation.current) dispatch({ type: "GRID_ERROR", error: error instanceof Error ? error.message : String(error), requestRevision: revision }); }
   }, [nextToken]);
   const evaluateAnalytic = useCallback(async () => {
+    cancelRefresh.current?.(); cancelRefresh.current = null;
     const captured = structuredClone(stateRef.current); if (captured.inputGeneration !== generation.current || captured.designStatus !== "success" || !captured.frozenEnrollment) return;
     evaluateAbort.current?.abort(); const controller = new AbortController(); evaluateAbort.current = controller; const revision = nextToken();
     dispatch({ type: "START_EVALUATE", requestRevision: revision, expectedInputGeneration: captured.inputGeneration });

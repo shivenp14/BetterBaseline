@@ -1,5 +1,4 @@
 "use client";
-import { getApiMode } from "@/lib/api";
 import { useWorkspace } from "../WorkspaceProvider";
 import { WorkspaceFrame } from "../WorkspaceFrame";
 import { StressControls } from "@/components/StressControls";
@@ -17,8 +16,7 @@ export default function StressTestPage() {
       <p>Request the full range analysis to compare event-rate and dropout combinations. You can also use the single-scenario estimate above.</p>
       <button type="button" onClick={() => { void loadGrid(); }} disabled={state.designStatus !== "success" || state.gridStatus === "loading"}>{state.gridStatus === "loading" ? "Loading range analysis…" : "Load range analysis"}</button>
       <span>Status: {state.gridStatus.toUpperCase()}</span>
-      {state.gridError && <p role="alert">{state.gridError} {getApiMode() === "live" && "The live range-analysis endpoint is not available yet; you can still review one scenario above."}</p>}
-      {getApiMode() === "live" && <p>Live range analysis is not available yet. You can change one scenario above and review its estimate.</p>}
+      {state.gridError && <p role="alert">{state.gridError}</p>}
     </section>
     <DesignComparison {...workspaceComparisonProps({ ...state, requestRevision: state.inputGeneration }, completedGrid)} />
     <details className={styles.advancedRanges}><summary>Advanced: inspect range charts and grid data</summary>

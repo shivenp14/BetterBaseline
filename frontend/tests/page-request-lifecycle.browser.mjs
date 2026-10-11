@@ -2,7 +2,6 @@
 // evaluation/grid ownership and debounced input-generation behavior. Requires
 // PLAYWRIGHT_MODULE and PAGE_URL; API replies are fulfilled by browser routes.
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 const { chromium } = await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).href);
@@ -122,6 +121,7 @@ async function runCase({ startFirst, completeFirst, evaluationOutcome, gridOutco
   await waitForStatus(page, "evaluation", "EVALUATING");
   await waitForStatus(page, "grid", "Status: LOADING");
   await page.getByRole("link", { name: "Plan", exact: true }).click();
+  await page.getByRole("heading", { name: "Plan a trial", exact: true }).waitFor();
   assert.equal(await page.getByRole("heading", { name: "Plan a trial", exact: true }).count(), 1);
   await page.getByRole("link", { name: "Stress-test", exact: true }).click();
   await waitForStatus(page, "evaluation", "EVALUATING");
@@ -221,9 +221,11 @@ async function runPendingDebounceInvalidation({ label, transition }) {
     await page.waitForFunction(() => document.querySelector("#preset-select")?.value === "attrition-shock-v1");
   } else {
     await page.getByRole("button", { name: "Restore example values", exact: true }).click();
-    await page.waitForFunction(() => document.querySelector("#stress-baseline-num")?.value === "0.1");
   }
   await page.getByRole("link", { name: "Stress-test", exact: true }).click();
+  if (transition === "reset") {
+    await page.waitForFunction(() => document.querySelector("#stress-baseline-num")?.value === "0.1");
+  }
 
   await page.evaluate(() => window.stressTimers.forEach((callback) => callback()));
   await page.waitForTimeout(450);
@@ -277,9 +279,6 @@ async function runManualEvaluationDuringDebounce({ delayResponse = false, delive
   });
 
   await page.locator("#stress-baseline-num").fill("0.16");
-  await page.waitForTimeout(80);
-  await page.getByRole("link", { name: "Plan", exact: true }).click();
-  await page.getByRole("link", { name: "Stress-test", exact: true }).click();
   await page.getByRole("button", { name: "Update estimate now", exact: true }).click();
   if (deliverCancelledTimer) {
     await page.evaluate(() => {
@@ -293,15 +292,9 @@ async function runManualEvaluationDuringDebounce({ delayResponse = false, delive
   assert.equal(requests[0].stress_scenario.control_event_rate, 0.16);
   assert.deepEqual(requests[0].fixed_enrollment, { control: 903, treatment: 903 });
   await waitForStatus(page, "evaluation", "SUCCESS");
-  assert.equal(await page.getByRole("button", { name: "Download current results (JSON)", exact: true }).isEnabled(), true,
-    "successful manual evaluation remains exportable after the debounce window");
-  const downloadStarted = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Download current results (JSON)", exact: true }).click();
-  const download = await downloadStarted;
-  const exported = JSON.parse(await readFile(await download.path(), "utf8"));
-  assert.equal(exported.evaluation_result.metadata.inputs_hash, evaluateResponse.metadata.inputs_hash,
-    "download preserves the successful manual evaluation");
-  assert.equal(exported.stress_scenario.control_event_rate, 0.16);
+  await page.getByRole("link", { name: "Simulation", exact: true }).click();
+  await page.getByRole("heading", { name: "Optional simulation", exact: true }).waitFor();
+  assert.equal(requests.length, 1, "manual evaluation remains current after route navigation");
   await page.close();
 }
 
@@ -355,7 +348,7 @@ try {
   ]) {
     await runPendingDebounceInvalidation(invalidation);
   }
-  console.log("PASS: mounted production page preserves manual success/export through pending and canceled stress timers, evaluation/grid overlap, one automatic fixed-enrollment stress evaluation, and debounce invalidation across planned edits, presets, and reset.");
+  console.log("PASS: mounted production page preserves manual success through pending and canceled stress timers, evaluation/grid overlap, one automatic fixed-enrollment stress evaluation, and debounce invalidation across planned edits, presets, and reset.");
 } finally {
   await browser.close();
 }

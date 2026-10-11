@@ -36,15 +36,21 @@ page.on("response", response => {
 });
 const downloadLink = () => page.getByRole("link", { name: "Download current scenario JSON", exact: true });
 async function charts() {
+  const disclosure = page.getByText("Advanced: inspect range charts and grid data", { exact: true });
+  const isOpen = await disclosure.locator("xpath=..").evaluate(element => element.open);
+  if (!isOpen) await disclosure.click();
   await page.waitForFunction(() => document.querySelector('section[aria-labelledby="grid-heading"] span')?.textContent.includes("SUCCESS"));
   await page.locator("[data-cell]").first().waitFor();
 }
 async function capture(name) {
+  await page.getByRole("link", { name: "Stress-test", exact: true }).click();
   await charts();
+  await page.getByRole("link", { name: "Simulation", exact: true }).click();
   const response = page.waitForResponse(r => r.url() === `${api}/api/v1/scenarios/evaluate`
     && r.request().postDataJSON()?.simulation != null);
   await page.getByRole("button", { name: "Run simulation", exact: true }).click();
   assert.equal((await response).status(), 200);
+  await page.getByRole("link", { name: "Methods", exact: true }).click();
   await downloadLink().waitFor();
   const download = page.waitForEvent("download"); await downloadLink().click();
   const file = path.join(output, `${name}-download.json`); await (await download).saveAs(file);
@@ -72,14 +78,18 @@ async function capture(name) {
   return exported;
 }
 try {
-  await page.goto(ui);
-  await page.getByLabel("Select Preset:").selectOption("baseline-collapse-v1");
+  await page.goto(`${ui}/plan`);
+  await page.getByLabel("Starting example:").selectOption("baseline-collapse-v1");
   await page.getByRole("button", { name: "Calculate & Lock Design", exact: true }).click();
+  await page.getByRole("link", { name: "Stress-test", exact: true }).click();
+  await page.getByText("Advanced: inspect range charts and grid data", { exact: true }).click();
   const first = await capture("preset");
   assert.deepEqual(first.fixed_enrollment, { control: 903, treatment: 903 });
   assert.ok(Math.abs(first.evaluation_result.analytic.conditional_power_approx - .46999657396642797) < 1e-10);
+  await page.getByRole("link", { name: "Stress-test", exact: true }).click();
   await page.locator("#stress-baseline-num").fill("0.12");
   await page.locator("#stress-dropout-num").fill("0.13");
+  await page.getByRole("link", { name: "Simulation", exact: true }).click();
   await page.getByLabel("Simulation seed", { exact: true }).fill("43");
   await page.getByLabel("Simulation replicates", { exact: true }).fill("1000");
   await page.waitForTimeout(500);
