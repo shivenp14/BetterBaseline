@@ -86,9 +86,9 @@ export function PowerCurve({ current, result, status, error, onSelectBaseline }:
   const id = useId();
   const problem = curveProblem(current, result);
   if (status !== "ready" || problem || !result) {
-    return <section aria-labelledby={`${id}-heading`} aria-busy={status === "loading"}>
-      <h2 id={`${id}-heading`}>Analytic conditional power by baseline risk</h2>
-      <p role={status === "error" ? "alert" : "status"}>
+    return <section className="workspace-section chart-panel" aria-labelledby={`${id}-heading`} aria-busy={status === "loading"}>
+      <h2 className="section-heading" id={`${id}-heading`}>Analytic conditional power by baseline risk</h2>
+      <p className={status === "error" ? "status-error" : problem?.startsWith("Stale") ? "status-warning" : "chart-empty"} role={status === "error" ? "alert" : "status"}>
         {status === "loading" ? "Loading analytic curve for current inputs."
           : status === "error" ? (error || "Analytic curve could not be loaded.")
             : status === "idle" ? "Calculate a design and request its analytic curve." : problem}
@@ -105,15 +105,17 @@ export function PowerCurve({ current, result, status, error, onSelectBaseline }:
   const x = (baseline: number) => left + (baseline - min) / (max - min) * (right - left);
   const y = (power: number) => bottom - power * (bottom - top);
 
-  return <section aria-labelledby={`${id}-heading`}>
-    <h2 id={`${id}-heading`}>Analytic conditional power by baseline risk</h2>
-    <p role="status">Current analytic curve. {result.illustrative ? "Illustrative synthetic fixture; not a measured result." : "Calculated from the supplied API response."}</p>
+  return <section className="workspace-section chart-panel" aria-labelledby={`${id}-heading`}>
+    <h2 className="section-heading" id={`${id}-heading`}>Analytic conditional power by baseline risk</h2>
+    <p className={result.illustrative ? "status-warning" : "status-success"} role="status">Current analytic curve. {result.illustrative ? "Illustrative synthetic fixture; not a measured result." : "Calculated from the supplied API response."}</p>
     <p>Method: {result.method}. Effect: {result.effectKind === "relative_risk" ? "RR" : "ARR"}.
       Fixed enrolled counts: {current.fixedEnrollment.control} control / {current.fixedEnrollment.treatment} treatment.
       Symmetric selected dropout: {percent(current.dropout)}.</p>
     <p>Risk and power use fractions in data and percentages in labels. Power is conditional on assumptions; it does not predict efficacy.</p>
-    <figure>
-      <svg viewBox="0 0 640 320" width="640" height="320" role="img" aria-labelledby={`${id}-title ${id}-description`}>
+    <figure className="chart-figure">
+      <p className="chart-scroll-hint">Scroll horizontally to inspect the full chart; focus the chart region and use arrow keys.</p>
+      <div className="chart-scroll" role="region" aria-label="Analytic power curve, horizontally scrollable" tabIndex={0}>
+      <svg className="chart-svg" viewBox="0 0 640 320" width="640" height="320" role="img" aria-labelledby={`${id}-title ${id}-description`}>
         <title id={`${id}-title`}>Approximate conditional power versus control baseline event risk</title>
         <desc id={`${id}-description`}>Analytic values at {percent(current.dropout)} dropout and fixed enrollment.
           Dashed line: target {percent(current.targetPower)}. Triangle: {plannedLabel}.
@@ -133,7 +135,7 @@ export function PowerCurve({ current, result, status, error, onSelectBaseline }:
         {result.powerCurve.slice(1).map((point, index) => {
           const previous = result.powerCurve[index];
           if (previous.power === null || point.power === null) return null;
-          return <line key={point.baseline} data-curve-segment={index} x1={x(previous.baseline)} y1={y(previous.power)}
+          return <line strokeWidth="2.5" className="power-curve-trace" key={point.baseline} data-curve-segment={index} x1={x(previous.baseline)} y1={y(previous.power)}
             x2={x(point.baseline)} y2={y(point.power)} stroke="currentColor" />;
         })}
         {result.plannedPoint.power !== null ? <polygon data-marker="planned" data-baseline={result.plannedPoint.baseline}
@@ -141,22 +143,23 @@ export function PowerCurve({ current, result, status, error, onSelectBaseline }:
         {result.selectedPoint.power !== null ? <circle data-marker="selected" data-baseline={result.selectedPoint.baseline}
           data-power={result.selectedPoint.power} cx={x(result.selectedPoint.baseline)} cy={y(result.selectedPoint.power)} r="5" fill="none" stroke="currentColor" /> : null}
       </svg>
+      </div>
       <figcaption>Solid segments: supplied analytic power. Dashed line: selected target.
         Triangle: {plannedLabel}. Circle: selected baseline.
         Null/invalid scenarios have no point marker or connecting segment.</figcaption>
     </figure>
-    <table>
+    <div className="table-scroll" role="region" aria-label="Analytic curve numerical values" tabIndex={0}><table className="data-table">
       <caption>Analytic curve at symmetric dropout {percent(current.dropout)}; target {percent(current.targetPower)}</caption>
       <thead><tr><th scope="col">Control baseline risk</th><th scope="col">Approximate conditional power</th>
         {onSelectBaseline ? <th scope="col">Select baseline</th> : null}</tr></thead>
       <tbody>{result.powerCurve.map((point) => <tr key={point.baseline}>
         <th scope="row">{percent(point.baseline)} ({point.baseline} fraction)</th>
         <td>{point.power === null ? "Invalid scenario (null)" : percent(point.power)}</td>
-        {onSelectBaseline ? <td><button type="button" disabled={point.power === null}
+        {onSelectBaseline ? <td><button className="button-secondary" type="button" disabled={point.power === null}
           onClick={() => onSelectBaseline(point.baseline)}>Select baseline {percent(point.baseline)}</button></td> : null}
       </tr>)}</tbody>
-    </table>
-    <p>Inputs hash: {result.inputsHash}</p>
+    </table></div>
+    <details className="disclosure"><summary>Curve identity</summary><p className="inline-code">Inputs hash: {result.inputsHash}</p></details>
   </section>;
 }
 

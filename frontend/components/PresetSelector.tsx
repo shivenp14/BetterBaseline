@@ -17,15 +17,15 @@ export function PresetSelector({
   const currentPreset = rawPresets.find((p) => p.preset_id === selectedPresetId) ?? rawPresets[0];
 
   return (
-    <section aria-labelledby="preset-heading">
-      <h2 id="preset-heading">Synthetic Presets & Scenario Selection</h2>
-      <p>
+    <section className="panel preset-panel" aria-labelledby="preset-heading">
+      <h2 className="section-heading" id="preset-heading">Synthetic Presets & Scenario Selection</h2>
+      <p className="muted">
         Select a versioned synthetic preset or reset the current scenario to initial defaults.
-        Editing assumptions will update field provenance to <code>manual_user</code>.
+        Editing assumptions will update field provenance to <code className="inline-code">manual_user</code>.
       </p>
 
-      <div>
-        <label htmlFor="preset-select">
+      <div className="preset-actions action-row">
+        <div className="field"><label htmlFor="preset-select">
           <strong>Select Preset:</strong>{" "}
         </label>
         <select
@@ -38,21 +38,23 @@ export function PresetSelector({
               {preset.name} ({preset.eyebrow})
             </option>
           ))}
-        </select>
+        </select></div>
         {onResetPreset && (
-          <button type="button" onClick={onResetPreset} style={{ marginLeft: "8px" }}>
+          <button type="button" onClick={onResetPreset} className="button-secondary">
             Reset to Preset Defaults
           </button>
         )}
       </div>
 
-      <div style={{ marginTop: "8px" }}>
+      <div className="preset-description">
         <p>
           <em>{currentPreset.description}</em>
         </p>
+        <details className="disclosure"><summary>Preset identity and provenance</summary>
+        <p className="field-help">Edits are recorded as <code className="inline-code">manual_user</code>.</p>
         <p>
-          <strong>Inputs Hash:</strong> <code>{currentPreset.inputs_hash}</code>
-        </p>
+          <strong>Inputs Hash:</strong> <code className="inline-code">{currentPreset.inputs_hash}</code>
+        </p></details>
       </div>
     </section>
   );

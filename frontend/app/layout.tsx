@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import "./globals.css";
+import { WorkspaceProvider } from "@/components/WorkspaceProvider";
+import { WorkspaceFrame } from "@/components/WorkspaceFrame";
 
 export const metadata: Metadata = {
   title: "Better Baseline · Trial planning workspace",
@@ -9,7 +12,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body><WorkspaceProvider><WorkspaceFrame>{children}</WorkspaceFrame></WorkspaceProvider></body>
     </html>
   );
 }

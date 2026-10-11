@@ -1,5 +1,5 @@
 export function MethodDisclosures() {
-  return <aside aria-label="Simulation method disclosures">
+  return <aside className="method-disclosures" aria-label="Simulation method disclosures">
     <p>These simulations are synthetic and conditional on specified rates, effect, independent missingness, and frozen enrollment. Conditional power estimates do not establish treatment efficacy or clinical benefit.</p>
     <p>Analytical power uses Cohen’s-h and floored expected retained counts. Monte Carlo samples actual retained counts and applies a two-sided pooled-z test; these are different approximations.</p>
     <p>MCSE measures simulation sampling error separately for each significance fraction. It does not measure uncertainty in the entered assumptions.</p>

@@ -36,10 +36,17 @@ test("2×3 orientation, nonuniform spacing and selected coordinates",()=>{
  assert.match(html,/data-marker="selected" data-baseline="0.2" data-dropout="0.4" cx="299.28571428571433" cy="35"/);
  for(const label of ["Control baseline event risk (%)","Symmetric dropout (%)","floor-based expected retained counts","sampled actual retained counts","Illustrative synthetic fixture","Fixture only"]) assert.ok(html.includes(label));
 });
-test("invalid gray cross differs from power zero; accessible table and CSV preserve null",()=>{
+test("invalid cross differs from power zero; accessible table and CSV preserve null",()=>{
  const p=props(),html=render(p); assert.equal((html.match(/data-invalid="true"/g)||[]).length,2);
- assert.match(html,/data-power="null"[^]*?fill="#bdbdbd"/);
- assert.match(html,/data-power="0"[^]*?fill="#2166ac" fill-opacity="0.12"/);
+ const cells=[...html.matchAll(/<g\b[^>]*data-cell="[^"]+"[^>]*>[\s\S]*?<\/g>/g)].map(match=>match[0]);
+ const invalid=cells.filter(cell=>cell.includes('data-power="null"'));
+ const zero=cells.find(cell=>cell.includes('data-power="0"'));
+ assert.equal(invalid.length,2);assert.ok(zero);
+ for(const cell of invalid) assert.match(cell, /<path\b[^>]*data-invalid="true"/);
+ assert.doesNotMatch(zero, /data-invalid="true"/);
+ // Invalid cells remain visibly distinct without pinning the theme palette.
+ const fill=cell=>cell.match(/<rect\b[^>]*fill="([^"]+)"/)[1];
+ for(const cell of invalid) assert.notEqual(fill(cell),fill(zero));
  assert.ok(html.includes("0.0% (0 fraction)")); assert.match(html,/scope="row"/);assert.match(html,/scope="col"/);
  const csv=gridCsv(p.result); assert.ok(csv.includes('0.05,0,null,true,false,0.8,"fixture","design"'));
  assert.ok(csv.includes('0.2,0,0,false,false,0.8'));assert.ok(csv.includes('0.2,0.4,0.5,false,true,0.8'));
@@ -70,9 +77,9 @@ test("reject malformed masks, shape, powers, ARR, domain and counts",()=>{
  for(const mutate of [p=>p.result.power.pop(),p=>p.result.invalidMask[0].pop(),p=>p.result.power[0][0]=0,p=>p.result.power[0][1]=null,p=>p.result.power[0][1]=NaN,p=>p.result.power[0][1]=1.1,p=>p.result.xBaseline[1]=.05,p=>p.result.yDropout[1]=1,p=>p.current.fixedEnrollment.treatment=p.result.fixedEnrollment.treatment=99,p=>p.current.selectedPoint=p.result.selectedPoint={baseline:.8,dropout:0},p=>p.result.frontierSegments[0][0].baseline=.01,p=>{p.result.invalidMask[0][0]=false;p.result.power[0][0]=.5;}]){
  const p=props();mutate(p);assert.ok(heatmapProblem(p.current,p.result));assert.ok(!render(p).includes("<svg"));}
 });
-test("CSV escapes metadata and render-only components contain no CSS or requests",()=>{
+test("CSV escapes metadata and render-only components contain no inline styles or requests",()=>{
  const p=props();p.result.inputsHash='fixture,"quoted"';const before=structuredClone(p.result);assert.ok(gridCsv(p.result).includes('"fixture,""quoted"""'));assert.deepEqual(p.result,before);
- for(const name of ["StressHeatmap.tsx","GridDataTable.tsx"]){const source=fs.readFileSync(path.join(__dirname,"../components",name),"utf8");assert.doesNotMatch(source,/className=|style=|fetch\(|axios|Math\.asin/);}
+ for(const name of ["StressHeatmap.tsx","GridDataTable.tsx"]){const source=fs.readFileSync(path.join(__dirname,"../components",name),"utf8");assert.doesNotMatch(source,/style\s*=|fetch\(|axios|Math\.asin/);}
 });
 
 function handoff() {

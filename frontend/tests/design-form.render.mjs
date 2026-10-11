@@ -33,7 +33,7 @@ test("form has explicit units, baseline definition, and associated native contro
   for (const label of html.matchAll(/<label for="([^"]+)"/g)) {
     assert.ok(html.includes(`id="${label[1]}"`));
   }
-  assert.ok(!html.includes("class="));
+  assert.doesNotMatch(html, /\sstyle=/);
 });
 
 test("ARR form displays percentage points without reusing RR", () => {

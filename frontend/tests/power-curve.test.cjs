@@ -133,8 +133,8 @@ test("selection uses native accessible buttons and invalid values cannot be sele
   const input = { ...props(), onSelectBaseline: () => {} };
   const html = render(PowerCurve, input);
   assert.equal((html.match(/<button/g) || []).length, 5);
-  assert.match(html, /<button type="button" disabled="">Select baseline 15.0%<\/button>/);
-  assert.match(html, /<button type="button">Select baseline 10.0%<\/button>/);
+  assert.match(html, /<button\b[^>]*type="button"[^>]*disabled=""[^>]*>Select baseline 15\.0%<\/button>/);
+  assert.match(html, /<button\b(?=[^>]*type="button")(?![^>]*\sdisabled=)[^>]*>Select baseline 10\.0%<\/button>/);
 });
 
 test("malformed probabilities, ordering, markers and allocation cannot become chart data", () => {
@@ -156,10 +156,10 @@ test("malformed probabilities, ordering, markers and allocation cannot become ch
   }
 });
 
-test("components contain no CSS or network/statistical calculation path", () => {
+test("components contain no inline styles or network/statistical calculation path", () => {
   for (const name of ["PowerCurve.tsx", "DesignComparison.tsx"]) {
     const source = fs.readFileSync(path.join(__dirname, "../components", name), "utf8");
-    assert.doesNotMatch(source, /className=|style=|fetch\(|axios|monte_carlo|Math\.asin/);
+    assert.doesNotMatch(source, /style\s*=|fetch\(|axios|monte_carlo|Math\.asin/);
   }
 });
 

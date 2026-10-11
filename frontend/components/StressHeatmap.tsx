@@ -112,9 +112,9 @@ export function selectGridCell(result: HeatmapSnapshot, row: number, column: num
 export function StressHeatmap({ current, result, status, error, onSelectPoint }: StressHeatmapProps) {
   const id = useId();
   const problem = heatmapProblem(current, result);
-  if (status !== "ready" || problem || !result) return <section aria-labelledby={`${id}-heading`} aria-busy={status === "loading"}>
-    <h2 id={`${id}-heading`}>Sensitivity heatmap</h2>
-    <p role={status === "error" ? "alert" : "status"}>{status === "loading" ? "Loading analytic grid for current inputs."
+  if (status !== "ready" || problem || !result) return <section className="workspace-section chart-panel" aria-labelledby={`${id}-heading`} aria-busy={status === "loading"}>
+    <h2 className="section-heading" id={`${id}-heading`}>Sensitivity heatmap</h2>
+    <p className={status === "error" ? "status-error" : problem?.startsWith("Stale") ? "status-warning" : "chart-empty"} role={status === "error" ? "alert" : "status"}>{status === "loading" ? "Loading analytic grid for current inputs."
       : status === "error" ? error || "Analytic grid could not be loaded."
         : status === "idle" ? "Calculate a design and request its analytic grid." : problem}</p>
   </section>;
@@ -127,52 +127,63 @@ export function StressHeatmap({ current, result, status, error, onSelectPoint }:
   const selectedCell = result.selectedPower === undefined && result.invalidMask.some((row, r) => row.some((invalid, c) => invalid
     && result.selectedPoint.baseline >= xs[c] && result.selectedPoint.baseline <= xs[c + 1]
     && result.selectedPoint.dropout >= ys[r] && result.selectedPoint.dropout <= ys[r + 1]));
-  return <section aria-labelledby={`${id}-heading`}>
-    <h2 id={`${id}-heading`}>Sensitivity heatmap</h2>
-    <p role="status">{result.illustrative ? "Illustrative synthetic fixture; not a measured result." : "Supplied analytic grid."}</p>
+  return <section className="workspace-section chart-panel" aria-labelledby={`${id}-heading`}>
+    <h2 className="section-heading" id={`${id}-heading`}>Sensitivity heatmap</h2>
+    <p className={result.illustrative ? "status-warning" : "status-success"} role="status">{result.illustrative ? "Illustrative synthetic fixture; not a measured result." : "Supplied analytic grid."}</p>
     <p>Analytic power at floor-based expected retained counts: floor(enrolled × (1 − dropout)) per arm.
       This expected-count approximation uses frozen enrollment: {current.fixedEnrollment.control} control / {current.fixedEnrollment.treatment} treatment.
       Selected Monte Carlo results are shown separately by the simulation panel; they use sampled actual retained counts.</p>
     <p>Method: {result.method}. Effect: {result.effectKind === "relative_risk" ? "RR" : "ARR"} {result.effectValue}.
       Target: {percent(result.targetPower)}. Conditional power does not predict efficacy.</p>
-    <figure>
-      <svg viewBox="0 0 650 345" width="650" height="345" role="img" aria-labelledby={`${id}-title ${id}-desc`}>
+    <figure className="chart-figure">
+      <p className="chart-scroll-hint">Scroll horizontally to inspect the full chart; focus the chart region and use arrow keys.</p>
+      <div className="chart-scroll" role="region" aria-label="Sensitivity heatmap, horizontally scrollable" tabIndex={0}>
+      <svg className="chart-svg" viewBox="0 0 650 345" width="650" height="345" role="img" aria-labelledby={`${id}-title ${id}-desc`}>
         <title id={`${id}-title`}>Analytic sensitivity grid, baseline horizontally and dropout vertically</title>
         <desc id={`${id}-desc`}>Rows are dropout and columns are baseline. Higher dropout is at the top.
-          Gray crossed cells are invalid, never zero power. Darker blue means higher power.
+          Slate crossed cells are invalid, never zero power. Stronger mint means higher power.
           Dashed lines show supplied target frontier segments. Circle marks the selected point. Select cells using the table below.</desc>
-        {result.power.map((row, r) => row.map((power, c) => <g key={`${r}-${c}`} data-cell={`${r}-${c}`} data-baseline={result.xBaseline[c]} data-dropout={result.yDropout[r]} data-power={power === null ? "null" : power}
+        {result.power.map((row, r) => row.map((power, c) => <g className="heatmap-cell" key={`${r}-${c}`} data-cell={`${r}-${c}`} data-baseline={result.xBaseline[c]} data-dropout={result.yDropout[r]} data-power={power === null ? "null" : power}
           role={onSelectPoint ? "button" : undefined} tabIndex={onSelectPoint && power !== null ? 0 : undefined}
           aria-disabled={onSelectPoint ? power === null : undefined}
           aria-label={`Baseline ${percent(result.xBaseline[c])}, dropout ${percent(result.yDropout[r])}: ${power === null ? "Invalid scenario; ARR requires baseline greater than ARR and retained counts must support the analytic test" : `power ${percent(power)}`}`}
           onClick={() => selectGridCell(result, r, c, onSelectPoint)}
           onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); selectGridCell(result, r, c, onSelectPoint); } }}>
-          <rect x={x(xs[c])} y={y(ys[r + 1])} width={x(xs[c + 1]) - x(xs[c])} height={y(ys[r]) - y(ys[r + 1])}
-            fill={power === null ? "#bdbdbd" : "#2166ac"} fillOpacity={power === null ? 1 : .12 + power * .88} stroke="currentColor" />
+          <rect className="heatmap-cell-body" x={x(xs[c])} y={y(ys[r + 1])} width={x(xs[c + 1]) - x(xs[c])} height={y(ys[r]) - y(ys[r + 1])}
+            fill={power === null ? "#17262E" : "#A8E6C5"} fillOpacity={power === null ? 1 : .12 + power * .88} stroke="currentColor" />
           {power === null ? <path data-invalid="true" d={`M ${x(xs[c])} ${y(ys[r])} L ${x(xs[c + 1])} ${y(ys[r + 1])} M ${x(xs[c])} ${y(ys[r + 1])} L ${x(xs[c + 1])} ${y(ys[r])}`} stroke="currentColor" /> : null}
+          <rect className="heatmap-cell-focus" aria-hidden="true" x={x(xs[c])} y={y(ys[r + 1])}
+            width={x(xs[c + 1]) - x(xs[c])} height={y(ys[r]) - y(ys[r + 1])} />
           <title>{`Baseline ${percent(result.xBaseline[c])}, dropout ${percent(result.yDropout[r])}: ${power === null ? "Invalid scenario (null)" : percent(power)}`}</title>
         </g>))}
         {result.frontierSegments.map((segment, s) => segment.slice(1).map((point, i) => frontierEdgeAllowed(result, segment[i], point)
-          ? <line key={`${s}-${i}`} data-frontier-segment={`${s}-${i}`} data-target-power={result.targetPower}
-            x1={x(segment[i].baseline)} y1={y(segment[i].dropout)} x2={x(point.baseline)} y2={y(point.dropout)} stroke="black" strokeWidth="2" strokeDasharray="5 5" /> : null))}
-        {selectedValid && !selectedCell ? <circle data-marker="selected" data-baseline={result.selectedPoint.baseline} data-dropout={result.selectedPoint.dropout}
-          cx={x(result.selectedPoint.baseline)} cy={y(result.selectedPoint.dropout)} r="7" fill="none" stroke="black" strokeWidth="3" /> : null}
+          ? <g key={`${s}-${i}`} className="heatmap-frontier">
+            <line aria-hidden="true" className="heatmap-marker-halo" x1={x(segment[i].baseline)} y1={y(segment[i].dropout)}
+              x2={x(point.baseline)} y2={y(point.dropout)} strokeWidth="6" strokeDasharray="5 5" />
+            <line data-frontier-segment={`${s}-${i}`} data-target-power={result.targetPower}
+            x1={x(segment[i].baseline)} y1={y(segment[i].dropout)} x2={x(point.baseline)} y2={y(point.dropout)} stroke="#EAF2F2" strokeWidth="2" strokeDasharray="5 5" /></g> : null))}
+        {selectedValid && !selectedCell ? <g className="heatmap-selected-marker">
+          <circle aria-hidden="true" className="heatmap-marker-halo" cx={x(result.selectedPoint.baseline)}
+            cy={y(result.selectedPoint.dropout)} r="7" fill="none" strokeWidth="7" />
+          <circle data-marker="selected" data-baseline={result.selectedPoint.baseline} data-dropout={result.selectedPoint.dropout}
+          cx={x(result.selectedPoint.baseline)} cy={y(result.selectedPoint.dropout)} r="7" fill="none" stroke="#EAF2F2" strokeWidth="3" /></g> : null}
         {result.xBaseline.map(v => <text key={v} x={x(v)} y={bottom + 20} textAnchor="middle">{percent(v)}</text>)}
         {result.yDropout.map(v => <text key={v} x={left - 8} y={y(v) + 4} textAnchor="end">{percent(v)}</text>)}
         <text x={(left + right) / 2} y={bottom + 50} textAnchor="middle">Control baseline event risk (%)</text>
         <text transform="translate(18 150) rotate(-90)" textAnchor="middle">Symmetric dropout (%)</text>
       </svg>
-      <figcaption>Blue: analytic power (pale = zero, dark = one). Gray with cross: invalid/null.
+      </div>
+      <figcaption>Mint: analytic power (faint = zero, strong = one). Slate with cross: invalid/null.
         Dashed: supplied {percent(result.targetPower)} target frontier; segments never join across invalid cells.
         Circle: selected stress point. Use the native selection buttons below with click, Enter or Space.</figcaption>
     </figure>
-    {!selectedValid || selectedCell ? <p role="status">Selected scenario is invalid; no simulation selection is emitted. ARR requires baseline greater than ARR so treatment risk stays positive; expected retained counts must also support the analytic test.</p> : null}
-    {result.warnings.map((warning, i) => <p key={i}>Warning: {warning}</p>)}
-    {result.diagnostics?.map((diagnostic, i) => <p key={i}>
+    {!selectedValid || selectedCell ? <p className="status-badge" role="status">Selected scenario is invalid; no simulation selection is emitted. ARR requires baseline greater than ARR so treatment risk stays positive; expected retained counts must also support the analytic test.</p> : null}
+    {result.warnings.map((warning, i) => <p className="status-warning" key={i}>Warning: {warning}</p>)}
+    {result.diagnostics?.map((diagnostic, i) => <p className={diagnostic.severity === "error" ? "status-error" : "status-warning"} key={i}>
       {diagnostic.severity}: {diagnostic.code} ({diagnostic.field}, {diagnostic.method}): {diagnostic.message}
     </p>)}
     <GridDataTable result={result} onSelectPoint={onSelectPoint} />
-    <p>Inputs hash: {result.inputsHash}. Design hash: {result.designHash}.</p>
+    <details className="disclosure"><summary>Grid identity</summary><p className="inline-code">Inputs hash: {result.inputsHash}. Design hash: {result.designHash}.</p></details>
   </section>;
 }
 

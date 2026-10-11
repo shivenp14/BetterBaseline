@@ -1,4 +1,4 @@
-// Mount the production page and hold independent API responses to exercise real
+// Mount the production workspace and hold independent API responses to exercise real
 // evaluation/grid ownership and debounced input-generation behavior. Requires
 // PLAYWRIGHT_MODULE and PAGE_URL; API replies are fulfilled by browser routes.
 import assert from "node:assert/strict";
@@ -70,6 +70,12 @@ function statusSelector(kind) {
     : 'section[aria-labelledby="grid-heading"] > span';
 }
 
+async function navigateTo(page, pathname) {
+  if (new URL(page.url()).pathname === pathname) return;
+  await page.locator(`a[href="${pathname}"]`).first().click();
+  await page.waitForURL(url => url.pathname === pathname);
+}
+
 async function waitForStatus(page, kind, expected) {
   const selector = statusSelector(kind);
   await page.waitForFunction(({ selector: query, expectedText }) =>
@@ -106,10 +112,11 @@ async function runCase({ startFirst, completeFirst, evaluationOutcome, gridOutco
 
   await page.goto(process.env.PAGE_URL);
   await page.getByRole("button", { name: "Calculate & Lock Design", exact: true }).click();
+  await navigateTo(page, "/stress");
   await page.getByRole("button", { name: "Evaluate Stress Scenario", exact: true }).waitFor();
 
   const evaluateButton = page.getByRole("button", { name: "Evaluate Stress Scenario", exact: true });
-  const gridButton = page.getByRole("button", { name: "Load grid response from backend", exact: true });
+  const gridButton = page.getByRole("button", { name: "Load analytic grid", exact: true });
   if (startFirst === "evaluation") {
     await evaluateButton.click();
     await gridButton.click();
@@ -161,6 +168,7 @@ async function mountLiveWorkspace(page, onEvaluation) {
   });
   await page.goto(process.env.PAGE_URL);
   await page.getByRole("button", { name: "Calculate & Lock Design", exact: true }).click();
+  await navigateTo(page, "/stress");
   await page.waitForFunction(() => {
     const button = Array.from(document.querySelectorAll("button"))
       .find((candidate) => candidate.textContent?.trim() === "Evaluate Stress Scenario");
@@ -246,6 +254,13 @@ async function runManualEvaluationDuringDebounce({ delayResponse = false, delive
   const page = await browser.newPage();
   if (deliverCancelledTimer) await captureStressTimers(page);
   await mountLiveWorkspace(page, async () => {});
+  await page.route("**/api/v1/scenarios/grid", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify(gridResponse),
+  }));
+  await page.getByRole("button", { name: "Load analytic grid", exact: true }).click();
+  await waitForStatus(page, "grid", "Status: SUCCESS");
   const requests = [];
   await page.route("**/api/v1/scenarios/evaluate", async (route) => {
     const requestNumber = requests.push(route.request().postDataJSON());
@@ -282,10 +297,11 @@ async function runManualEvaluationDuringDebounce({ delayResponse = false, delive
   assert.equal(requests[0].stress_scenario.control_event_rate, 0.16);
   assert.deepEqual(requests[0].fixed_enrollment, { control: 903, treatment: 903 });
   await waitForStatus(page, "evaluation", "SUCCESS");
-  assert.equal(await page.getByRole("button", { name: "Download current results (JSON)", exact: true }).isEnabled(), true,
+  await navigateTo(page, "/simulation");
+  assert.equal(await page.getByRole("link", { name: "Download current scenario JSON", exact: true }).isEnabled(), true,
     "successful manual evaluation remains exportable after the debounce window");
   const downloadStarted = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Download current results (JSON)", exact: true }).click();
+  await page.getByRole("link", { name: "Download current scenario JSON", exact: true }).click();
   const download = await downloadStarted;
   const exported = JSON.parse(await readFile(await download.path(), "utf8"));
   assert.equal(exported.evaluation_result.metadata.inputs_hash, evaluateResponse.metadata.inputs_hash,
@@ -309,7 +325,7 @@ async function runCancelledDebounceAfterCallbackChange() {
   await page.waitForFunction(() => window.stressTimers.length > 0);
   // Grid ownership changes page state and hence handleEvaluate's identity,
   // without invalidating the stress-input generation or its pending intent.
-  await page.getByRole("button", { name: "Load grid response from backend", exact: true }).click();
+  await page.getByRole("button", { name: "Load analytic grid", exact: true }).click();
   await waitForStatus(page, "grid", "Status: SUCCESS");
   await page.waitForFunction(() => window.stressTimers.length > 1);
   await page.evaluate(() => window.stressTimers.slice(0, -1).forEach((callback) => callback()));
@@ -344,7 +360,7 @@ try {
   ]) {
     await runPendingDebounceInvalidation(invalidation);
   }
-  console.log("PASS: mounted production page preserves manual success/export through pending and canceled stress timers, evaluation/grid overlap, one automatic fixed-enrollment stress evaluation, and debounce invalidation across planned edits, presets, and reset.");
+  console.log("PASS: the production workspace preserves manual success/export across route mounts, pending and canceled stress timers, evaluation/grid overlap, one automatic fixed-enrollment stress evaluation, and debounce invalidation across planned edits, presets, and reset.");
 } finally {
   await browser.close();
 }

@@ -6,7 +6,7 @@
  * fails explicitly; fixture-only success cannot satisfy acceptance.
  */
 
-import { test, expect, Page, Response } from "@playwright/test";
+import { test, expect, Page, Response, APIResponse } from "@playwright/test";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 
@@ -21,6 +21,12 @@ const RESPONSE_TIMEOUT_MS = 12_000;
 
 const forbiddenRequests = new WeakMap<Page, string[]>();
 const forbiddenWebSockets = new WeakMap<Page, string[]>();
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((res) => { resolve = res; });
+  return { promise, resolve };
+}
 
 function isLocalUrl(url: URL): boolean {
   const normalized = new URL(url.href);
@@ -94,8 +100,14 @@ async function requireUiApiResponse(
 
 async function selectPreset(page: Page, id = PRESET_ID): Promise<void> {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /better baseline/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Better Baseline", exact: true })).toBeVisible();
   await page.getByLabel("Select Preset:").selectOption(id);
+}
+
+async function navigateTo(page: Page, pathname: "/" | "/stress" | "/simulation" | "/methods"): Promise<void> {
+  if (new URL(page.url()).pathname === pathname) return;
+  await page.locator(`a[href="${pathname}"]`).first().click();
+  await expect(page).toHaveURL(new RegExp(`${pathname.replace(/\//g, "\\/")}$`));
 }
 
 async function calculateFromUi(page: Page): Promise<Record<string, any>> {
@@ -179,12 +191,14 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
   test("Analytic Evaluate and explicit simulation send frozen enrollment and current stress", async ({ page }) => {
     await selectPreset(page);
     const design = await calculateFromUi(page);
+    await navigateTo(page, "/stress");
     await page.locator("#stress-baseline-num").fill("0.10");
 
     const analytic = await evaluateFromUi(page);
     expect(analytic.response.status()).toBe(200);
     expect(analytic.response.request().postDataJSON().simulation).toBeNull();
     expect(analytic.body.monte_carlo).toBeNull();
+    await navigateTo(page, "/simulation");
     const { response, body } = await simulateFromUi(page);
     expect(body.analytic).toEqual(analytic.body.analytic);
     expect(response.status()).toBe(200);
@@ -209,14 +223,18 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
   test("changed stress produces a fresh backend calculation and updated MC fields", async ({ page }) => {
     await selectPreset(page);
     const design = await calculateFromUi(page);
+    await navigateTo(page, "/stress");
     await page.locator("#stress-baseline-num").fill("0.10");
+    await navigateTo(page, "/simulation");
     const first = await simulateFromUi(page);
     expect(first.response.status()).toBe(200);
     const firstRequest = first.response.request().postDataJSON();
     expect(firstRequest.fixed_enrollment).toEqual(design.enrolled_n);
     expect(firstRequest.stress_scenario.control_event_rate).toBe(0.1);
 
+    await navigateTo(page, "/stress");
     await page.locator("#stress-baseline-num").fill("0.15");
+    await navigateTo(page, "/simulation");
     const changed = await simulateFromUi(page);
     expect(changed.response.status()).toBe(200);
     const changedRequest = changed.response.request().postDataJSON();
@@ -243,10 +261,11 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
   test("grid action calls the local API with frozen enrollment and displays its response", async ({ page }) => {
     await selectPreset(page);
     const design = await calculateFromUi(page);
+    await navigateTo(page, "/stress");
     const response = await requireUiApiResponse(
       page,
       "/api/v1/scenarios/grid",
-      () => page.getByRole("button", { name: "Load grid response from backend", exact: true }).click(),
+      () => page.getByRole("button", { name: "Load analytic grid", exact: true }).click(),
     );
     expect(response.status()).toBe(200);
     const request = response.request().postDataJSON();
@@ -264,6 +283,7 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
     expect(body).not.toHaveProperty("mock");
     const gridSection = page.getByRole("region", { name: "Sensitivity heatmap", exact: true });
     await expect(gridSection).toContainText(body.method);
+    await page.getByText("Inspect numerical matrix and select a stress scenario", { exact: true }).click();
     await expect(gridSection.locator("table caption")).toContainText(/dropout.*baseline/i);
     await expect(gridSection.locator('thead th[scope="col"]').first()).toContainText(/dropout.*baseline/i);
     await expect(gridSection.locator('tbody th[scope="row"]').first()).toBeVisible();
@@ -278,7 +298,7 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
         await expect(cell).toHaveAttribute("data-baseline", String(body.x_baseline[col]));
         await expect(cell).toHaveAttribute("data-dropout", String(body.y_dropout[row]));
         await expect(gridSection.locator("tbody tr").nth(row).locator("td").nth(col)).toContainText(
-          power === null ? "Invalid scenario (null)" : `${(power * 100).toFixed(1)}% (${power} fraction)`);
+          power === null ? "Invalid scenario (null)" : `${(power * 100).toFixed(1)}% (${Number(power.toFixed(4))} fraction)`);
       }
     }
 
@@ -290,6 +310,7 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
     await page.getByLabel("Hypothetical treatment effect").selectOption("absolute_risk_reduction");
     await page.locator('[name="reductionPoints"]').fill("5");
     const design = await calculateFromUi(page);
+    await navigateTo(page, "/stress");
     await page.locator("#stress-baseline-num").fill("0.05");
 
     const { response, body } = await evaluateFromUi(page);
@@ -303,21 +324,25 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
     const errorSection = page.locator('section[aria-labelledby="stress-heading"]');
     await expect(errorSection, "the visible UI must expose the backend's invalid ARR 422").toContainText(body.error.message);
     await expect(errorSection.getByText(/Error:/)).toBeVisible();
-    await expect(page.getByRole("heading", { name: /better baseline/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Better Baseline", exact: true })).toBeVisible();
   });
 
   test("export is available and downloads JSON containing provenance and real calculation metadata", async ({ page }, testInfo) => {
     await selectPreset(page);
+    await navigateTo(page, "/simulation");
     await expect(page.getByRole("region", { name: "Scenario export", exact: true })
       .getByRole("button", { name: "Download current scenario JSON", exact: true })).toBeDisabled();
     const exportButton = exportLink(page);
 
+    await navigateTo(page, "/");
     const design = await calculateFromUi(page);
+    await navigateTo(page, "/stress");
+    const gridResponse = await requireUiApiResponse(page, "/api/v1/scenarios/grid",
+      () => page.getByRole("button", { name: "Load analytic grid", exact: true }).click());
+    expect(gridResponse.status()).toBe(200);
+    await navigateTo(page, "/simulation");
     const evaluation = await simulateFromUi(page);
     expect(evaluation.response.status()).toBe(200);
-    const gridResponse = await requireUiApiResponse(page, "/api/v1/scenarios/grid",
-      () => page.getByRole("button", { name: "Load grid response from backend", exact: true }).click());
-    expect(gridResponse.status()).toBe(200);
     const grid = await gridResponse.json();
     await expect(exportButton).toBeEnabled();
     const [download] = await Promise.all([
@@ -355,13 +380,15 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
   test("complete workflow makes no requests outside the exact local server origins", async ({ page }) => {
     await selectPreset(page);
     await calculateFromUi(page);
+    await navigateTo(page, "/stress");
     await evaluateFromUi(page);
-    await simulateFromUi(page);
     await requireUiApiResponse(
       page,
       "/api/v1/scenarios/grid",
-      () => page.getByRole("button", { name: "Load grid response from backend", exact: true }).click(),
+      () => page.getByRole("button", { name: "Load analytic grid", exact: true }).click(),
     );
+    await navigateTo(page, "/simulation");
+    await simulateFromUi(page);
     const exportButton = exportLink(page);
     await expect(exportButton, "current seeded results must provide a download link").toBeVisible();
     await expect(exportButton).toBeEnabled();
@@ -390,4 +417,186 @@ test.describe("Offline baseline-collapse E2E workflow", () => {
     // guard caught it so afterEach can continue checking unexpected attempts.
     captured.length = 0;
   });
+
+  test("direct stress and simulation visits guide users without a calculated design", async ({ page }) => {
+    const stress = await page.goto("/stress");
+    expect(stress?.status()).toBe(200);
+    await expect(page.getByRole("heading", { name: /stress/i }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "Plan & lock", exact: true })).toBeVisible();
+    await expect(page.getByText(/calculate and lock a design before comparing scenarios/i)).toBeVisible();
+    const evaluateButton = page.getByRole("button", { name: "Evaluate Stress Scenario", exact: true });
+    if (await evaluateButton.count()) await expect(evaluateButton).toBeDisabled();
+
+    const simulation = await page.goto("/simulation");
+    expect(simulation?.status()).toBe(200);
+    await expect(page.getByRole("heading", { name: /simulation/i }).first()).toBeVisible();
+    await expect(page.getByText(/simulation unavailable|calculate the current design first/i).first()).toBeVisible();
+    const run = page.getByRole("button", { name: "Run simulation", exact: true });
+    if (await run.count()) await expect(run).toBeDisabled();
+    await expect(page.getByRole("region", { name: "Scenario export", exact: true })
+      .getByRole("button", { name: "Download current scenario JSON", exact: true })).toBeDisabled();
+
+    const methods = await page.goto("/methods");
+    expect(methods?.status()).toBe(200);
+    await expect(page.getByRole("heading", { name: /method/i }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "Stress-test", exact: true })).toBeVisible();
+  });
+
+  test("stress debounce and latest result ownership survive client route changes", async ({ page }) => {
+    await selectPreset(page);
+    await calculateFromUi(page);
+    await navigateTo(page, "/stress");
+    const gridRegion = page.getByRole("region", { name: "Sensitivity heatmap", exact: true });
+    const initialGrid = await requireUiApiResponse(page, "/api/v1/scenarios/grid",
+      () => page.getByRole("button", { name: "Load analytic grid", exact: true }).click());
+    expect(initialGrid.status()).toBe(200);
+    await expect(gridRegion.locator("[data-cell]").first()).toBeVisible();
+
+    const pendingOld = deferred<{ body: Record<string, any>; response: APIResponse }>();
+    const releaseOld = deferred<void>();
+    const requests: Record<string, any>[] = [];
+    await page.route("**/api/v1/scenarios/evaluate", async (route) => {
+      const body = route.request().postDataJSON();
+      if (body.simulation === null) {
+        requests.push(body);
+        if (body.stress_scenario.control_event_rate === 0.13) {
+          const response = await route.fetch();
+          pendingOld.resolve({ body, response });
+          await releaseOld.promise;
+          try { await route.fulfill({ response }); } catch { /* input change may abort the superseded browser request */ }
+          return;
+        }
+      }
+      await route.continue();
+    });
+
+    try {
+      await page.locator("#stress-baseline-num").fill("0.13");
+      await navigateTo(page, "/simulation");
+      const old = await pendingOld.promise;
+      expect(old.response.status()).toBe(200);
+      expect(old.body.fixed_enrollment).toEqual({ control: REFERENCE_N, treatment: REFERENCE_N });
+
+      await navigateTo(page, "/stress");
+      const latestResponse = page.waitForResponse((response) => {
+        const url = new URL(response.url());
+        if (url.origin !== BACKEND_ORIGIN || url.pathname !== "/api/v1/scenarios/evaluate" || response.request().method() !== "POST") return false;
+        const body = response.request().postDataJSON();
+        return body.simulation === null && body.stress_scenario.control_event_rate === 0.16;
+      }, { timeout: RESPONSE_TIMEOUT_MS });
+      await page.locator("#stress-baseline-num").fill("0.16");
+      await navigateTo(page, "/simulation");
+      const current = await latestResponse;
+      expect(current.status()).toBe(200);
+      expect(current.request().postDataJSON().fixed_enrollment).toEqual({ control: REFERENCE_N, treatment: REFERENCE_N });
+      expect(requests.some((body) => body.stress_scenario.control_event_rate === 0.16)).toBe(true);
+
+      releaseOld.resolve();
+      await page.waitForTimeout(450);
+      await navigateTo(page, "/stress");
+      await expect(page.locator("#stress-baseline-num")).toHaveValue("0.16");
+      await expect(page.getByRole("region", { name: "Sensitivity heatmap", exact: true }).locator("[data-cell]").first()).toBeVisible();
+      await expect(page.getByRole("link", { name: "Simulate & export", exact: true })).toBeVisible();
+    } finally {
+      releaseOld.resolve();
+    }
+  });
+
+  test("Monte Carlo completes across navigation and exports the current real payload", async ({ page }, testInfo) => {
+    await selectPreset(page);
+    const design = await calculateFromUi(page);
+    await navigateTo(page, "/stress");
+    const gridResponse = await requireUiApiResponse(page, "/api/v1/scenarios/grid",
+      () => page.getByRole("button", { name: "Load analytic grid", exact: true }).click());
+    expect(gridResponse.status()).toBe(200);
+    await navigateTo(page, "/simulation");
+
+    const region = simulationRegion(page);
+    const startedA = deferred<{ body: Record<string, any>; response: APIResponse }>();
+    const startedB = deferred<{ body: Record<string, any>; response: APIResponse }>();
+    const releaseA = deferred<void>();
+    const releaseB = deferred<void>();
+    const settledA = deferred<void>();
+    const settledB = deferred<void>();
+    await page.route("**/api/v1/scenarios/evaluate", async (route) => {
+      const body = route.request().postDataJSON();
+      if ((body.simulation?.seed === 314 && body.simulation?.replicates === 1000) ||
+          (body.simulation?.seed === 315 && body.simulation?.replicates === 1200)) {
+        const response = await route.fetch();
+        const isA = body.simulation.seed === 314;
+        (isA ? startedA : startedB).resolve({ body, response });
+        await (isA ? releaseA : releaseB).promise;
+        try { await route.fulfill({ response }); } catch { /* input changes may abort a superseded request */ }
+        (isA ? settledA : settledB).resolve();
+        return;
+      }
+      await route.continue();
+    });
+
+    try {
+      await region.getByLabel("Simulation seed", { exact: true }).fill("314");
+      await region.getByLabel("Simulation replicates", { exact: true }).fill("1000");
+      const runButton = region.getByRole("button", { name: /run simulation|running simulation/i });
+      const clickA = runButton.click();
+      const requestA = await startedA.promise;
+      expect(requestA.response.status()).toBe(200);
+      expect(requestA.body.fixed_enrollment).toEqual(design.enrolled_n);
+      await navigateTo(page, "/methods");
+      await navigateTo(page, "/simulation");
+      await expect(runButton).toBeDisabled();
+      await region.getByLabel("Simulation seed", { exact: true }).fill("315");
+      await region.getByLabel("Simulation replicates", { exact: true }).fill("1200");
+      await expect(runButton).toBeEnabled();
+
+      const clickB = runButton.click();
+      const requestB = await startedB.promise;
+      expect(requestB.response.status()).toBe(200);
+      expect(requestB.body.fixed_enrollment).toEqual(design.enrolled_n);
+      await expect(runButton).toBeDisabled();
+
+      // A has an actual backend result ready. Settle it only after B owns the pending run.
+      releaseA.resolve();
+      await settledA.promise;
+      await expect(runButton).toBeDisabled();
+      await expect(region.getByLabel("Simulation seed", { exact: true })).toHaveValue("315");
+      releaseB.resolve();
+      await settledB.promise;
+      await clickA;
+      await clickB;
+
+      const body = await requestB.response.json();
+      expect(body.monte_carlo.seed).toBe(315);
+      expect(body.monte_carlo.replicates).toBe(1200);
+      await expect(resultValue(page, "Seed")).toHaveText("315");
+      await expect(resultValue(page, "Replicates")).toHaveText("1200");
+      const downloadLink = exportLink(page);
+      await expect(downloadLink).toBeEnabled();
+      const [download] = await Promise.all([page.waitForEvent("download"), downloadLink.click()]);
+      const stream = await download.createReadStream();
+      expect(stream).not.toBeNull();
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream!) chunks.push(Buffer.from(chunk));
+      const downloadedJson = Buffer.concat(chunks).toString("utf8");
+      const exported = JSON.parse(downloadedJson);
+      await testInfo.attach("route-persistent-simulation-export", { body: downloadedJson, contentType: "application/json" });
+      const backendDir = path.resolve(__dirname, "../../../backend");
+      const python = process.platform === "win32"
+        ? path.join(backendDir, ".venv", "Scripts", "python.exe")
+        : path.join(backendDir, ".venv", "bin", "python");
+      const validation = spawnSync(python, ["-c",
+        "import sys; from app.schemas import ExportPayload; ExportPayload.model_validate_json(sys.stdin.read())"],
+        { cwd: backendDir, input: downloadedJson, encoding: "utf8", timeout: 10_000 });
+      expect(validation.error).toBeUndefined();
+      expect(validation.status, validation.stderr).toBe(0);
+      expect(exported.fixed_enrollment).toEqual(design.enrolled_n);
+      expect(exported.evaluation_result.monte_carlo.seed).toBe(315);
+      expect(exported.evaluation_result.monte_carlo.replicates).toBe(1200);
+      expect(exported.evaluation_result.metadata.inputs_hash).toBeTruthy();
+      expect(exported.stress_scenario.control_event_rate).toBe(0.1);
+    } finally {
+      releaseA.resolve();
+      releaseB.resolve();
+    }
+  });
+
 });

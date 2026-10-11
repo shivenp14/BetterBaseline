@@ -15,9 +15,9 @@ export function DesignComparison({ current, result, status, error, plannedPower,
   const id = useId();
   const problem = curveProblem(current, result);
   if (status !== "ready" || problem || !result) {
-    return <section aria-labelledby={`${id}-heading`} aria-busy={status === "loading"}>
-      <h2 id={`${id}-heading`}>Planned design and selected analytic scenario</h2>
-      <p role={status === "error" ? "alert" : "status"}>
+    return <section className="workspace-section panel" aria-labelledby={`${id}-heading`} aria-busy={status === "loading"}>
+      <h2 className="section-heading" id={`${id}-heading`}>Planned design and selected analytic scenario</h2>
+      <p className={status === "error" ? "status-error" : problem?.startsWith("Stale") ? "status-warning" : "chart-empty"} role={status === "error" ? "alert" : "status"}>
         {status === "loading" ? "Loading current analytic comparison."
           : status === "error" ? (error || "Analytic comparison could not be loaded.")
             : status === "idle" ? "Calculate a design and evaluate a stress scenario." : problem}
@@ -25,17 +25,17 @@ export function DesignComparison({ current, result, status, error, plannedPower,
     </section>;
   }
   if (plannedDesignHash !== current.designHash) {
-    return <p role="status">Stale planned design: calculate the current design before comparing power.</p>;
+    return <p className="status-warning" role="status">Stale planned design: calculate the current design before comparing power.</p>;
   }
   if ((plannedPower !== null && (!Number.isFinite(plannedPower) || plannedPower < 0 || plannedPower > 1))
       || !Number.isFinite(plannedDropout) || plannedDropout < 0 || plannedDropout >= 1) {
-    return <p role="alert">Invalid planned design comparison values.</p>;
+    return <p className="status-error" role="alert">Invalid planned design comparison values.</p>;
   }
   const selectedPower = result.selectedPoint.power;
-  return <section aria-labelledby={`${id}-heading`}>
-    <h2 id={`${id}-heading`}>Planned design and selected analytic scenario</h2>
-    <p role="status">Current comparison. {result.illustrative ? "Illustrative synthetic fixture values." : "Supplied analytic API values."}</p>
-    <table>
+  return <section className="workspace-section panel" aria-labelledby={`${id}-heading`}>
+    <h2 className="section-heading" id={`${id}-heading`}>Planned design and selected analytic scenario</h2>
+    <p className={result.illustrative ? "status-warning" : "status-success"} role="status">Current comparison. {result.illustrative ? "Illustrative synthetic fixture values." : "Supplied analytic API values."}</p>
+    <div className="table-scroll" role="region" aria-label="Planned and selected scenario comparison" tabIndex={0}><table className="data-table">
       <caption>Enrollment stays frozen while baseline risk and dropout change</caption>
       <thead><tr><th scope="col">Assumption</th><th scope="col">Original planned design</th><th scope="col">Selected stress scenario</th></tr></thead>
       <tbody>
@@ -44,11 +44,11 @@ export function DesignComparison({ current, result, status, error, plannedPower,
         <tr><th scope="row">Fixed enrolled control / treatment</th><td>{current.fixedEnrollment.control} / {current.fixedEnrollment.treatment}</td><td>{current.fixedEnrollment.control} / {current.fixedEnrollment.treatment}</td></tr>
         <tr><th scope="row">Approximate conditional power</th><td>{plannedPower === null ? "Unavailable (null)" : percent(plannedPower)}</td><td>{selectedPower === null ? "Invalid scenario (null)" : percent(selectedPower)}</td></tr>
       </tbody>
-    </table>
+    </table></div>
     <p>{selectedPower === null || plannedPower === null ? "Power change is unavailable for an invalid selected scenario."
       : `Power change: ${((selectedPower - plannedPower) * 100).toFixed(1)} percentage points.`}</p>
-    <p>Target power: {percent(current.targetPower)}. Method: {result.method}.
-      Effect: {current.effectKind === "relative_risk" ? "RR" : "ARR"}. Inputs hash: {result.inputsHash}.</p>
+    <details className="disclosure"><summary>Comparison method and identity</summary><p>Target power: {percent(current.targetPower)}. Method: {result.method}.
+      Effect: {current.effectKind === "relative_risk" ? "RR" : "ARR"}. Inputs hash: <span className="inline-code">{result.inputsHash}</span>.</p></details>
     <p>{result.plannedPointDropout === undefined
       ? "The curve’s triangle shows the planned baseline evaluated at the selected dropout; this table’s original planned power uses the original dropout. These are distinct comparisons."
       : "The triangle and original-plan column use the API’s original planned scenario; the curve and selected point use the selected stress dropout."}</p>

@@ -18,17 +18,33 @@ const run = () => page.getByRole("button", { name: "Run simulation", exact: true
 const exportLink = () => page.getByRole("link", { name: "Download current scenario JSON", exact: true });
 const disabledExport = () => page.getByRole("button", { name: "Download current scenario JSON", exact: true });
 const mcCalls = () => requests.filter(r => r.url.endsWith("/evaluate") && r.body.simulation !== null);
-async function charts() {
-  await page.waitForFunction(() => document.querySelector('section[aria-labelledby="grid-heading"] span')?.textContent.includes("SUCCESS"));
-  await page.locator("[data-cell]").first().waitFor();
+async function navigateTo(pathname) {
+  if (new URL(page.url()).pathname === pathname) return;
+  await page.locator(`a[href="${pathname}"]`).first().click();
+  await page.waitForURL(url => url.pathname === pathname);
 }
-async function calculate() { await page.getByRole("button", { name: "Calculate & Lock Design", exact: true }).click(); await charts(); }
+async function charts() {
+  await navigateTo("/stress");
+  await page.waitForFunction(() => document.querySelector('section[aria-labelledby="grid-heading"] span')?.textContent.includes("SUCCESS"));
+  const disclosure = page.locator("details").filter({ hasText: "Inspect numerical matrix and select a stress scenario" });
+  if (!(await disclosure.evaluate(element => element.open))) await disclosure.locator("summary").click();
+  await page.locator("[data-cell]").first().waitFor({ state: "visible" });
+}
+async function calculate() {
+  await navigateTo("/");
+  await page.getByRole("button", { name: "Calculate & Lock Design", exact: true }).click();
+  await navigateTo("/stress");
+  await page.getByRole("button", { name: "Load analytic grid", exact: true }).click();
+  await charts();
+}
 async function simulate() {
+  await navigateTo("/simulation");
   const before = mcCalls().length;
   await run().click(); await exportLink().waitFor();
   assert.equal(mcCalls().length, before + 1, "Exactly one selected-point simulation per submit");
 }
 async function download(name) {
+  await navigateTo("/simulation");
   const pending = page.waitForEvent("download"); await exportLink().click(); const file = await pending;
   const filename = path.join(output, `${name}.json`); await file.saveAs(filename);
   const data = JSON.parse(await readFile(filename, "utf8"));
@@ -45,7 +61,17 @@ async function download(name) {
 }
 try {
   await page.goto(process.env.PAGE_URL);
-  for (const heading of ["Planning assumptions", "Planned design summary", "Planned design and selected analytic scenario", "Analytic conditional power by baseline risk", "Sensitivity heatmap", "Selected-scenario Monte Carlo simulation", "Scenario export", "Field provenance and audit trail"]) assert.equal(await page.getByRole("heading", { name: heading, exact: true }).count(), 1);
+  const headingRoutes = [
+    ["/", ["Planning assumptions", "Planned design summary", "Planned design and selected analytic scenario"]],
+    ["/stress", ["Analytic conditional power by baseline risk", "Sensitivity heatmap"]],
+    ["/simulation", ["Selected-scenario Monte Carlo simulation", "Scenario export"]],
+    ["/methods", ["Field provenance and audit trail"]],
+  ];
+  for (const [pathname, headings] of headingRoutes) {
+    await navigateTo(pathname);
+    for (const heading of headings) assert.equal(await page.getByRole("heading", { name: heading, exact: true }).count(), 1);
+  }
+  await navigateTo("/simulation");
   assert.equal(await disabledExport().isDisabled(), true);
   await calculate();
   assert.equal(mcCalls().length, 0, "Automatic stress refresh is analytic only");
@@ -55,17 +81,20 @@ try {
   assert.equal(synthetic.provenance["/planned_design/control_event_rate"].source, "synthetic_preset");
 
   // Exact heatmap selection plus keyboard selection; enrollment remains frozen.
+  await navigateTo("/stress");
   const cell = page.locator('[data-cell="1-2"]');
   const baseline = Number(await cell.getAttribute("data-baseline")), dropout = Number(await cell.getAttribute("data-dropout"));
   const beforeSelection = mcCalls().length; await cell.click();
-  assert.equal(await disabledExport().isDisabled(), true); await charts();
+  await navigateTo("/simulation"); assert.equal(await disabledExport().isDisabled(), true); await charts();
   assert.equal(mcCalls().length, beforeSelection);
+  await navigateTo("/stress");
   assert.equal(Number(await page.locator("#stress-baseline-num").inputValue()), baseline);
   assert.equal(Number(await page.locator("#stress-dropout-num").inputValue()), dropout);
   const keyboard = page.locator('[data-cell="0-1"]'); await keyboard.focus(); await keyboard.press("Enter"); await charts();
   const spaceCell = page.locator('[data-cell="2-3"]'), spaceDropout = Number(await spaceCell.getAttribute("data-dropout"));
   await spaceCell.focus(); await spaceCell.press("Space"); await charts();
   assert.equal(Number(await page.locator("#stress-dropout-num").inputValue()), spaceDropout);
+  await navigateTo("/simulation");
   await page.getByLabel("Simulation seed", { exact: true }).fill("43");
   await page.getByLabel("Simulation replicates", { exact: true }).fill("1000");
   assert.equal(await disabledExport().isDisabled(), true);
@@ -84,7 +113,7 @@ try {
   await page.getByRole("alert").filter({ hasText: "inputs_hash does not match" }).waitFor();
   await page.getByLabel("Simulation seed", { exact: true }).fill("invalid");
   assert.equal(await run().isDisabled(), true); assert.equal(await disabledExport().isDisabled(), true);
-  await page.getByLabel("Simulation seed", { exact: true }).fill("44"); await charts();
+  await page.getByLabel("Simulation seed", { exact: true }).fill("44"); await charts(); await navigateTo("/simulation");
 
   // Explicit simulation failure hides export; restoring the real transport recovers.
   await page.route("**/api/v1/scenarios/evaluate", async route => {
@@ -103,14 +132,15 @@ try {
     if (!once) { await route.continue(); return; } once = false;
     const response = await route.fetch(); requested(); await held; try { await route.fulfill({ response }); } catch {}
   });
-  await page.getByRole("button", { name: "Load grid response from backend", exact: true }).click(); await started;
-  assert.equal(await disabledExport().isDisabled(), true);
+  await page.getByRole("button", { name: "Load analytic grid", exact: true }).click(); await started;
+  await navigateTo("/simulation"); assert.equal(await disabledExport().isDisabled(), true); await navigateTo("/stress");
   await page.locator("#stress-baseline-num").fill("0.12"); release(); await charts();
   assert.equal(await page.locator('[data-marker="selected"][data-baseline="0.12"]').count(), 2);
-  assert.equal(await disabledExport().isDisabled(), true); await page.unroute("**/api/v1/scenarios/grid");
+  await navigateTo("/simulation"); assert.equal(await disabledExport().isDisabled(), true); await page.unroute("**/api/v1/scenarios/grid");
   await simulate(); const current = await download("late-response-rejected"); assert.equal(current.stress_scenario.control_event_rate, .12);
 
   // Hold one real MC response, change options, and reject its late completion.
+  await navigateTo("/simulation");
   let releaseSimulation, requestedSimulation;
   const heldSimulation = new Promise(resolve => { releaseSimulation = resolve; }), simulationStarted = new Promise(resolve => { requestedSimulation = resolve; });
   let holdSimulation = true;
@@ -119,30 +149,38 @@ try {
     const response = await route.fetch(); requestedSimulation(); await heldSimulation; try { await route.fulfill({ response }); } catch {}
   });
   await run().click(); await simulationStarted;
-  await page.getByLabel("Simulation seed", { exact: true }).fill("45"); releaseSimulation(); await charts();
+  await page.getByLabel("Simulation seed", { exact: true }).fill("45"); releaseSimulation();
+  await page.getByRole("button", { name: "Run simulation", exact: true }).waitFor();
   assert.equal(await disabledExport().isDisabled(), true); await page.unroute("**/api/v1/scenarios/evaluate");
   await simulate(); const latestSimulation = await download("late-simulation-rejected"); assert.equal(latestSimulation.evaluation_result.monte_carlo.seed, 45);
 
   // Planned invalid input prevents recalc, disables export and does not resize lock.
+  await navigateTo("/");
   const calculateCount = requests.filter(r => r.url.endsWith("/calculate")).length;
   await page.getByLabel("Control endpoint risk (%)", { exact: true }).fill("0");
   await page.getByRole("button", { name: "Calculate & Lock Design", exact: true }).click();
   assert.equal(requests.filter(r => r.url.endsWith("/calculate")).length, calculateCount);
+  await navigateTo("/simulation");
   assert.equal(await disabledExport().isDisabled(), true);
+  await navigateTo("/");
   await page.getByLabel("Control endpoint risk (%)", { exact: true }).fill("20");
   await page.getByLabel("Hypothetical treatment effect", { exact: true }).selectOption("absolute_risk_reduction");
   await page.getByLabel("Absolute risk reduction (percentage points)", { exact: true }).fill("10");
-  await page.locator("#stress-baseline-num").fill("0.2"); await calculate();
+  await calculate();
+  await page.locator("#stress-baseline-num").fill("0.2");
   assert.ok(await page.locator('[data-cell][data-power="null"]').count());
   assert.ok(await page.locator('[data-invalid="true"]').count());
   const invalidButton = page.getByRole("button", { name: "Select baseline 5.0%, dropout 0.0%", exact: true });
   assert.equal(await invalidButton.isDisabled(), true);
   await simulate(); const arr = await download("arr-invalid-cells");
   assert.ok(arr.grid_result.invalid_cell_count); assert.equal(arr.grid_result.power[0][0], null); assert.equal(arr.grid_result.invalid_mask[0][0], true);
-  await page.locator("#stress-baseline-num").fill("0.05"); await charts();
-  assert.equal(await run().isDisabled(), true); assert.equal(await disabledExport().isDisabled(), true);
+  await navigateTo("/stress"); await page.locator("#stress-baseline-num").fill("0.05"); await charts();
+  await navigateTo("/simulation"); assert.equal(await run().isDisabled(), true); assert.equal(await disabledExport().isDisabled(), true);
+  await navigateTo("/");
   await page.getByLabel("Select Preset:").selectOption("stable-design-v1");
+  await navigateTo("/simulation");
   assert.equal(await disabledExport().isDisabled(), true); assert.equal(await run().isDisabled(), true);
+  await navigateTo("/");
   await calculate(); await simulate(); await download("stable-preset");
   await page.screenshot({ path: path.join(output, "complete-screen.png"), fullPage: true });
   assert.deepEqual(errors, []);

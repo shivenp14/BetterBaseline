@@ -11,6 +11,34 @@ try {
   const value=label=>page.locator('dt').filter({hasText: new RegExp(`^${label}$`)}).locator('xpath=following-sibling::dd[1]').textContent();
   assert.equal(await page.getByRole('complementary',{name:'Simulation method disclosures'}).count(),0);
   assert.equal(await field('Simulation seed').inputValue(),'42');assert.equal(await field('Simulation replicates').inputValue(),'10000');
+  // Standalone panel cleanup must clear only the aborted request's pending ID.
+  // Returning to A must permit a replacement run, and A's late finally must not
+  // clear that replacement while it is still pending.
+  const regression=await browser.newPage();
+  try {
+    await regression.goto('http://localhost:3000/c6-harness');
+    const runRegression=()=>regression.getByRole('button',{name:'Run simulation',exact:true});
+    await regression.getByRole('button',{name:'Hold runs',exact:true}).click();
+    await runRegression().click();
+    await regression.getByRole('button',{name:'Running simulation…',exact:true}).waitFor();
+    await regression.getByRole('button',{name:'Select new baseline',exact:true}).click();
+    await regression.waitForFunction(()=>document.querySelector('button[type="submit"]')?.disabled===false);
+    await regression.getByRole('button',{name:'Return to original baseline',exact:true}).click();
+    await regression.waitForFunction(()=>document.querySelector('button[type="submit"]')?.disabled===false);
+    await runRegression().click();
+    await regression.getByRole('button',{name:'Running simulation…',exact:true}).waitFor();
+    await regression.waitForFunction(()=>document.querySelector('[aria-label="Held runs"]')?.textContent==='2');
+    assert.equal(await regression.getByLabel('Held runs',{exact:true}).textContent(),'2');
+    await regression.getByRole('button',{name:'Release oldest held run',exact:true}).click();
+    await regression.waitForFunction(()=>document.querySelector('[aria-label="Settled held runs"]')?.textContent==='1');
+    assert.equal(await regression.getByRole('button',{name:'Running simulation…',exact:true}).count(),1,
+      'the aborted A run must not clear the replacement A run pending state');
+    await regression.getByRole('button',{name:'Release oldest held run',exact:true}).click();
+    await regression.waitForFunction(()=>document.querySelector('[aria-label="Settled held runs"]')?.textContent==='2');
+    await regression.waitForFunction(()=>document.querySelector('button[type="submit"]')?.disabled===false);
+    assert.equal(await runRegression().isDisabled(),false);
+    assert.equal(await regression.getByLabel('Accepted seeds',{exact:true}).textContent(),'[42]');
+  } finally { await regression.close(); }
   await field('Simulation replicates').fill('100001');
   await page.waitForFunction(()=>Array.from(document.querySelectorAll('button')).some(button=>button.textContent==='Run simulation'&&button.disabled));
   assert.equal(await run().isDisabled(),true);
@@ -50,5 +78,5 @@ try {
   await page.getByRole('button',{name:'Toggle panel',exact:true}).click();
   await page.waitForFunction(()=>Number(document.querySelector('[aria-label="Abort calls"]').textContent)>0);
   assert.deepEqual(errors,[]);
-  console.log('PASS: fresh 10k seeded API, keyboard/bounds, one call per run, late responses, effect/selection stale states, errors/invalid/unavailable states, unmount abort.');
+  console.log('PASS: fresh 10k seeded API, keyboard/bounds, one call per run, late responses, effect/selection stale states, errors/invalid/unavailable states, unmount abort, standalone A→B→A held-run cleanup and stale-finally ownership.');
 } finally {await browser.close();}

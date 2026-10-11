@@ -18,27 +18,32 @@ export function GridDataTable({ result, onSelectPoint }: {
   onSelectPoint?: (point: HeatmapPoint) => void;
 }) {
   const problem = heatmapProblem(result, result);
-  if (problem) return <p role="alert">{problem}</p>;
+  if (problem) return <p className="status-error" role="alert">{problem}</p>;
+  const fraction = (value: number) => value.toFixed(4).replace(/0+$/, "").replace(/\.$/, "");
   return <>
-    <table>
+    <details className="disclosure grid-disclosure">
+      <summary>Inspect numerical matrix and select a stress scenario</summary>
+      <p>Scroll horizontally for all baselines. Displayed fractions are rounded to four decimal places; the CSV preserves full precision.</p>
+    <div className="table-scroll" role="region" aria-label="Analytic grid numerical values" tabIndex={0}><table className="data-table grid-data-table">
       <caption>Analytic power matrix [dropout][baseline], floor-based expected retained counts; selected MC shown separately.</caption>
       <thead><tr><th scope="col">Symmetric dropout ↓ / Baseline →</th>{result.xBaseline.map(baseline =>
-        <th key={baseline} scope="col">{percent(baseline)} ({baseline} fraction)</th>)}</tr></thead>
+        <th key={baseline} scope="col">{percent(baseline)} ({fraction(baseline)} fraction)</th>)}</tr></thead>
       <tbody>{result.power.map((row, r) => <tr key={result.yDropout[r]}>
-        <th scope="row">{percent(result.yDropout[r])} ({result.yDropout[r]} fraction)</th>
+        <th scope="row">{percent(result.yDropout[r])} ({fraction(result.yDropout[r])} fraction)</th>
         {row.map((power, c) => {
           const selected = result.selectedPoint.baseline === result.xBaseline[c] && result.selectedPoint.dropout === result.yDropout[r];
-          return <td key={result.xBaseline[c]}>
-            {power === null ? "Invalid scenario (null). ARR requires baseline greater than ARR; expected retained counts must support the analytic test. Unavailable cells cannot be simulated." : `${percent(power)} (${power} fraction)`}
+          return <td className={selected ? "grid-cell-selected" : power === null ? "grid-cell-invalid" : undefined} key={result.xBaseline[c]}>
+            {power === null ? "Invalid scenario (null). ARR requires baseline greater than ARR; expected retained counts must support the analytic test. Unavailable cells cannot be simulated." : `${percent(power)} (${fraction(power)} fraction)`}
             {selected ? " — selected" : ""}
-            {onSelectPoint ? <button type="button" disabled={power === null} aria-pressed={selected}
+            {onSelectPoint ? <button className="button-secondary" type="button" disabled={power === null} aria-pressed={selected}
               onClick={() => selectGridCell(result, r, c, onSelectPoint)}>
               Select baseline {percent(result.xBaseline[c])}, dropout {percent(result.yDropout[r])}
             </button> : null}
           </td>;
         })}
       </tr>)}</tbody>
-    </table>
-    <a download="analytic-grid.csv" href={`data:text/csv;charset=utf-8,${encodeURIComponent(gridCsv(result))}`}>Download analytic grid CSV (fractions, nulls and invalid mask)</a>
+    </table></div>
+    </details>
+    <a className="button-secondary" download="analytic-grid.csv" href={`data:text/csv;charset=utf-8,${encodeURIComponent(gridCsv(result))}`}>Download analytic grid CSV (fractions, nulls and invalid mask)</a>
   </>;
 }
