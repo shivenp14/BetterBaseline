@@ -11,8 +11,8 @@ import path from "path";
  * See: https://playwright.dev/docs/test-configuration
  */
 
-const BACKEND_PORT = 8001; // Use 8001 to avoid conflicts with a running dev backend
-const FRONTEND_PORT = 3001;
+const BACKEND_PORT = Number(process.env.BACKEND_PORT || 8001);
+const FRONTEND_PORT = Number(process.env.FRONTEND_PORT || 3001);
 const BACKEND_URL = `http://127.0.0.1:${BACKEND_PORT}`;
 const FRONTEND_URL = `http://localhost:${FRONTEND_PORT}`;
 
@@ -20,7 +20,9 @@ const FRONTEND_URL = `http://localhost:${FRONTEND_PORT}`;
 const REPO_ROOT = path.resolve(__dirname, "../..");
 const BACKEND_DIR = path.join(REPO_ROOT, "backend");
 const FRONTEND_DIR = path.join(REPO_ROOT, "frontend");
-const VENV_PYTHON = path.join(BACKEND_DIR, ".venv", "bin", "python");
+const VENV_PYTHON = process.platform === "win32"
+  ? path.join(BACKEND_DIR, ".venv", "Scripts", "python.exe")
+  : path.join(BACKEND_DIR, ".venv", "bin", "python");
 
 export default defineConfig({
   testDir: "./tests",
@@ -43,9 +45,7 @@ export default defineConfig({
     {
       // Real FastAPI backend — uses the shared .venv from the backend dir
       command: [
-        process.platform === "win32"
-          ? path.join(BACKEND_DIR, ".venv", "Scripts", "python.exe")
-          : VENV_PYTHON,
+        VENV_PYTHON,
         "-m",
         "uvicorn",
         "app.main:app",

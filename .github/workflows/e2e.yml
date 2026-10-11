@@ -91,13 +91,9 @@ jobs:
       - name: Run E2E tests
         working-directory: tests/e2e
         env:
-          # Playwright webServer picks these up via playwright.config.ts
           BACKEND_PORT: ${{ env.BACKEND_PORT }}
           FRONTEND_PORT: ${{ env.FRONTEND_PORT }}
           NEXT_PUBLIC_API_BASE_URL: "http://127.0.0.1:${{ env.BACKEND_PORT }}"
-          # Point backend venv to the uv-managed one
-          VIRTUAL_ENV: ${{ github.workspace }}/backend/.venv
-          PATH: "${{ github.workspace }}/backend/.venv/bin:${{ env.PATH }}"
         run: npx playwright test --reporter=list
 
       - name: Upload Playwright report
