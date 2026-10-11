@@ -12,6 +12,50 @@ from app.data.clinicaltrials import (
     TIMEOUT_SECONDS, ClinicalTrialsClient, TrialLookupError, _NoRedirect,
 )
 
+
+class RegisteredTrialTests(unittest.TestCase):
+    def test_registered_route_returns_metadata_without_planning_assumptions(self):
+        from fastapi.testclient import TestClient
+        from app.main import create_app
+        from app.routers.trials import get_trial_client
+        client = ClinicalTrialsClient(opener=Mock(open=Mock(return_value=response())))
+        app = create_app()
+        app.dependency_overrides[get_trial_client] = lambda: client
+        with TestClient(app) as http:
+            result = http.get('/api/v1/trials/' + NCT)
+        self.assertEqual(result.status_code, 200)
+        self.assertIsNone(result.json()['planned_control_event_rate'])
+        self.assertIsNone(result.json()['planned_effect'])
+        self.assertEqual(result.json()['nct_id'], NCT)
+
+    def test_failure_is_explicit_and_cannot_block_calculations(self):
+        from fastapi.testclient import TestClient
+        from app.main import create_app
+        from app.routers.trials import get_trial_client
+        app = create_app()
+        opener = Mock()
+        opener.open.side_effect = URLError('offline')
+        app.dependency_overrides[get_trial_client] = lambda: ClinicalTrialsClient(opener=opener)
+        with TestClient(app) as http:
+            malformed = http.get('/api/v1/trials/not-an-nct')
+            self.assertEqual(malformed.status_code, 422)
+            self.assertEqual(malformed.json()['error']['code'], 'INVALID_NCT_ID')
+            opener.open.assert_not_called()
+            failed = http.get('/api/v1/trials/' + NCT)
+            self.assertEqual(failed.status_code, 503)
+            self.assertEqual(failed.json()['error']['code'], 'UPSTREAM_UNAVAILABLE')
+            self.assertEqual(opener.open.call_count, 2)
+            # Actual preset and manual planning endpoints still execute, rather
+            # than falling back to fabricated registry assumptions.
+            from pathlib import Path
+            root = Path(__file__).resolve().parents[2]
+            planned = json.loads((root/'demo-data/baseline-collapse-v1/inputs.json').read_text())['planned_design']
+            for risk in (.20, .23):
+                result = http.post('/api/v1/design/calculate', json={**planned, 'control_event_rate': risk})
+                self.assertEqual(result.status_code, 200)
+                self.assertGreater(result.json()['enrolled_n']['control'], 0)
+            self.assertEqual(opener.open.call_count, 2)
+
 NCT = 'NCT01234567'
 FIXTURE = {
     'protocolSection': {
