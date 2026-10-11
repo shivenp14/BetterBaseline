@@ -73,7 +73,9 @@ def verify(base, engine_commit):
               (.05, 'relative_risk', .75, .05, .8, .3),
               (.2, 'absolute_risk_reduction', .05, .05, .8, 0),
               (.1, 'absolute_risk_reduction', .02, .01, .9, .13),
-              (.3, 'absolute_risk_reduction', .05, .05, .7, .1)]
+              (.3, 'absolute_risk_reduction', .05, .05, .7, .1),
+              (.001, 'relative_risk', .5, .05, .8, .8),
+              (.99, 'relative_risk', .99, .05, .8, .3)]
     cases, versions = [], None
     for control, kind, value, alpha, target, dropout in matrix:
         treatment = control * value if kind == 'relative_risk' else control - value
@@ -116,7 +118,7 @@ def verify(base, engine_commit):
                 oracle='stdlib math.erfc/arcsine + statistics.NormalDist, independent of product/statsmodels',
                 power_tolerance=POWER_TOLERANCE, design_cases=len(cases), stress_cases=sum(len(c['stress_checks']) for c in cases),
                 limitations=['Same mathematical approximation, not independent clinical evidence',
-                             'Monte Carlo/null calibration and full export evidence remain pending',
+                             'This report excludes Monte Carlo; primitive calibration is recorded separately',
                              'Small prespecified matrix, not exhaustive edge-case validation'], cases=cases)
 
 
@@ -127,5 +129,6 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     report = verify(args.base_url, args.engine_commit)
-    args.output.write_text(json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + '\n')
+    with args.output.open('x') as handle:
+        handle.write(json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + '\n')
     print(json.dumps({k: report[k] for k in ('status', 'scope', 'design_cases', 'stress_cases', 'power_tolerance')}))

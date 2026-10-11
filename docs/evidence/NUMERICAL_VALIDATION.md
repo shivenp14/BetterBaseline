@@ -1,7 +1,7 @@
 # Independent numerical evidence — #109 draft
 
-The first measured check covers the shipped analytic model only. It does not
-complete #109 or validate Monte Carlo calibration, clinical utility or regulatory
+Measured checks cover the shipped analytic model and the supported simulation
+primitive. They do not complete #109 or validate clinical utility or regulatory
 use. Final integration/provenance/export and #82's method handoff remain pending.
 
 ## Oracle and prescribed checks
@@ -59,16 +59,70 @@ at frozen 903 with halved risk, and 1,004 enrolled at planned dropout .10.
 
 ## Still required before #109 can close
 
-- Independent pooled-z rejection-rule checks and prespecified Monte Carlo/null
-  calibration with binomial uncertainty, including favorable alpha/2 semantics.
-- Invalid-test nonrejection policy, seed/batch repeatability and measured MCSE
-  scaling, with a supported test-only null seam rather than weakened API limits.
-- Broader low-event and boundary regimes; publish approximation disagreements
-  instead of forcing analytic and pooled-z estimates to match.
+- Reconcile the measured primitive checks below with #82's final method handoff
+  and #79's exported response contracts. HTTP/UI acceptance is separate.
+- Extend coverage when new supported regimes or discrepancies are identified;
+  the prespecified matrix is finite, not exhaustive.
 - Complete #79's actual export/provenance acceptance and reconcile #82's method
   documentation. #60/#68 are merged; those remaining handoffs gate completion.
-- A separate validation CI workflow once the complete suite is established.
+- Confirm the separate validation workflow on the final integrated stack.
 
 This draft is isolated preparatory evidence. It does not replace current P0
 integration work, report clinical predictive accuracy or claim a historical
 trial could have been saved.
+
+## Combined rerun and simulation evidence
+
+After installing the committed backend lock, one command starts a fresh local
+backend, waits for its actual `/healthz` route, runs both validators and stops it:
+
+```sh
+uv run --project backend --locked --extra dev python scripts/validation/run_validation.py --output-dir /tmp/new-betterbaseline-validation
+```
+
+The output directory must be new. Validators preserve historical reports rather
+than overwrite them. A failure returns nonzero; logs remain in that directory.
+The separate `.github/workflows/validation.yml` runs the same command and uploads
+raw reports/logs, including on failure. Core, integration and E2E CI are untouched.
+
+[analytic-boundaries-80f00dd.json](../../evidence/validation/analytic-boundaries-80f00dd.json)
+extends the matrix to ten designs and forty stress evaluations, including .001
+and .99 control risks and .80 planned dropout. All exact counts match and maximum
+power error remains 2.220446049250313e-16. Backend source is unchanged from the
+first report; checkout identity is recorded separately.
+
+[simulation-80f00dd.json](../../evidence/validation/simulation-80f00dd.json)
+records thirty runs: five scenarios, three seeds (42, 31415, 27182), and
+25,000/100,000 replicates per seed. The existing `simulate_binary` primitive
+explicitly accepts equal true risks for calibration. Production RR/ARR request
+validation is unchanged. The independent scalar oracle uses an integer
+cross-product form of pooled z and `math.erfc`; all rejection counts, favorable
+counts, invalid counts and separate MCSEs match the shipped primitive.
+
+Replay intentionally shares NumPy PCG64/binomial draws to isolate the rejection
+rule and aggregation. It is not an independent test of the random sampler.
+An additional small-N oracle enumerates the complete retained/event distribution
+with standard-library combinatorics, independent of the random stream.
+
+Calibration uses a prespecified five-standard-deviation Wilson interval aggregated
+across seeds. Well-populated null cases compare with alpha and alpha/2. Sparse
+cases compare with their exact finite-N rejection probability; they are not
+forced to have nominal alpha. Batch streams are not claimed to be prefixes:
+changing the vector size changes how the fixed draw order consumes the RNG.
+Repeatability is exact only at the same seed, batch and software environment.
+
+| Scenario, 300,000 pooled replicates | Two-sided | Favorable | Invalid | Interpretation |
+| --- | ---: | ---: | ---: | --- |
+| N=5,000/arm, risk=.20, alpha=.05 | .0502167 | .0252633 | 0 | Consistent with .05/.025 in the prespecified interval |
+| N=5,000/arm, risk=.20, dropout=.25, alpha=.01 | .0100700 | .0051033 | 0 | Consistent with .01/.005 |
+| N=903/arm, control=.10, treatment=.075 | .4702800 | .4702233 | 0 | Conditional simulation; analytic ~.4701 is a different approximation |
+| N=10/arm, equal risk=.01 | 0 | 0 | .8185667 | Exact two-sided size ~.00000362, far below .05 |
+| N=1/arm, equal risk=.20, dropout=.90 | 0 | 0 | .9966633 | Exact invalid fraction .9968; no possible rejection |
+
+Zero observed sparse rejections does not imply zero underlying probability.
+Undefined tests remain nonrejections over all replicates. The rare-case finding
+demonstrates how poorly nominal-alpha intuition transfers to sparse binary data;
+it is a documented approximation limitation, not evidence that a trial failed.
+Measured MCSE ratios with four times the replicates range .5000–.5117 in the
+well-populated cases (prespecified acceptance .45–.55). More simulation improves
+precision of the estimated detection fraction; it does not reduce trial variance.
