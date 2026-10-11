@@ -26,6 +26,7 @@ def payload():
 
 class GridApiTests(unittest.TestCase):
     def setUp(self):
+        app.state.compute_guard.cache.clear()
         self.client = TestClient(app, raise_server_exceptions=False)
 
     def post(self, body):
