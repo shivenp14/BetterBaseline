@@ -24,19 +24,6 @@ GRID_DROPOUTS = tuple(index / 100 for index in range(21))
 PRESETS = ("baseline-collapse-v1", "attrition-shock-v1", "stable-design-v1")
 
 
-# Cross-platform audit tolerance for continuous probabilities/MCSE only.
-# Counts, dimensions, masks, seeds and same-environment replay remain exact.
-FLOAT_REL_TOL = 1e-12
-FLOAT_ABS_TOL = 1e-12
-
-def close_float(actual, expected):
-    return math.isclose(actual, expected, rel_tol=FLOAT_REL_TOL, abs_tol=FLOAT_ABS_TOL)
-
-def normalized_source_hash(data):
-    text = data.decode('utf-8').replace('\r\n', '\n').replace('\r', '\n')
-    return hashlib.sha256(text.encode('utf-8')).hexdigest()
-
-
 def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
 
@@ -119,7 +106,7 @@ def validate_result(workload, inputs, result):
         n = result["evaluable_per_arm"]
         treatment = resolve_treatment_risk(plan["control_event_rate"], Effect(**plan["effect"]))
         power = analytic_power(plan["control_event_rate"], treatment, n, n, plan["alpha"]).power
-        if not close_float(power, result["achieved_power"]) or power < plan["target_power"]:
+        if power != result["achieved_power"] or power < plan["target_power"]:
             raise ValueError("Design result fails direct analytical agreement/target")
         if n > 2 and analytic_power(plan["control_event_rate"], treatment, n - 1, n - 1, plan["alpha"]).power >= plan["target_power"]:
             raise ValueError("Design result is not the minimum integer N")
@@ -135,7 +122,7 @@ def validate_result(workload, inputs, result):
                                ("significant_favorable_fraction", "mcse_favorable")):
             value = result[fraction]
             expected = math.sqrt(value * (1 - value) / options["replicates"])
-            if not 0 <= value <= 1 or not close_float(result[mcse], expected):
+            if not 0 <= value <= 1 or result[mcse] != expected:
                 raise ValueError("Simulation fractions/MCSE are inconsistent")
         if result["significant_favorable_fraction"] > result["significant_two_sided_fraction"]:
             raise ValueError("Favorable rejections exceed two-sided rejections")
@@ -159,10 +146,10 @@ def validate_result(workload, inputs, result):
             if point is not None:
                 n = expected_retained_count(inputs["fixed_enrollment"]["control"], dropout)
                 expected = analytic_power(baseline, resolve_treatment_risk(baseline, effect), n, n, plan["alpha"]).power
-                if not close_float(point, expected) or result["below_target"][row][column] != (point < plan["target_power"]):
+                if point != expected or result["below_target"][row][column] != (point < plan["target_power"]):
                     raise ValueError("Grid cell fails direct scalar/target agreement")
                 valid.append(point)
-    if result["invalid_cell_count"] != 651 - len(valid) or (not close_float(result["worst_case_power"], min(valid)) if valid else result["worst_case_power"] is not None):
+    if result["invalid_cell_count"] != 651 - len(valid) or result["worst_case_power"] != (min(valid) if valid else None):
         raise ValueError("Grid summary is inconsistent")
     if len(result["power_curve"]) != 31:
         raise ValueError("Grid power curve has wrong length")
@@ -170,7 +157,7 @@ def validate_result(workload, inputs, result):
         dropout = inputs["stress_scenario"]["dropout"]["control"]
         n = expected_retained_count(inputs["fixed_enrollment"]["control"], dropout)
         expected = analytic_power(baseline, resolve_treatment_risk(baseline, effect), n, n, plan["alpha"]).power
-        if (point["baseline"], point["dropout"], point["expected_evaluable_per_arm"], point["below_target"]) != (baseline, dropout, n, point["power"] < plan["target_power"]) or not close_float(point["power"], expected):
+        if (point["baseline"], point["dropout"], point["expected_evaluable_per_arm"], point["power"], point["below_target"]) != (baseline, dropout, n, expected, expected < plan["target_power"]):
             raise ValueError("Selected-dropout curve fails direct agreement")
 
 
@@ -206,9 +193,8 @@ def environment():
         "hardware": {"os": platform.platform(), "machine": platform.machine(),
                      "processor": platform.processor() or None, "logical_cpu_count": os.cpu_count()},
         "git_commit": commit,
-        "core_source_sha256": {str(path.relative_to(ROOT)): normalized_source_hash(path.read_bytes()) for path in paths},
-        "source_hash_policy": "UTF-8 text, CRLF/CR normalized to LF",
-        "harness_source_sha256": normalized_source_hash(Path(__file__).read_bytes()),
+        "core_source_sha256": {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths},
+        "harness_source_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
     }
 
 

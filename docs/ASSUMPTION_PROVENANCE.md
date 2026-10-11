@@ -1,8 +1,5 @@
 # Better Baseline assumption provenance
 
-The methods are educational and conditional on the entered assumptions.
-Provenance supports traceability; it does not validate those assumptions.
-
 Provenance records where an input came from; it does not establish that the
 assumption is clinically correct or that a hypothetical treatment works.
 Binary endpoint risk concerns the eligible control population and a stated
@@ -122,9 +119,3 @@ reports use fresh services, preserve software/source hashes, and make no claim
 that an older cache entry is valid after a software change. Final UI export
 assembly, field-source preservation in a downloaded export and replay of that
 export remain the responsibility of #76.
-
-New source hashes normalize UTF-8 CRLF/CR line endings to LF; historical raw
-hashes remain capture metadata. Continuous numerical audits use bounded 1e-12
-relative/absolute tolerance across environments. Discrete counts, masks, shapes
-and seeds remain exact. The browser evidence includes a temporary benchmark-owned
-31×21 page using the real shared API helper, alongside the production workspace.

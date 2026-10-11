@@ -23,14 +23,9 @@ class LiveEvidenceTests(unittest.TestCase):
         self.assertEqual(len(paths),2)
         for path in paths:
             report=json.loads(path.read_text())
-            self.assertEqual(len(report['measurements']),6 if report['frontend'] else 5)
-            if report['frontend']:
-                grid=next(entry for entry in report['measurements'] if entry.get('variant')=='grid-31x21')
-                self.assertEqual(len(grid['representative_result']['x_baseline']),31)
-                self.assertEqual(len(grid['representative_result']['y_dropout']),21)
-                self.assertEqual(report['source_sha256']['frontend/app/d6-grid/page.tsx'],report['source_sha256']['scripts/benchmarks/grid-page.tsx'])
+            self.assertEqual(len(report['measurements']),5)
             for filename in ('scripts/benchmarks/live.py','scripts/benchmarks/browser.mjs'):
-                self.assertRegex(report['source_sha256'][filename],r'^[0-9a-f]{64}$')
+                self.assertEqual(report['source_sha256'][filename],hashlib.sha256((ROOT/filename).read_bytes()).hexdigest())
             for entry in report['measurements']:
                 self.assertEqual(entry['semantic_result_sha256'],hashlib.sha256(replay_identity(entry['representative_result']).encode()).hexdigest())
                 if not report['frontend']:

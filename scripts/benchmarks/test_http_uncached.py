@@ -31,7 +31,7 @@ class HttpEvidenceTests(unittest.TestCase):
                 self.assertEqual(measurement['result_sha256'], hashlib.sha256(canonical(result).encode()).hexdigest())
                 self.assertEqual(measurement['semantic_result_sha256'], hashlib.sha256(replay_identity(result).encode()).hexdigest())
                 self.assertEqual(report['computation_sha256'], hashlib.sha256(canonical(report['computation_parameters']).encode()).hexdigest())
-                self.assertRegex(report['http_harness_source_sha256'],r'^[0-9a-f]{64}$')
+                self.assertEqual(report['http_harness_source_sha256'], hashlib.sha256((ROOT/'scripts/benchmarks/http_uncached.py').read_bytes()).hexdigest())
                 validate_response(report['workload'], report['inputs'], result)
                 if report['workload'] != 'design':
                     self.assertEqual(len(set(measurement['measured_computed_at'])), len(samples))
