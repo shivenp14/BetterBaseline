@@ -1,4 +1,4 @@
-"""Optional synchronous registry adapter, not registered until #68 handoff.
+"""Optional synchronous registry adapter, registered after #68/#67 handoff.
 
 Fixed API v2 host, redirects rejected, 8-second per-attempt timeout, at most one
 retry for timeout/transport/5xx, 1 MiB body ceiling, 15-minute TTL and 128-entry

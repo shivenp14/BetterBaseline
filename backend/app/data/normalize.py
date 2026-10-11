@@ -18,7 +18,7 @@ def normalize_study(payload, nct_id, retrieved_at):
 
     The caller validates response identity. Missing/malformed optional sections
     produce null/empty metadata, never default clinical planning assumptions.
-    This is an isolated proposed handoff shape pending #67/#68 contracts.
+    This metadata response is separate from calculation assumptions/contracts.
     """
     protocol = _mapping(payload.get('protocolSection'))
     identification = _mapping(protocol.get('identificationModule'))

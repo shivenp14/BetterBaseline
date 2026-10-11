@@ -1,0 +1,67 @@
+{
+  "captured_at": "2026-10-11T13:00:43.221Z",
+  "browser": "154.0.8037.57",
+  "page_url": "http://localhost:3181",
+  "api_url": "http://127.0.0.1:8181",
+  "engine_commit": "0f8d80928697686e8a37b81c8c0983f6e0cf5b06",
+  "captures": [
+    {
+      "name": "preset",
+      "enrollment": {
+        "control": 903,
+        "treatment": 903
+      },
+      "inputs_hash": "sha256:dcbe1fad286070d2c593e9774494fa1aa4ec46ab21c76b7bc1d84470fe951582",
+      "seed": 42,
+      "replicates": 10000
+    },
+    {
+      "name": "fresh-manual",
+      "enrollment": {
+        "control": 903,
+        "treatment": 903
+      },
+      "inputs_hash": "sha256:e73e982b8e82f2b37d0b3baee927d0729b57a994c276a59d79e23dff81734ec8",
+      "seed": 43,
+      "replicates": 1000
+    },
+    {
+      "name": "same-seed-repeat",
+      "enrollment": {
+        "control": 903,
+        "treatment": 903
+      },
+      "inputs_hash": "sha256:e73e982b8e82f2b37d0b3baee927d0729b57a994c276a59d79e23dff81734ec8",
+      "seed": 43,
+      "replicates": 1000
+    }
+  ],
+  "post_requests": 8,
+  "statuses": [
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200
+  ],
+  "external_attempts": [],
+  "page_errors": [],
+  "isolation": "Browser HTTP/WebSocket allowlist; backend egress isolation is supplied and recorded by the runner.",
+  "product_source_commit": "86e834efd50aba6ba1951c5bb0f052c463846867",
+  "backend_image": "sha256:793306b3aaa2c4028ee4223cdcbe849f9a8132cba4aeb9e95927095847ebdd93",
+  "frontend_image": "sha256:442f5d92c2b7dd8def9ac1bfe3f256e275986012ab21a333979c27bebd740ec0",
+  "container_health": {
+    "backend": "healthy",
+    "frontend": "healthy"
+  },
+  "container_users": {
+    "backend": "app (10001)",
+    "frontend": "node (1000)"
+  },
+  "backend_egress_probe": "Docker internal network; socket connect to 1.1.1.1:443 failed with ENETUNREACH (101)",
+  "local_transport": "Loopback TCP relays to internal-network containers; external container traffic has no route.",
+  "hosting_limitation": "No public hosting account/project or deployment target is configured in this task; public URL not verified."
+}

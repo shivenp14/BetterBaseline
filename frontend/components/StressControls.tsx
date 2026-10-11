@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { FixedEnrollment } from "@/lib/contracts";
+import { expectedRetainedCount } from "../lib/expected-retained";
 
 interface StressControlsProps {
   frozenEnrollment: FixedEnrollment | null;
@@ -28,8 +29,8 @@ export function StressControls({
 }: StressControlsProps) {
   const controlN = frozenEnrollment?.control ?? 0;
   const treatmentN = frozenEnrollment?.treatment ?? 0;
-  const expectedRetainedControl = Math.floor(controlN * (1 - stressDropout));
-  const expectedRetainedTreatment = Math.floor(treatmentN * (1 - stressDropout));
+  const expectedRetainedControl = frozenEnrollment ? expectedRetainedCount(controlN, stressDropout) : 0;
+  const expectedRetainedTreatment = frozenEnrollment ? expectedRetainedCount(treatmentN, stressDropout) : 0;
 
   return (
     <section aria-labelledby="stress-heading">
