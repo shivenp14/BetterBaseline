@@ -734,6 +734,18 @@
           ],
           "default": null,
           "title": "Effect Override"
+        },
+        "selected_scenario": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StressScenario"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Selected Scenario"
         }
       },
       "required": [

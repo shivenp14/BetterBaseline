@@ -24,3 +24,13 @@
    - In `/api/v1/scenarios/grid`, points where $ARR \ge p_C$ are marked `is_valid: false`, `power: null`, and set to `true` in `invalid_mask` without failing the request.
 8. **Provenance Tracking:**
    - Source provenance tags (`manual_user`, `synthetic_preset`, `protocol_curated`, `clinicaltrials_registry`) are preserved through `ExportPayload` with `export_schema_version = 1`.
+9. **Strict Integer Participant Counts:**
+   - `ArmCounts` uses strict integer fields (`strict=True`), rejecting string coercion (`"903"`), floats (`903.0`), and boolean flags (`True`).
+10. **Finite Floating-Point Enforcement:**
+   - Response models (including MCSE, axis specs, and power outputs) disallow `NaN` and infinity (`allow_inf_nan=False`), preventing illegal null serialization.
+11. **Grid Selected Stress Scenario & Power Curve Semantics:**
+   - `ScenarioGridRequest` accepts an optional `selected_scenario: StressScenario` to determine `selected_point` and fix the dropout slice for `power_curve`.
+   - `power_curve` evaluates analytic power across `x_baseline` at the selected dropout using floored expected retention $\lfloor N \times (1 - \text{dropout}) \rfloor$.
+12. **Development & Test Dependencies:**
+   - Test execution requires the `dev` extra declared in `backend/pyproject.toml`.
+   - Install command: `pip install -e ".[dev]"` (includes `pytest>=8.0.0` and `jsonschema>=4.20.0`).

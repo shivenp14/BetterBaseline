@@ -124,7 +124,15 @@
       "max": 0.20,
       "steps": 2
     },
-    "effect_override": null
+    "effect_override": null,
+    "selected_scenario": {
+      "control_event_rate": 0.10,
+      "dropout": {
+        "control": 0.0,
+        "treatment": 0.0
+      },
+      "effect_override": null
+    }
   },
   "scenario_grid_response": {
     "model_version": "binary-v1",

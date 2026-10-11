@@ -20,7 +20,10 @@ from app.schemas import (
     ArmProportions,
     SimulationOptions,
     GridPoint,
+    MonteCarloEvaluation,
+    StressScenario,
 )
+
 
 
 @pytest.fixture
@@ -61,6 +64,9 @@ def test_grid_fixtures(example_fixtures):
     req = ScenarioGridRequest.model_validate(example_fixtures["scenario_grid_request"])
     assert req.x_baseline.min == 0.05
     assert req.x_baseline.max == 0.30
+    assert req.selected_scenario is not None
+    assert req.selected_scenario.control_event_rate == 0.10
+
 
     res = ScenarioGridResponse.model_validate(example_fixtures["scenario_grid_response"])
     assert len(res.power) == 2
@@ -158,6 +164,78 @@ def test_grid_response_mask_true_with_value_rejected():
             planned_point=GridPoint(p_control=0.2, dropout=0.0, power=0.8),
             invalid_cell_count=1,
             worst_case_power=0.6,
+            computed_at="2026-10-10T00:00:00Z",
+            inputs_hash="hash",
+        )
+
+
+def test_arm_counts_strict_integer_rejected():
+    # Booleans rejected
+    with pytest.raises(ValidationError):
+        ArmCounts(control=True, treatment=True)
+    # Strings rejected
+    with pytest.raises(ValidationError):
+        ArmCounts(control="903", treatment="903")
+    # Floats rejected
+    with pytest.raises(ValidationError):
+        ArmCounts(control=903.0, treatment=903.0)
+    # Valid ints accepted
+    counts = ArmCounts(control=903, treatment=903)
+    assert counts.control == 903
+
+
+def test_mcse_nonfinite_rejected():
+    # Infinity rejected
+    with pytest.raises(ValidationError):
+        MonteCarloEvaluation(
+            significant_two_sided_fraction=0.5,
+            significant_favorable_fraction=0.5,
+            mcse_two_sided=float("inf"),
+            mcse_favorable=0.01,
+            invalid_test_fraction=0.0,
+            replicates=1000,
+        )
+    # NaN rejected
+    with pytest.raises(ValidationError):
+        MonteCarloEvaluation(
+            significant_two_sided_fraction=0.5,
+            significant_favorable_fraction=0.5,
+            mcse_two_sided=float("nan"),
+            mcse_favorable=0.01,
+            invalid_test_fraction=0.0,
+            replicates=1000,
+        )
+
+
+def test_grid_axes_nonfinite_rejected():
+    with pytest.raises(ValidationError, match="Axis values must be finite numbers"):
+        ScenarioGridResponse(
+            model_version="binary-v1",
+            method="cohen_h_normal_v1",
+            x_baseline=[0.1, float("nan")],
+            y_dropout=[0.0],
+            power=[[0.5, 0.6]],
+            invalid_mask=[[False, False]],
+            target_power=0.80,
+            planned_point=GridPoint(p_control=0.2, dropout=0.0, power=0.8),
+            invalid_cell_count=0,
+            worst_case_power=0.5,
+            computed_at="2026-10-10T00:00:00Z",
+            inputs_hash="hash",
+        )
+
+    with pytest.raises(ValidationError, match="Axis values must be finite numbers"):
+        ScenarioGridResponse(
+            model_version="binary-v1",
+            method="cohen_h_normal_v1",
+            x_baseline=[0.1, 0.2],
+            y_dropout=[float("inf")],
+            power=[[0.5, 0.6]],
+            invalid_mask=[[False, False]],
+            target_power=0.80,
+            planned_point=GridPoint(p_control=0.2, dropout=0.0, power=0.8),
+            invalid_cell_count=0,
+            worst_case_power=0.5,
             computed_at="2026-10-10T00:00:00Z",
             inputs_hash="hash",
         )

@@ -10,7 +10,7 @@ Provides strongly typed models for:
 
 import math
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 # ── DOMAIN PRIMITIVES ──
 
@@ -47,8 +47,8 @@ class ArmProportions(BaseModel):
 
 
 class ArmCounts(BaseModel):
-    control: Annotated[int, Field(ge=1, description="Control arm count")]
-    treatment: Annotated[int, Field(ge=1, description="Treatment arm count")]
+    control: Annotated[int, Field(strict=True, ge=1, description="Control arm count")]
+    treatment: Annotated[int, Field(strict=True, ge=1, description="Treatment arm count")]
 
     @model_validator(mode="after")
     def validate_equal(self) -> "ArmCounts":
@@ -57,6 +57,7 @@ class ArmCounts(BaseModel):
                 f"Equal 1:1 enrollment required in P0 MVP: control ({self.control}) != treatment ({self.treatment})"
             )
         return self
+
 
 
 class TrialAssumptions(BaseModel):
@@ -102,10 +103,10 @@ class DesignCalculateRequest(TrialAssumptions):
 class DesignCalculateResponse(BaseModel):
     model_version: ModelVersion = "binary-v1"
     method: AnalyticalMethod = "cohen_h_normal_v1"
-    p_treatment: float = Field(gt=0.0, lt=1.0)
+    p_treatment: float = Field(gt=0.0, lt=1.0, allow_inf_nan=False)
     evaluable_n: ArmCounts
     enrolled_n: ArmCounts
-    nominal_power_evaluable: float = Field(ge=0.0, le=1.0)
+    nominal_power_evaluable: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
     warnings: List[str] = Field(default_factory=list)
     inputs_hash: str
 
@@ -130,17 +131,17 @@ class ScenarioEvaluateRequest(BaseModel):
 
 class AnalyticEvaluation(BaseModel):
     method: AnalyticalMethod = "cohen_h_normal_v1"
-    conditional_power_approx: float = Field(ge=0.0, le=1.0)
+    conditional_power_approx: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
     assumed_evaluable_n: ArmCounts
 
 
 class MonteCarloEvaluation(BaseModel):
     method: SimulationMethod = "pooled_two_proportion_z_v1"
-    significant_two_sided_fraction: float = Field(ge=0.0, le=1.0)
-    significant_favorable_fraction: float = Field(ge=0.0, le=1.0)
-    mcse_two_sided: float = Field(ge=0.0)
-    mcse_favorable: float = Field(ge=0.0)
-    invalid_test_fraction: float = Field(ge=0.0, le=1.0)
+    significant_two_sided_fraction: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
+    significant_favorable_fraction: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
+    mcse_two_sided: float = Field(ge=0.0, allow_inf_nan=False)
+    mcse_favorable: float = Field(ge=0.0, allow_inf_nan=False)
+    invalid_test_fraction: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
     replicates: int = Field(ge=100)
     seed: Optional[int] = Field(default=None, ge=0, le=2**32 - 1)
 
@@ -184,6 +185,12 @@ class GridDropoutAxisSpec(BaseModel):
 
 
 class ScenarioGridRequest(BaseModel):
+    """Request for generating the 2D power grid surface and 1D power curve.
+
+    The power curve slices analytic power across x_baseline holding dropout fixed
+    at selected_scenario.dropout (or 0.0 if omitted). Each curve point uses floored
+    expected retention floor(enrolled_n * (1 - dropout)) and the effective effect.
+    """
     planned_design: TrialAssumptions
     fixed_enrollment: ArmCounts
     x_baseline: GridAxisSpec = Field(
@@ -193,19 +200,23 @@ class ScenarioGridRequest(BaseModel):
         default_factory=lambda: GridDropoutAxisSpec(min=0.0, max=0.30, steps=10)
     )
     effect_override: Optional[Effect] = None
+    selected_scenario: Optional[StressScenario] = Field(
+        default=None,
+        description="Selected stress scenario providing the selected baseline risk and dropout level for selected_point and power_curve",
+    )
 
 
 class GridPoint(BaseModel):
-    p_control: float = Field(ge=0.0, le=1.0)
-    dropout: float = Field(ge=0.0, le=1.0)
-    power: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    p_control: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
+    dropout: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
+    power: Optional[float] = Field(default=None, ge=0.0, le=1.0, allow_inf_nan=False)
     is_safe: bool = False
     is_valid: bool = True
 
 
 class ContourPoint(BaseModel):
-    p_control: float = Field(ge=0.0, le=1.0)
-    dropout: float = Field(ge=0.0, le=1.0)
+    p_control: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
+    dropout: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
 
 
 class ContourSegment(BaseModel):
@@ -214,8 +225,8 @@ class ContourSegment(BaseModel):
 
 
 class PowerCurvePoint(BaseModel):
-    p_control: float = Field(ge=0.0, le=1.0)
-    power: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    p_control: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
+    power: Optional[float] = Field(default=None, ge=0.0, le=1.0, allow_inf_nan=False)
     is_valid: bool = True
 
 
@@ -226,17 +237,26 @@ class ScenarioGridResponse(BaseModel):
     y_dropout: List[float]
     power: List[List[Optional[float]]]  # [dropout_index][baseline_index]
     invalid_mask: List[List[bool]]     # [dropout_index][baseline_index]
-    target_power: float = Field(gt=0.0, lt=1.0)
+    target_power: float = Field(gt=0.0, lt=1.0, allow_inf_nan=False)
     planned_point: GridPoint
     selected_point: Optional[GridPoint] = None
     frontier_points: List[GridPoint] = Field(default_factory=list)
     contour_segments: List[ContourSegment] = Field(default_factory=list)
     power_curve: List[PowerCurvePoint] = Field(default_factory=list)
     invalid_cell_count: int = Field(ge=0)
-    worst_case_power: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    worst_case_power: Optional[float] = Field(default=None, ge=0.0, le=1.0, allow_inf_nan=False)
     warnings: List[str] = Field(default_factory=list)
     computed_at: str
     inputs_hash: str
+
+    @field_validator("x_baseline", "y_dropout", mode="after")
+    @classmethod
+    def validate_finite_axis(cls, v: List[float]) -> List[float]:
+        for val in v:
+            if not math.isfinite(val):
+                raise ValueError(f"Axis values must be finite numbers, got {val}")
+        return v
+
 
     @model_validator(mode="after")
     def validate_grid_matrix(self) -> "ScenarioGridResponse":
