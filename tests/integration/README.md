@@ -1,10 +1,10 @@
 # D3 integration preparation (#79)
 
 This draft prepares external request/result/export invariants. It does not
-close #79 or report live API-to-export acceptance. #65 is implemented by merged PR #91; #66/#67/#76
+close #79 or report live API-to-export acceptance. #65 and #66 are implemented by merged PRs #91/#106; #67/#76
 still gate full integration. Core CI #80 (PR #95) is merged. This draft now adds its own integration.yml
 using the same pinned Python/uv and committed lock. It runs fixture mutation
-checks and the real calculate-to-evaluate HTTP handoff, without modifying
+checks and the real calculate-to-evaluate-to-grid HTTP handoff, without modifying
 ci.yml/e2e.yml or product source.
 
 Run the standard-library fixture checker regressions from the repository root:
@@ -16,7 +16,7 @@ python3 -m unittest discover -s tests/integration -p 'test_*.py' -v
 These tests consume the three committed synthetic presets as read-only inputs.
 Their results remain illustrative. The export witness is explicitly constructed
 checker data, never a measured UI export or a production export implementation.
-Twelve tests exercise cross-boundary invariants and prove that mutations fail:
+Fourteen tests exercise cross-boundary invariants and prove that mutations fail:
 transposed nonsquare matrices, null converted to zero, wrong selected-cell values,
 conflated retained counts, unsplit MCSE, valid-only MCSE denominators, invalid tests
 counted as rejections, seed drift, changed enrollment/results and lost/relabeled
@@ -48,7 +48,7 @@ The tool loads #63's committed JSON schema, validates each named response/export
 model and checks the cross-boundary invariants. A missing schema, field, library
 or capture fails; there is no fixture substitution or successful skip. The
 branch now contains #63 schemas; full capture acceptance still requires the
-real grid and independently downloaded UI export.
+independently downloaded UI export and final provenance handoff.
 Proposed count aggregates, optional simulation, RNG/software metadata and richer
 provenance must be aligned with the final contracts through their owners before
 readiness. Current #89 schemas do not yet express all those fields; this draft
@@ -76,13 +76,13 @@ Record actual request/response/browser evidence and failures. Fixture checks
 passing alone cannot mark the draft ready or close the issue. This capture tool
 is preparation for assertions on real evidence; it does not drive the browser,
 fetch a backend response, or independently establish that a supplied capture was
-obtained live. The separate point-API orchestration is available now; add full grid/UI-export
-orchestration after #66/#67/#76.
+obtained live. The separate point-API orchestration is available now; add full UI-export
+orchestration after #67/#76.
 
 #65 follow-up: expected-retention assertions now follow the shared decimal-floor
 convention and allow null analytic power exactly at zero expected retention.
-The registered point API is implemented in #91; full grid/UI-export acceptance
-still awaits #66/#67/#76 while its point-API workflow runs independently.
+The registered point API is implemented in #91; full UI-export acceptance
+still awaits #67/#76 while its point-API workflow runs independently.
 
 ## Running the partial HTTP integration
 
@@ -91,12 +91,18 @@ real running local backend. It loads the synthetic assumptions as inputs, then
 uses actual HTTP calculate/evaluate responses and the app’s registered OpenAPI
 response model. It verifies the 903/.470 reference, 1,004 enrollment inflation,
 same-seed repeatability, frozen counts under stress and changing input identity.
+It also checks every cell in a real nonsquare 2×3 grid against separately
+requested point evaluations, the exact curve at off-grid dropout .13, original
+planned comparisons under changed stress effects, and ARR invalid-cell nulls.
+Real grids validate against both the registered OpenAPI and committed schema.
 It never imports an engine or fabricates an export. The workflow starts the real
 uvicorn app, waits up to 30 seconds for health and fails on any mismatch.
 
-Local evidence: the committed lock installs, 292 backend/fixture tests (183
-subtests) and 12 invariant regressions pass. The HTTP checker passes against the
+Earlier container evidence: the committed lock installs, 292 backend/fixture tests
+(183 subtests) and 12 invariant regressions pass. The HTTP checker passes against the
 locked, non-root backend container: stressed power 0.46999657396642797, seed 42,
 Python 3.12.15 / NumPy 2.5.4 / SciPy 1.18.1 / statsmodels 0.15.0. See
-DEPLOYMENT.md for the tested image and CORS evidence. This scope is point API only; grid, provenance normalization and
-real browser export/offline acceptance remain pending.
+DEPLOYMENT.md for the tested image and CORS evidence. Current local HTTP evidence after #106 merges: calculate/evaluate/grid checks
+pass on Python 3.12.14 with the same locked numerical library versions; 14
+invariant regressions and 305 backend/fixture tests (201 subtests) pass. Provenance normalization and real browser
+export/offline acceptance remain pending.
