@@ -1,0 +1,48 @@
+name: Core CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend-tests:
+    name: Backend tests (Python 3.12)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.13"
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.26"
+      - name: Run backend tests
+        run: bash scripts/ci/core_checks.sh
+
+  frontend:
+    name: Frontend lint, typecheck, and build (Node 24)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.15.0"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+
+# Keep this workflow independent of app services, credentials, and secrets.
+# Add browser E2E coverage in .github/workflows/e2e.yml (#78) and service-backed
+# integration coverage in .github/workflows/integration.yml (#79).

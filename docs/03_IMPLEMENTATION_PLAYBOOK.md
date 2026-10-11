@@ -1,11 +1,11 @@
-# Baseline Breaker — Detailed Implementation Playbook
+# Better Baseline — Detailed Implementation Playbook
 
 **Document:** `03_IMPLEMENTATION_PLAYBOOK.md`  
 **Version:** 1.0, 10 October 2026  
 **Companions:** [`01_BASELINE_BREAKER_SPEC.md`](01_BASELINE_BREAKER_SPEC.md) · [`02_INFRASTRUCTURE_ARCHITECTURE.md`](02_INFRASTRUCTURE_ARCHITECTURE.md)  
 **Audience:** four-person HackRU implementation team and coding agents. This is a sequence of executable engineering tasks, **not** a report on an already implemented system.
 
-> **Deliver one complete experience:** enter a binary two-arm trial's planning assumptions → calculate an evaluable and enrolled N → freeze N → perturb baseline/dropout → show analytic power and the 80% boundary → verify a point by seeded Monte Carlo → export reproducible results. Public NCT import should never be allowed to block this path.
+> **Deliver one complete experience:** enter a binary two-arm trial's planning assumptions → calculate an evaluable and enrolled N → freeze N → perturb baseline/dropout → show analytic power and the requested target-power contour (80% for the demo/default) → verify a point by seeded Monte Carlo → export reproducible results. Public NCT import should never be allowed to block this path.
 
 ## 0. Read this before starting
 
@@ -48,14 +48,14 @@ The research report's `906/arm` comes from another common two-proportion formula
 
 ## 1. Team roles, branches, and parallel execution
 
-| Owner | Branch | Modules | Deliverable by hour 6 |
+| Task category | Example branch | Modules | Deliverable by hour 6 |
 |---|---|---|---|
 | **A — Statistical engine** | `feat/statistical-core` | `backend/app/statistics/*`, `test_effect.py`, `test_sample_size.py` | Validated 903-per-arm reference and reusable power/simulation functions |
 | **B — API and external data** | `feat/api-and-trials` | `schemas.py`, `main.py`, `routers/*`, `data/*`, Docker | Running typed FastAPI with stubbed design/grid routes |
 | **C — Frontend and charts** | `feat/frontend-visuals` | Next.js `components/*`, `lib/*`, CSS | Clickable desktop dashboard with local mock responses |
 | **D — Integration, quality, demo** | `feat/integration-demo` | `demo-data/*`, E2E test, CI, docs/demo, export | Seeded presets, walkthrough, contract smoke tests |
 
-**No person is “just doing research.”** Ask a teammate to review statistical assumptions, but all four should ship code. Set up a shared Discord/issue board, commit small increments, and agree that B owns contract changes while A validates numeric meanings and C owns presentation types.
+**A/B/C/D are task categories, not permanent owners.** Assign or rotate the categories as the team needs; coordinate shared contract changes with statistical and frontend review. All four should ship code.
 
 ### One-time kickoff (first 60–90 minutes)
 
@@ -73,7 +73,8 @@ The research report's `906/arm` comes from another common two-proportion formula
 
 ## 2. Section A — Statistical inputs, schemas and effect transformation
 
-**Owner:** A (logic), B (API type binding)  
+**Task category:** A (logic), B (API type binding)
+
 **Files:** `backend/app/statistics/effect.py`, `backend/app/schemas.py`, `frontend/lib/contracts.ts`
 
 ### Implementation steps
@@ -138,7 +139,8 @@ Prefer `pytest.approx` for floating comparisons in real tests. Verify Pydantic e
 
 ## 3. Section B — Analytical power and integer sample-size solver
 
-**Owner:** A  
+**Task category:** A
+
 **Files:** `statistics/analytic.py`, `statistics/sample_size.py`, `tests/test_sample_size.py`
 
 ### Steps
@@ -148,7 +150,7 @@ Prefer `pytest.approx` for floating comparisons in real tests. Verify Pydantic e
 3. For shipped equal allocation, search only integer equal evaluable arm sizes. If unequal ratio is not validated, reject rather than promising it.
 4. Implement exponential bracketing: test n=2,4,8,… until power meets target; cap N at a documented maximum.
 5. Implement integer binary search for **smallest n** meeting target power; check `power(n-1) < target <= power(n)`.
-6. Convert evaluable to enrolled N using separate dropout rates (`ceil(n/(1-d))`); return *both*.
+6. Convert evaluable to enrolled N using the supported shared planned dropout rate (`ceil(n/(1-d))`); return *both*. Arm-specific rates are unsupported in the MVP.
 7. Store method version, effect transformation and all values in result.
 8. Independently test benchmark scenarios against statsmodels; document alternate formula discrepancies.
 
@@ -215,17 +217,18 @@ def inflated_enrollment(evaluable: int, dropout: float) -> int:
 
 ## 4. Section C — Vectorized Monte Carlo simulation
 
-**Owner:** A; B supplies route/cap  
+**Task category:** A; B supplies route/cap
+
 **Files:** `statistics/simulation.py`, `tests/test_simulation.py`
 
 ### Model and implementation steps
 
-1. Receive *fixed enrolled N* for each arm, true hypothetical `pC`, `pT`, `dC`, `dT`, alpha, seed, and replicates.
+1. Receive *fixed enrolled N* for each arm, true hypothetical `pC`, `pT`, the symmetric stress dropout rate applied to both arms, alpha, seed, and replicates.
 2. Initialize `numpy.random.default_rng(seed)`; return seed with results.
 3. Draw **retained counts** using binomial dropout, independently by arm.
 4. Draw **event counts** conditional on retained counts, using binomial endpoint probability.
 5. Compute estimated arm rates, pooled event probability, standard error, z-statistic, and two-sided p-values **using vectorized arrays**.
-6. Identify invalid-test replicates (zero retained count, zero pooled variance, numerical nonfinite values); use a documented conservative `nonrejection` treatment and report their percentage.
+6. Identify invalid-test replicates (zero retained count, zero pooled variance, numerical nonfinite values); use a documented conservative `nonrejection` treatment and report their percentage. Monte Carlo still runs when floored expected retention is zero.
 7. Return:
    - two-sided-significance fraction;
    - significant-and-favorable fraction;
@@ -237,6 +240,8 @@ def inflated_enrollment(evaluable: int, dropout: float) -> int:
 8. Fix default 10,000 replications, max 100,000, and an allocation/CPU guard.
 
 ### Numerical implementation skeleton
+
+This is an internal simulation sketch, not a separate API schema. Internal summaries such as mean retained counts/events may be kept for diagnostics, but serialize the canonical response fields `significant_two_sided_fraction`, `significant_favorable_fraction`, `mcse_two_sided`, and `mcse_favorable`.
 
 ```python
 import numpy as np
@@ -275,11 +280,13 @@ def simulate_binary(n_c: int, n_t: int,
 
     fraction = float(reject_two.mean())
     favorable = float(reject_favorable.mean())
-    mcse = float(np.sqrt(fraction * (1 - fraction) / reps))
+    mcse_two_sided = float(np.sqrt(fraction * (1 - fraction) / reps))
+    mcse_favorable = float(np.sqrt(favorable * (1 - favorable) / reps))
     return {
         "significant_two_sided_fraction": fraction,
         "significant_favorable_fraction": favorable,
-        "mcse": mcse,
+        "mcse_two_sided": mcse_two_sided,
+        "mcse_favorable": mcse_favorable,
         "invalid_test_fraction": float((~valid).mean()),
         "mean_retained_control": float(r_c.mean()),
         "mean_retained_treatment": float(r_t.mean()),
@@ -318,17 +325,17 @@ def simulate_binary(n_c: int, n_t: int,
 
 ## 5. Section D — Stress grid, power curve and Assumption Safety Envelope
 
-**Owner:** A supplies numerical functions, B assembles endpoint, C visualizes  
+**Task category:** A supplies numerical functions, B assembles endpoint, C visualizes
 **Files:** `statistics/stress_grid.py`, `routers/calculations.py`, `components/StressHeatmap.tsx`
 
 ### Implementation steps
 
 1. Freeze `enrolled_n` obtained from initial design calculation.
 2. Generate a sorted baseline array e.g. `np.linspace(0.05, 0.30, 31)` and dropout array `np.linspace(0, 0.30, 21)`.
-3. For each baseline, derive `p_t` from **selected** relative or absolute effect model; invalid ARR cells → `null` with invalid mask.
+3. Resolve effect by API precedence: top-level `effect_override`, then `selected_scenario.effect_override`, then `planned_design.effect`; conflicting explicit overrides are invalid. For each baseline, derive `p_t`; invalid ARR cells → `null` with invalid mask.
 4. For each dropout, compute **expected evaluable N**, floored to an integer and clearly marked as an approximation.
-5. Evaluate Cohen's-h conditional analytic power; return grid with dimensions **[dropout][baseline]** and associated method metadata.
-6. Calculate `mask = power >= target`; interpolate a boundary only where cells on opposite sides of the target have valid numerical values.
+5. Evaluate Cohen's-h conditional analytic power; return grid with dimensions **[dropout_index][baseline_index]** and associated method metadata.
+6. Calculate `mask = power >= target_power`; return `contour_segments` for the requested target, interpolating only where adjacent valid cells straddle that target. The demo/default target is 0.80; the contour is not fixed at 80%.
 7. Return planned point, stress point, worst-case value over grid domain, and invalid-cell count.
 8. For a selected cell, run `/scenarios/evaluate` with full Monte Carlo; overlay its result and MCSE (not fake exact simulation of the whole grid).
 9. Cache identical heatmaps by canonical input hash; debounce UI requests by ~150–300 ms and cancel outdated fetches.
@@ -352,7 +359,7 @@ def stress_grid(fixed_enrolled_n: int,
     matrix = []
     for dropout in dropout_rates:
         expected_n = math.floor(fixed_enrolled_n * (1 - dropout))
-        if expected_n < 2:
+        if expected_n == 0:
             matrix.append([None] * len(baselines))
             continue
         row = []
@@ -366,13 +373,13 @@ def stress_grid(fixed_enrolled_n: int,
     return matrix
 ```
 
-Later support separate arm sample sizes and dropouts; start with symmetric stress dropout and equal-arm enrollment to keep P0 auditable.
+This grid sketch shows one symmetric dropout value at a time. MVP supports equal 1:1 enrollment and symmetric planned/stress dropout; asymmetric arm counts and dropout are unsupported. For zero expected retention return an invalid analytic cell (`null` plus invalid mask), not zero power. `worst_case_power` is the minimum among valid cells and is null only if there are no valid cells.
 
 ### Required plots
 
 **Power curve:** x = hypothetical true control event rate; y = analytic conditional power; horizontal dashed target; markers for planning and selected stress baselines.
 
-**Heatmap:** x = baseline; y = assumed dropout; z = analytic conditional power; invalid cells hatched/gray; overlay an 80% contour and current point.
+**Heatmap:** x = baseline; y = assumed dropout; z = analytic conditional power; invalid cells hatched/gray; overlay the requested target-power contour and current point (80% only for the demo/default target).
 
 **Comparison panel:** planning N, stress N (unchanged), planned power, selected power, change in percentage points, method labels.
 
@@ -385,13 +392,13 @@ Later support separate arm sample sizes and dropouts; start with symmetric stres
 - Invalid ARR combinations are visually distinct from low-power cells.
 - Slow/upstream errors show previous valid result as **stale** rather than silently relabeling it current.
 
-**Done when:** an evaluator can identify the 80% contour and understand what caused the planned design to cross it.
+**Done when:** an evaluator can identify the requested target-power contour and understand what caused the planned design to cross it.
 
 ---
 
 ## 6. Section E — Backend API, validation, caching and security
 
-**Owner:** B  
+**Task category:** B
 **Files:** `main.py`, `schemas.py`, `routers/calculations.py`, `settings.py`, `cache.py`, `tests/test_api_contract.py`
 
 ### Implementation steps
@@ -419,7 +426,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Literal
 
-app = FastAPI(title="Baseline Breaker API", version="1.0.0")
+app = FastAPI(title="Better Baseline API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],  # extend via environment
@@ -473,7 +480,7 @@ This code is an API scaffold, **not yet a working calculation route**. During im
 
 ## 7. Section F — ClinicalTrials.gov import and curated trial example
 
-**Owner:** B primary, D QA  
+**Task category:** B primary, D QA
 **Files:** `data/clinicaltrials.py`, `data/normalize.py`, `routers/trials.py`, `demo-data/curated-study.json`
 
 **Priority:** P1, not a P0 blocker.
@@ -506,7 +513,7 @@ This code is an API scaffold, **not yet a working calculation route**. During im
 
 ## 8. Section G — Frontend experience and visual components
 
-**Owner:** C; D validates demo flow  
+**Task category:** C; D validates demo flow
 **Files:** `frontend/app/page.tsx`, `components/*`, `lib/api.ts`, `lib/contracts.ts`
 
 ### Screens and components
@@ -517,7 +524,7 @@ This code is an API scaffold, **not yet a working calculation route**. During im
 | `DesignSummary` | eval/enroll N, planned power | Show method + separate sample types | No false precision |
 | `StressControls` | stress baseline, dropout | Modify scenario **without changing fixed planned N** | Immutable frozen design |
 | `PowerCurve` | baseline array, analytic power | Plot planned/stress markers and target line | Axes, legend, units |
-| `StressHeatmap` | baseline, dropout, power matrix, invalid mask | Highlight selected point/80% contour | Correct orientation and invalid shading |
+| `StressHeatmap` | baseline, dropout, power matrix, invalid mask | Highlight selected point/requested target contour | Correct orientation and invalid shading |
 | `MonteCarloPanel` | MC fractions, MCSE, seed, reps | Show two-sided vs favorable fractions | Different statistic labels |
 | `ModelWarnings` | method, warnings, provenance | Explain assumptions and unsupported regions | Always visible near results |
 | `PresetSwitcher` | 3 bundled scenarios | Deterministic one-click demo | Synthetic badges |
@@ -581,7 +588,7 @@ Use `AbortController` and a monotonically increasing request token or request ke
 
 ## 9. Section H — Synthetic presets, reproducibility and export
 
-**Owner:** D  
+**Task category:** D
 **Files:** `demo-data/*.json`, `docs/ASSUMPTION_PROVENANCE.md`, `components/ScenarioExport.tsx`
 
 ### Required presets
@@ -610,23 +617,30 @@ Use `AbortController` and a monotonically increasing request token or request ke
 ```json
 {
   "export_schema_version": 1,
-  "project": "Baseline Breaker",
-  "scenario_origin": "synthetic_preset",
-  "preset_id": "baseline-collapse-v1",
   "model_version": "binary-v1",
-  "planned_design": {"...": "see versioned TrialAssumptions schema"},
+  "planned_design": {
+    "model_version": "binary-v1",
+    "control_event_rate": 0.2,
+    "effect": {"kind": "relative_risk", "value": 0.75},
+    "alpha": 0.05,
+    "target_power": 0.8,
+    "allocation_ratio": 1.0,
+    "dropout": {"control": 0.0, "treatment": 0.0}
+  },
   "fixed_enrollment": {"control": 903, "treatment": 903},
-  "stress_scenario": {"...": "see versioned StressScenario schema"},
-  "analytic": {"method": "cohen_h_normal_v1"},
-  "monte_carlo": {"method": "pooled_two_proportion_z_v1", "seed": 42, "replicates": 10000},
-  "source_links": [],
-  "warnings": ["Synthetic example; not a clinical recommendation"],
-  "generated_at": "<ISO-8601 timestamp>",
-  "inputs_hash": "<sha256>"
+  "stress_scenario": null,
+  "design_result": null,
+  "evaluation_result": null,
+  "grid_result": null,
+  "software_versions": {"python": "3.12", "betterbaseline": "0.1.0"},
+  "provenance": {
+    "control_event_rate": {"source": "synthetic_preset", "description": "Baseline collapse preset"}
+  },
+  "exported_at": "2026-10-10T23:30:00Z"
 }
 ```
 
-Ellipses/placeholders denote fields to serialize fully from the actual schema. Export the complete inputs and results rather than only summaries; allow technical reviewers to reproduce a run.
+This is the `ExportPayload` field set; each present input/result must serialize fully from its named schema. Do not add presentation-only fields such as `project`, `scenario_origin`, `source_links`, `generated_at`, or top-level `inputs_hash`. Result metadata carries its own computation timestamp and input hash. Export full inputs, results, software versions, and provenance so technical reviewers can reproduce a run.
 
 **Done when:** offline demo can proceed from preset load to numeric charts and export with no registry access.
 
@@ -634,7 +648,7 @@ Ellipses/placeholders denote fields to serialize fully from the actual schema. E
 
 ## 10. Section I — Statistical QA, automated tests and scientific guardrails
 
-**Owner:** D coordinates; A owns numerical scientific review; everyone fixes own failures.
+**Task category:** D coordinates; A handles numerical scientific review; everyone fixes their assigned failures.
 
 ### Must-pass testing matrix
 
@@ -676,7 +690,7 @@ Ellipses/placeholders denote fields to serialize fully from the actual schema. E
 
 ## 11. Section J — Infrastructure, CI, deploy and operational fallback
 
-**Owner:** B deployment; D CI and recovery  
+**Task category:** B deployment; D CI and recovery
 **Files:** `backend/Dockerfile`, `.github/workflows/ci.yml`, `compose.yaml`, `.env.example`
 
 ### Step-by-step
@@ -705,7 +719,7 @@ npm run lint
 npm run build
 
 # Container (from repo root)
-docker build -t baseline-breaker-api ./backend
+docker build -t better-baseline-api ./backend
 ```
 
 If Docker/image build is not compatible with a scaffold, correct project packaging rather than circumventing the test. Keep Python and Node version compatibility documented.
@@ -785,12 +799,12 @@ flowchart TD
 
 **1:35–1:50 — Credibility:** Show input provenance, assumptions and export/replay. “No guessing patient eligibility or medical costs; this is prospective stress testing.”
 
-**Closing:** “Traditional calculations tell you how a trial performs if assumptions are correct. Baseline Breaker visualizes the consequences when those assumptions change.”
+**Closing:** “Traditional calculations tell you how a trial performs if assumptions are correct. Better Baseline visualizes the consequences when those assumptions change.”
 
 ### Likely judge questions — concise, correct answers
 
 **“Why not just use an ordinary calculator?”**  
-An ordinary calculator solves one scenario. This prototype maps which combinations of baseline risk/retention keep a *fixed* design near its target, then validates selected points with Monte Carlo and provenance.
+An ordinary calculator solves one scenario. Better Baseline maps which combinations of baseline risk/retention keep a *fixed* design near its target, then validates selected points with Monte Carlo and provenance.
 
 **“How do you know the expected baseline risk?”**  
 We do not infer it from population prevalence. It must be an assumption from prior compatible studies/protocol knowledge or manually entered, with uncertainty explored rather than hidden.

@@ -17,8 +17,30 @@ export interface FixedEnrollment {
   treatment: number;
 }
 
+export interface StatisticalDiagnostic {
+  code: string;
+  severity: "info" | "warning" | "error";
+  field: string;
+  method: string;
+  message: string;
+  arm?: "control" | "treatment" | null;
+  outcome?: "events" | "non_events" | null;
+  expected_count?: number | null;
+  threshold?: number | null;
+  count_basis?: "evaluable_count" | "expected_random_retention" | null;
+  invalid_test_fraction?: number | null;
+  replicates?: number | null;
+  invalid_test_policy?: "nonrejection_over_all_replicates" | null;
+}
+
 export interface CalculateRequest extends TrialAssumptions {
+  /** UI metadata only; stripped by the adapter before HTTP transport. */
   preset_id: string;
+}
+
+export interface ExecutionInfo {
+  mode: "backend" | "demo";
+  label: string;
 }
 
 export interface CalculateResponse {
@@ -29,9 +51,11 @@ export interface CalculateResponse {
   enrolled_n: FixedEnrollment;
   nominal_power_evaluable: number;
   warnings: string[];
+  diagnostics?: StatisticalDiagnostic[];
   inputs_hash: string;
   provenance: Provenance;
-  mock: true;
+  execution?: ExecutionInfo;
+  mock: boolean;
 }
 
 export interface EvaluateRequest {
@@ -44,13 +68,20 @@ export interface EvaluateRequest {
   };
   simulation: { replicates: number; seed: number };
   preset_id: string;
+  /** App ledger translated to the backend's top-level `provenance` field. */
+  provenance_ledger?: Record<string, {
+    source: "manual_user" | "synthetic_preset" | "protocol_curated" | "clinicaltrials_registry";
+    description?: string | null;
+    retrieved_at?: string | null;
+    source_url?: string | null;
+  }>;
 }
 
 export interface EvaluateResponse {
   model_version: "binary-v1";
   analytic: {
     method: "cohen_h_normal_v1";
-    conditional_power_approx: number;
+    conditional_power_approx: number | null;
     assumed_evaluable_n: FixedEnrollment;
   };
   monte_carlo: {
@@ -62,11 +93,13 @@ export interface EvaluateResponse {
     invalid_test_fraction: number;
     replicates: number;
     seed: number;
-  };
+  } | null;
   warnings: string[];
+  diagnostics?: StatisticalDiagnostic[];
   metadata: { computed_at: string; inputs_hash: string };
   provenance: Provenance;
-  mock: true;
+  execution?: ExecutionInfo;
+  mock: boolean;
 }
 
 export interface GridRequest {
@@ -74,6 +107,11 @@ export interface GridRequest {
   fixed_enrollment: FixedEnrollment;
   x_baseline: number[];
   y_dropout: number[];
+  selected_scenario?: {
+    control_event_rate: number;
+    dropout: { control: number; treatment: number };
+    effect_override: Effect | null;
+  };
   preset_id: string;
 }
 
@@ -94,13 +132,15 @@ export interface GridResponse {
   invalid_mask: boolean[][];
   target_power: number;
   planned_point: GridPoint;
-  selected_point: GridPoint;
+  selected_point: GridPoint | null;
   frontier_points: GridPoint[];
   warnings: string[];
+  diagnostics?: StatisticalDiagnostic[];
   computed_at: string;
   inputs_hash: string;
   provenance: Provenance;
-  mock: true;
+  execution?: ExecutionInfo;
+  mock: boolean;
 }
 
 export interface Provenance {
@@ -111,7 +151,13 @@ export interface Provenance {
   endpoint_type: "binary_undesirable_event";
   follow_up_label: string;
   method_version: "binary-v1";
-  generated_by: "local_fixture";
+  generated_by: "local_fixture" | "backend_service";
+  field_provenance?: Record<string, {
+    source: "manual_user" | "synthetic_preset" | "protocol_curated" | "clinicaltrials_registry";
+    description?: string | null;
+    retrieved_at?: string | null;
+    source_url?: string | null;
+  }>;
 }
 
 export interface Preset {

@@ -9,7 +9,7 @@ const ts = require("typescript");
 const React = require("react");
 const { renderToStaticMarkup } = require("react-dom/server");
 
-// Compile only these owned TSX modules in memory; production typecheck remains
+// Compile owned components and read-only workspace dependencies in memory; production typecheck remains
 // the normal tsc --noEmit command and this does not emulate a React renderer.
 require.extensions[".tsx"] = (module, filename) => {
   const source = fs.readFileSync(filename, "utf8");
@@ -20,8 +20,10 @@ require.extensions[".tsx"] = (module, filename) => {
   });
   module._compile(result.outputText, filename);
 };
-const { PowerCurve, curveProblem } = require("../components/PowerCurve.tsx");
-const { DesignComparison } = require("../components/DesignComparison.tsx");
+require.extensions[".ts"] = require.extensions[".tsx"];
+const { initializeWorkspaceState } = require("../lib/workspace-state.ts");
+const { PowerCurve, curveProblem, workspaceCurveProps } = require("../components/PowerCurve.tsx");
+const { DesignComparison, workspaceComparisonProps } = require("../components/DesignComparison.tsx");
 
 function props() {
   const current = {
@@ -160,3 +162,90 @@ test("components contain no CSS or network/statistical calculation path", () => 
     assert.doesNotMatch(source, /className=|style=|fetch\(|axios|monte_carlo|Math\.asin/);
   }
 });
+
+
+function handoff() {
+  const state = initializeWorkspaceState('baseline-collapse-v1');
+  state.calculatedDesign = { inputs_hash: 'calculated-plan', enrolled_n: {control:903,treatment:903} };
+  state.frozenEnrollment = {control:903,treatment:903};
+  state.designStatus = 'success'; state.gridStatus = 'success';
+  state.stressBaseline = .1; state.stressDropout = .13;
+  const response = { method:'cohen_h_normal_v1',inputs_hash:'measured-grid',
+    fixed_enrollment:{control:903,treatment:903},target_power:.8,
+    power_curve:[{p_control:.1,power:.4,is_valid:true},{p_control:.2,power:.7,is_valid:true}],
+    planned_point:{p_control:.2,dropout:0,power:.8},
+    selected_point:{p_control:.1,dropout:.13,power:.4} };
+  return {state, completed:{requestState:structuredClone(state), response}};
+}
+
+test('merged workspace handoff preserves original-plan and exact-dropout API values',()=>{
+  const {state,completed}=handoff();
+  const input=workspaceCurveProps(state,completed);
+  assert.equal(curveProblem(input.current,input.result),null);
+  const html=render(PowerCurve,input);
+  assert.match(html,/data-marker="planned" data-baseline="0.2" data-power="0.8"/);
+  assert.match(html,/original planned scenario at 0.0% dropout/);
+  assert.match(html,/measured-grid/);
+  const comparison=render(DesignComparison,workspaceComparisonProps(state,completed));
+  assert.match(comparison,/-40.0 percentage points/);
+  assert.deepEqual(input.result.powerCurve,[{baseline:.1,power:.4},{baseline:.2,power:.7}]);
+});
+
+test('workspace revisions, effect values, alpha and provenance invalidate late curves',()=>{
+  for(const mutate of [s=>s.requestRevision++,s=>s.plannedDraft.effect.value=.5,
+    s=>s.plannedDraft.alpha=.01,s=>s.stressDropout=.2,s=>s.stressBaseline=.12,
+    s=>s.provenanceLedger.changed={source:'manual_user'},s=>s.designStatus='idle']){
+    const {state,completed}=handoff();mutate(state);
+    assert.ok(!render(PowerCurve,workspaceCurveProps(state,completed)).includes('<svg'));
+    assert.ok(!render(DesignComparison,workspaceComparisonProps(state,completed)).includes('<table'));
+  }
+});
+
+test('workspace loading/errors and coordinate-only or mismatched API responses fail explicitly',()=>{
+  for(const status of ['loading','error']){
+    const {state,completed}=handoff();state.gridStatus=status;state.gridError='Unavailable API';
+    const result=workspaceCurveProps(state,completed);assert.equal(result.status,status);
+    assert.ok(!render(PowerCurve,result).includes('<svg'));
+  }
+  for(const mutate of [r=>delete r.power_curve,r=>delete r.selected_point.power,
+    r=>r.selected_point.dropout=.2,r=>r.fixed_enrollment.control=904,
+    r=>r.target_power=.9,r=>r.power_curve[0].is_valid=false]){
+    const {state,completed}=handoff();mutate(completed.response);
+    assert.equal(workspaceCurveProps(state,completed).status,'error');
+  }
+});
+
+test('original planned null power remains unavailable in comparison',()=>{
+  const {state,completed}=handoff();completed.response.planned_point.power=null;
+  const html=render(DesignComparison,workspaceComparisonProps(state,completed));
+  assert.match(html,/Unavailable \(null\)/);assert.match(html,/Power change is unavailable/);
+  assert.ok(!html.includes('percentage points'));
+});
+
+// Required when explicitly requested: errors fail this test, with no fixture
+// substitution. Normal offline component tests do not claim live acceptance.
+if(process.env.BETTERBASELINE_CURVE_API){
+  test('actual calculate/grid HTTP data render through merged workspace handoff',async()=>{
+    const base=process.env.BETTERBASELINE_CURVE_API;
+    const post=async(route,body)=>{const r=await fetch(base+route,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const text=await r.text();assert.equal(r.status,200,text);return JSON.parse(text);};
+    const {state}=handoff();
+    state.stressBaseline=.12;
+    state.calculatedDesign=await post('/api/v1/design/calculate',state.plannedDraft);
+    state.frozenEnrollment=state.calculatedDesign.enrolled_n;
+    const requestState=structuredClone(state);
+    const response=await post('/api/v1/scenarios/grid',{planned_design:state.plannedDraft,
+      fixed_enrollment:state.frozenEnrollment,x_baseline:{min:.1,max:.3,steps:3},
+      y_dropout:{min:0,max:.2,steps:2},selected_scenario:{control_event_rate:state.stressBaseline,
+        dropout:{control:.13,treatment:.13},effect_override:null}});
+    const completed={requestState,response};
+    const adapted=workspaceCurveProps(state,completed);
+    assert.equal(curveProblem(adapted.current,adapted.result),null);
+    assert.equal(adapted.result.selectedPoint.power,response.selected_point.power);
+    assert.equal(adapted.result.plannedPoint.power,response.planned_point.power);
+    assert.match(render(PowerCurve,adapted),/Calculated from the supplied API response/);
+    assert.match(render(DesignComparison,workspaceComparisonProps(state,completed)),/Current comparison/);
+    console.log(JSON.stringify({scope:'live_curve_handoff',gridHash:response.inputs_hash,
+      selectedDropout:response.selected_point.dropout,plannedPower:response.planned_point.power,
+      selectedPower:response.selected_point.power,curve:response.power_curve}));
+  });
+}
