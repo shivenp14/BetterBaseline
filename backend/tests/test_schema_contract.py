@@ -1,4 +1,5 @@
 import json
+import math
 from pathlib import Path
 import jsonschema
 import pytest
@@ -22,6 +23,9 @@ from app.schemas import (
     GridPoint,
     MonteCarloEvaluation,
     StressScenario,
+    AnalyticEvaluation,
+    ExpectedRetainedCounts,
+    PowerCurvePoint,
 )
 
 
@@ -239,3 +243,176 @@ def test_grid_axes_nonfinite_rejected():
             computed_at="2026-10-10T00:00:00Z",
             inputs_hash="hash",
         )
+
+
+def test_grid_request_conflicting_effect_rejected():
+    from app.schemas import (
+        AbsoluteRiskReductionEffect,
+        RelativeRiskEffect,
+        ScenarioGridRequest,
+        StressScenario,
+        TrialAssumptions,
+    )
+
+    base_design = TrialAssumptions(
+        control_event_rate=0.20,
+        effect=RelativeRiskEffect(value=0.75),
+    )
+    enrollment = ArmCounts(control=903, treatment=903)
+
+    # Conflicting effect override between top-level and selected_scenario
+    with pytest.raises(ValidationError, match="Conflicting effect_override"):
+        ScenarioGridRequest(
+            planned_design=base_design,
+            fixed_enrollment=enrollment,
+            effect_override=RelativeRiskEffect(value=0.75),
+            selected_scenario=StressScenario(
+                control_event_rate=0.20,
+                effect_override=AbsoluteRiskReductionEffect(value=0.05),
+            ),
+        )
+
+    # Consistent effect override succeeds
+    req = ScenarioGridRequest(
+        planned_design=base_design,
+        fixed_enrollment=enrollment,
+        effect_override=RelativeRiskEffect(value=0.75),
+        selected_scenario=StressScenario(
+            control_event_rate=0.20,
+            effect_override=RelativeRiskEffect(value=0.75),
+        ),
+    )
+    assert req.effective_grid_effect.value == 0.75
+
+
+def test_export_payload_preserves_results_and_software_versions():
+    from app.schemas import (
+        DesignCalculateResponse,
+        ExportPayload,
+        RelativeRiskEffect,
+        TrialAssumptions,
+    )
+
+    design = TrialAssumptions(
+        control_event_rate=0.20,
+        effect=RelativeRiskEffect(value=0.75),
+    )
+    enrollment = ArmCounts(control=903, treatment=903)
+
+    design_res = DesignCalculateResponse(
+        model_version="binary-v1",
+        method="cohen_h_normal_v1",
+        p_treatment=0.15,
+        evaluable_n=enrollment,
+        enrolled_n=enrollment,
+        nominal_power_evaluable=0.80,
+        warnings=[],
+        inputs_hash="test-hash",
+    )
+
+    versions = {
+        "python": "3.12.3",
+        "numpy": "1.26.4",
+        "betterbaseline": "0.1.0",
+    }
+
+    payload = ExportPayload(
+        planned_design=design,
+        fixed_enrollment=enrollment,
+        design_result=design_res,
+        software_versions=versions,
+        exported_at="2026-10-10T00:00:00Z",
+    )
+
+    dumped = payload.model_dump(mode="json")
+    assert dumped["design_result"] is not None
+    assert dumped["design_result"]["p_treatment"] == 0.15
+    assert dumped["software_versions"] == versions
+
+    # Round-trip validate
+    loaded = ExportPayload.model_validate(dumped)
+    assert loaded.design_result is not None
+    assert loaded.design_result.p_treatment == 0.15
+    assert loaded.software_versions == versions
+
+
+def test_zero_expected_retention_response_round_trip(example_fixtures, json_schema):
+    request = example_fixtures["scenario_evaluate_request"]
+    request["fixed_enrollment"] = {"control": 1, "treatment": 1}
+    request["stress_scenario"]["dropout"] = {"control": 0.9, "treatment": 0.9}
+    parsed = ScenarioEvaluateRequest.model_validate(request)
+    retained = math.floor(parsed.fixed_enrollment.control * (1 - parsed.stress_scenario.dropout.control))
+    assert retained == 0
+    response = example_fixtures["scenario_evaluate_response"]
+    response["analytic"] = {
+        "conditional_power_approx": None,
+        "assumed_evaluable_n": {"control": retained, "treatment": retained},
+    }
+    response["warnings"] = ["Analytic power unavailable: zero expected retention"]
+    result = ScenarioEvaluateResponse.model_validate(response)
+    dumped = result.model_dump(mode="json")
+    assert ScenarioEvaluateResponse.model_validate(dumped).analytic.assumed_evaluable_n.control == 0
+    jsonschema.validate(dumped, {"$ref": "#/$defs/ScenarioEvaluateResponse", "$defs": json_schema["$defs"]})
+    with pytest.raises(ValidationError):
+        ArmCounts(control=0, treatment=0)
+
+
+@pytest.mark.parametrize("value", [-1, True, "0", 0.0])
+def test_expected_retention_rejects_invalid_counts(value):
+    with pytest.raises(ValidationError):
+        ExpectedRetainedCounts(control=value, treatment=value)
+
+
+def test_expected_retention_rejects_unequal_arms():
+    with pytest.raises(ValidationError, match="Equal expected retention"):
+        ExpectedRetainedCounts(control=0, treatment=1)
+
+
+@pytest.mark.parametrize("count,power", [(0, 0.0), (1, None)])
+def test_analytic_power_availability_matches_retention(count, power):
+    with pytest.raises(ValidationError, match="Analytic power must be null"):
+        AnalyticEvaluation(conditional_power_approx=power, assumed_evaluable_n={"control": count, "treatment": count})
+
+
+def test_grid_requires_minimum_with_valid_cells(example_fixtures):
+    grid = example_fixtures["scenario_grid_response"]
+    grid["worst_case_power"] = None
+    with pytest.raises(ValidationError, match="worst_case_power"):
+        ScenarioGridResponse.model_validate(grid)
+
+
+def test_all_invalid_grid_requires_null_minimum(example_fixtures):
+    grid = example_fixtures["scenario_grid_response"]
+    grid["power"] = [[None for _ in grid["x_baseline"]] for _ in grid["y_dropout"]]
+    grid["invalid_mask"] = [[True for _ in grid["x_baseline"]] for _ in grid["y_dropout"]]
+    grid["invalid_cell_count"] = len(grid["x_baseline"]) * len(grid["y_dropout"])
+    grid["worst_case_power"] = 0.75
+    with pytest.raises(ValidationError, match="no valid cells"):
+        ScenarioGridResponse.model_validate(grid)
+    grid["worst_case_power"] = None
+    assert ScenarioGridResponse.model_validate(grid).worst_case_power is None
+
+
+@pytest.mark.parametrize("model", [GridPoint, PowerCurvePoint])
+@pytest.mark.parametrize("is_valid,power", [(True, None), (False, 0.8)])
+def test_point_validity_rejects_contradictory_power(model, is_valid, power):
+    with pytest.raises(ValidationError, match="exactly when is_valid"):
+        model(p_control=0.2, dropout=0.1, is_valid=is_valid, power=power)
+
+
+@pytest.mark.parametrize("model", [GridPoint, PowerCurvePoint])
+@pytest.mark.parametrize("is_valid,power", [(True, 0.8), (False, None)])
+def test_point_validity_accepts_consistent_power(model, is_valid, power):
+    result = model(p_control=0.2, dropout=0.1, is_valid=is_valid, power=power)
+    assert result.is_valid == is_valid
+    assert result.power == power
+
+
+@pytest.mark.parametrize("field", ["planned_point", "selected_point", "frontier_points", "power_curve"])
+@pytest.mark.parametrize("is_valid,power", [(True, None), (False, 0.8)])
+def test_grid_rejects_contradictory_nested_points(example_fixtures, field, is_valid, power):
+    grid = example_fixtures["scenario_grid_response"]
+    point = {"p_control": 0.2, "dropout": 0.1, "is_valid": is_valid, "power": power}
+    grid[field] = [point] if field in ("frontier_points", "power_curve") else point
+    with pytest.raises(ValidationError, match="exactly when is_valid"):
+        ScenarioGridResponse.model_validate(grid)

@@ -60,6 +60,19 @@ class ArmCounts(BaseModel):
 
 
 
+class ExpectedRetainedCounts(BaseModel):
+    """Floored expected retention, distinct from positive enrollment counts."""
+
+    control: int = Field(strict=True, ge=0)
+    treatment: int = Field(strict=True, ge=0)
+
+    @model_validator(mode="after")
+    def validate_equal(self) -> "ExpectedRetainedCounts":
+        if self.control != self.treatment:
+            raise ValueError("Equal expected retention required in P0 MVP")
+        return self
+
+
 class TrialAssumptions(BaseModel):
     model_version: ModelVersion = "binary-v1"
     control_event_rate: Annotated[float, Field(gt=0.0, lt=1.0, description="Baseline control event probability")]
@@ -131,8 +144,14 @@ class ScenarioEvaluateRequest(BaseModel):
 
 class AnalyticEvaluation(BaseModel):
     method: AnalyticalMethod = "cohen_h_normal_v1"
-    conditional_power_approx: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
-    assumed_evaluable_n: ArmCounts
+    conditional_power_approx: Optional[float] = Field(ge=0.0, le=1.0, allow_inf_nan=False)
+    assumed_evaluable_n: ExpectedRetainedCounts
+
+    @model_validator(mode="after")
+    def validate_power_availability(self) -> "AnalyticEvaluation":
+        if (self.assumed_evaluable_n.control == 0) != (self.conditional_power_approx is None):
+            raise ValueError("Analytic power must be null exactly when expected retention is zero")
+        return self
 
 
 class MonteCarloEvaluation(BaseModel):
@@ -205,6 +224,28 @@ class ScenarioGridRequest(BaseModel):
         description="Selected stress scenario providing the selected baseline risk and dropout level for selected_point and power_curve",
     )
 
+    @model_validator(mode="after")
+    def validate_effect_consistency(self) -> "ScenarioGridRequest":
+        if self.effect_override and self.selected_scenario and self.selected_scenario.effect_override:
+            if (
+                self.effect_override.kind != self.selected_scenario.effect_override.kind
+                or self.effect_override.value != self.selected_scenario.effect_override.value
+            ):
+                raise ValueError(
+                    "Conflicting effect_override: top-level effect_override and "
+                    "selected_scenario.effect_override must not conflict."
+                )
+        return self
+
+    @property
+    def effective_grid_effect(self) -> Effect:
+        """Effective effect for computing the 2D grid matrix and 1D power curve."""
+        return (
+            self.effect_override
+            or (self.selected_scenario.effect_override if self.selected_scenario else None)
+            or self.planned_design.effect
+        )
+
 
 class GridPoint(BaseModel):
     p_control: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
@@ -212,6 +253,12 @@ class GridPoint(BaseModel):
     power: Optional[float] = Field(default=None, ge=0.0, le=1.0, allow_inf_nan=False)
     is_safe: bool = False
     is_valid: bool = True
+
+    @model_validator(mode="after")
+    def validate_power_availability(self) -> "GridPoint":
+        if self.is_valid != (self.power is not None):
+            raise ValueError("Point power must be numeric exactly when is_valid is true")
+        return self
 
 
 class ContourPoint(BaseModel):
@@ -228,6 +275,12 @@ class PowerCurvePoint(BaseModel):
     p_control: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
     power: Optional[float] = Field(default=None, ge=0.0, le=1.0, allow_inf_nan=False)
     is_valid: bool = True
+
+    @model_validator(mode="after")
+    def validate_power_availability(self) -> "PowerCurvePoint":
+        if self.is_valid != (self.power is not None):
+            raise ValueError("Curve power must be numeric exactly when is_valid is true")
+        return self
 
 
 class ScenarioGridResponse(BaseModel):
@@ -303,10 +356,12 @@ class ScenarioGridResponse(BaseModel):
 
         if powers:
             min_power = min(powers)
-            if self.worst_case_power is not None and abs(self.worst_case_power - min_power) > 1e-4:
+            if self.worst_case_power is None or abs(self.worst_case_power - min_power) > 1e-4:
                 raise ValueError(
                     f"worst_case_power ({self.worst_case_power}) does not match minimum valid power ({min_power})"
                 )
+        elif self.worst_case_power is not None:
+            raise ValueError("worst_case_power must be null when no valid cells exist")
         return self
 
 
@@ -344,6 +399,12 @@ class ExportPayload(BaseModel):
     planned_design: TrialAssumptions
     fixed_enrollment: ArmCounts
     stress_scenario: Optional[StressScenario] = None
+    design_result: Optional[DesignCalculateResponse] = None
     evaluation_result: Optional[ScenarioEvaluateResponse] = None
+    grid_result: Optional[ScenarioGridResponse] = None
+    software_versions: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Software and package versions for reproducible calculation",
+    )
     provenance: Dict[str, FieldProvenance] = Field(default_factory=dict)
     exported_at: str

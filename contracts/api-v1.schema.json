@@ -31,13 +31,20 @@
           "type": "string"
         },
         "conditional_power_approx": {
-          "maximum": 1.0,
-          "minimum": 0.0,
-          "title": "Conditional Power Approx",
-          "type": "number"
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Conditional Power Approx"
         },
         "assumed_evaluable_n": {
-          "$ref": "#/$defs/ArmCounts"
+          "$ref": "#/$defs/ExpectedRetainedCounts"
         }
       },
       "required": [
@@ -298,6 +305,27 @@
       "title": "ErrorEnvelope",
       "type": "object"
     },
+    "ExpectedRetainedCounts": {
+      "description": "Floored expected retention, distinct from positive enrollment counts.",
+      "properties": {
+        "control": {
+          "minimum": 0,
+          "title": "Control",
+          "type": "integer"
+        },
+        "treatment": {
+          "minimum": 0,
+          "title": "Treatment",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "control",
+        "treatment"
+      ],
+      "title": "ExpectedRetainedCounts",
+      "type": "object"
+    },
     "ExportPayload": {
       "properties": {
         "export_schema_version": {
@@ -328,6 +356,17 @@
           ],
           "default": null
         },
+        "design_result": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DesignCalculateResponse"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "evaluation_result": {
           "anyOf": [
             {
@@ -338,6 +377,25 @@
             }
           ],
           "default": null
+        },
+        "grid_result": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ScenarioGridResponse"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "software_versions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Software and package versions for reproducible calculation",
+          "title": "Software Versions",
+          "type": "object"
         },
         "provenance": {
           "additionalProperties": {
@@ -696,6 +754,7 @@
       "type": "object"
     },
     "ScenarioGridRequest": {
+      "description": "Request for generating the 2D power grid surface and 1D power curve.\n\nThe power curve slices analytic power across x_baseline holding dropout fixed\nat selected_scenario.dropout (or 0.0 if omitted). Each curve point uses floored\nexpected retention floor(enrolled_n * (1 - dropout)) and the effective effect.",
       "properties": {
         "planned_design": {
           "$ref": "#/$defs/TrialAssumptions"
@@ -745,7 +804,7 @@
             }
           ],
           "default": null,
-          "title": "Selected Scenario"
+          "description": "Selected stress scenario providing the selected baseline risk and dropout level for selected_point and power_curve"
         }
       },
       "required": [

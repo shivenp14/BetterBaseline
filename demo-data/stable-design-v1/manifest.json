@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "preset_id": "stable-design-v1",
+  "preset_version": 1,
+  "project": "Better Baseline",
+  "title": "Stable Design",
+  "scenario_origin": "synthetic_preset",
+  "contract_status": "draft_pending_B1",
+  "inputs_file": "inputs.json",
+  "mock_response_file": "mock-response.json",
+  "inputs_hash": "sha256:c63d70d3603bd1db5a8c3942246e253d65507c7526f366cb753ea2f7b3b3bc4a",
+  "probability_units": "fraction",
+  "endpoint_direction": "lower_is_better",
+  "methods": {
+    "analytic": "cohen_h_normal_v1",
+    "monte_carlo": "pooled_two_proportion_z_v1"
+  },
+  "reference_expectations": {
+    "status": "documented_reference_not_measured",
+    "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#0-read-this-before-starting",
+    "evaluable_n_per_arm": 903,
+    "planned_enrolled_n_per_arm": 951,
+    "planned_expected_retained_floor_per_arm": 903,
+    "stress_expected_retained_floor_per_arm": 893
+  },
+  "provenance": [
+    {
+      "field": "/planned_design/model_version",
+      "value": "binary-v1",
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/planned_design/control_event_rate",
+      "value": 0.2,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/planned_design/effect/kind",
+      "value": "relative_risk",
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/planned_design/effect/value",
+      "value": 0.75,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/planned_design/alpha",
+      "value": 0.05,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/planned_design/target_power",
+      "value": 0.8,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/planned_design/allocation_ratio",
+      "value": 1.0,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/planned_design/dropout/control",
+      "value": 0.05,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/planned_design/dropout/treatment",
+      "value": 0.05,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/fixed_enrollment/control",
+      "value": 951,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "ceil(903 / (1 - planned_dropout)); synthetic reference, not an engine result"
+    },
+    {
+      "field": "/fixed_enrollment/treatment",
+      "value": 951,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "ceil(903 / (1 - planned_dropout)); synthetic reference, not an engine result"
+    },
+    {
+      "field": "/stress_scenario/control_event_rate",
+      "value": 0.19,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/stress_scenario/dropout/control",
+      "value": 0.06,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/stress_scenario/dropout/treatment",
+      "value": 0.06,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/stress_scenario/effect_override",
+      "value": null,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/simulation/replicates",
+      "value": 10000,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/simulation/seed",
+      "value": 42,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    }
+  ],
+  "warnings": [
+    "Synthetic example; not a clinical recommendation.",
+    "Hand-authored illustrative mock; not measured engine output or clinical evidence."
+  ],
+  "snapshot_requirements": {
+    "status": "pending",
+    "actual_engine_functions_required": true,
+    "fixed_seed": 42,
+    "replicates": 10000,
+    "record_software_versions": true,
+    "record_engine_commit": true,
+    "schema_alignment_gate": "B1; update only D-owned fixtures, not contracts/"
+  }
+}
