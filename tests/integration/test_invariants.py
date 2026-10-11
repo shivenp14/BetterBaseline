@@ -46,6 +46,20 @@ class PipelineFixtureChecks(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError, 'inflation'):
             check_design(planned, design)
 
+    def test_decimal_floor_and_zero_expected_retention_contract(self):
+        req, mock, _, _ = fixture('baseline-collapse-v1')
+        req['simulation'] = None
+        mock['point']['monte_carlo'] = None
+        for enrolled, dropout, expected in ((50, .58, 21), (1, .90, 0)):
+            req['fixed_enrollment'] = dict(control=enrolled, treatment=enrolled)
+            req['stress_scenario']['dropout'] = dict(control=dropout, treatment=dropout)
+            mock['point']['analytic']['assumed_evaluable_n'] = dict(control=expected, treatment=expected)
+            mock['point']['analytic']['conditional_power_approx'] = None if expected == 0 else .47
+            check_evaluation(req, mock['point'])
+        mock['point']['analytic']['conditional_power_approx'] = 0
+        with self.assertRaisesRegex(AssertionError, 'availability'):
+            check_evaluation(req, mock['point'])
+
     def test_transpose_is_detected(self):
         req, mock, _, _ = fixture('baseline-collapse-v1')
         mock['grid']['power'] = list(map(list, zip(*mock['grid']['power'])))

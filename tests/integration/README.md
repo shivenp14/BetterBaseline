@@ -15,7 +15,7 @@ python3 -m unittest discover -s tests/integration -p 'test_*.py' -v
 These tests consume the three committed synthetic presets as read-only inputs.
 Their results remain illustrative. The export witness is explicitly constructed
 checker data, never a measured UI export or a production export implementation.
-Eleven tests exercise cross-boundary invariants and prove that mutations fail:
+Twelve tests exercise cross-boundary invariants and prove that mutations fail:
 transposed nonsquare matrices, null converted to zero, wrong selected-cell values,
 conflated retained counts, unsplit MCSE, valid-only MCSE denominators, invalid tests
 counted as rejections, seed drift, changed enrollment/results and lost/relabeled
@@ -75,3 +75,8 @@ passing alone cannot mark the draft ready or close the issue. This capture tool
 is preparation for assertions on real evidence; it does not drive the browser,
 fetch a backend response, or independently establish that a supplied capture was
 obtained live. Add orchestration/CI after the registered API and #76 handoffs.
+
+#65 follow-up: expected-retention assertions now follow the shared decimal-floor
+convention and allow null analytic power exactly at zero expected retention.
+The registered point API is implemented in #91; full grid/UI-export acceptance
+still awaits #66/#67/#76 and the #80 workflow handoff.
