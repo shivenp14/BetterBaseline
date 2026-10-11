@@ -29,10 +29,9 @@ GRID_REQUEST = {
     "y_dropout": {"min": 0.0, "max": 0.30, "steps": 31},
 }
 ENGINE_PATHS = (
-    "backend/app/statistics",
-    "backend/app/routers/design.py",
-    "backend/app/routers/scenarios.py",
-    "backend/app/services/grid.py",
+    "backend/app",
+    "backend/pyproject.toml",
+    "backend/uv.lock",
 )
 OMITTED_OPERATIONAL_FIELDS = [
     "/design/computed_at (not present in design response)",
@@ -49,6 +48,13 @@ def _dump(value: object) -> dict:
 
 def _engine_commit() -> str:
     try:
+        dirty = subprocess.check_output(
+            ["git", "status", "--porcelain", "--untracked-files=all", "--", *ENGINE_PATHS],
+            cwd=ROOT,
+            text=True,
+        )
+        if dirty.strip():
+            raise RuntimeError("Commit or discard backend source changes before generating snapshots")
         return subprocess.check_output(
             ["git", "log", "-1", "--format=%H", "--", *ENGINE_PATHS],
             cwd=ROOT,

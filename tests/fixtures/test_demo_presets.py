@@ -1,12 +1,14 @@
 """Offline integrity checks; these are not statistical engine validation."""
 
 import hashlib
+import importlib.util
 import json
 import math
 from pathlib import Path
 import subprocess
 import sys
 import unittest
+from unittest.mock import patch
 
 
 DATA = Path(__file__).resolve().parents[2] / "demo-data"
@@ -262,6 +264,16 @@ class DemoPresetTests(unittest.TestCase):
             capture_output=True, text=True,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_generator_rejects_uncommitted_engine_source(self):
+        spec = importlib.util.spec_from_file_location("preset_generator", DATA / "generate_snapshots.py")
+        generator = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(generator)
+        for dirty in (" M backend/app/statistics/analytic.py\n", "?? backend/app/new_engine.py\n"):
+            with self.subTest(dirty=dirty), patch.object(generator.subprocess, "check_output", return_value=dirty) as command:
+                with self.assertRaisesRegex(RuntimeError, "backend source changes"):
+                    generator._engine_commit()
+                self.assertEqual(command.call_count, 1)
 
 
 if __name__ == "__main__":
