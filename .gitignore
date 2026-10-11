@@ -1,1 +1,15 @@
+# agent-workflow:begin
+.workflow-sync-state.json
+__pycache__/
+*.py[cod]
+# agent-workflow:end
 /regeneron-info/
+
+# Locally installed agent workflow assets
+.codex/config.toml
+.codex/agents/
+.agents/skills/orchestrate/
+.agents/skills/review-change/
+.agents/skills/verify-change/
+docs/agent/
+.agent-state/
