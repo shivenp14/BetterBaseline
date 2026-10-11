@@ -1,5 +1,6 @@
 "use client";
 
+
 import React from "react";
 import { rawPresets } from "@/lib/presets";
 
@@ -17,14 +18,14 @@ export function PresetSelector({
   const currentPreset = rawPresets.find((p) => p.preset_id === selectedPresetId) ?? rawPresets[0];
 
   return (
-    <section aria-labelledby="preset-heading">
+    <section className="planning-presets" aria-labelledby="preset-heading">
       <h2 id="preset-heading">Synthetic Presets & Scenario Selection</h2>
       <p>
         Select a versioned synthetic preset or reset the current scenario to initial defaults.
         Editing assumptions will update field provenance to <code>manual_user</code>.
       </p>
 
-      <div>
+      <div className="planning-presetControls">
         <label htmlFor="preset-select">
           <strong>Select Preset:</strong>{" "}
         </label>
@@ -40,13 +41,13 @@ export function PresetSelector({
           ))}
         </select>
         {onResetPreset && (
-          <button type="button" onClick={onResetPreset} style={{ marginLeft: "8px" }}>
+          <button type="button" onClick={onResetPreset}>
             Reset to Preset Defaults
           </button>
         )}
       </div>
 
-      <div style={{ marginTop: "8px" }}>
+      <div className="planning-presetDetails">
         <p>
           <em>{currentPreset.description}</em>
         </p>

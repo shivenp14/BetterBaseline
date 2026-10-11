@@ -58,11 +58,11 @@ Do not present stale or fixture output as a completed live calculation.
 
 ## Repeatable validation
 
-The validation checkout must contain #94 `ca6dc37` and #118 `4322bd0` as well as
-#83. Keep #118's tests/workflow unmodified. If #118 has not merged, merge its
-handoff into a temporary validation checkout only; the #83 PR targets #94's
-`pranav81` branch and contains only its owned files. When dependencies merge,
-update the stack and recheck the combined source before a release tag.
+The validation checkout must contain merged #94 and #118 prerequisites as well as
+#83. Keep #118's tests/workflow unmodified. #94 merged into main at `53f7fd1`
+after refreshing its head to `1a4af92`; #118 merged at `f07092f`. The #83 PR
+now targets main and contains only README.md, this runbook, and `scripts/demo/**`.
+Recheck the combined source after main updates before final acceptance or a release tag.
 
 After clean backend/frontend installation, in that checkout:
 
@@ -124,9 +124,12 @@ complete export disabled and live simulation unavailable.
 
 Dependency outcomes checked during this run: #82/#117 merged at bf327a8;
 #76/#128 merged at 86e834e; #78/#118 merged at f07092f (handoff 4322bd0 had three
-passing checks). #81/#94 remained open at ca6dc37 with both core checks passing;
-its owner is updating main ancestry. The PR remains stacked on `pranav81`.
-No hosted rehearsal was possible because no hosting target is configured.
+passing checks). These are the original rehearsal's dependency identities.
+Subsequently, #94 refreshed to `1a4af92` and merged into main at `53f7fd1`;
+#83 incorporated that parent and retargeted main. Later main UI/narrative updates
+are incorporated normally; the recorded rehearsals above do not establish
+acceptance of those updates. The independent teammate must test the final head.
+No end-to-end hosted backend rehearsal is claimed.
 
 A timed automated browser rehearsal demonstrates the actions fit the narration budget;
 it is not an independent teammate usability test. Do not mark that human

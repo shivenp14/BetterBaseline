@@ -1,0 +1,65 @@
+name: Integration invariants (fixture and live API)
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fixture-and-live-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.13"
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.26"
+      - name: Install committed backend lock with dev dependencies
+        working-directory: backend
+        run: uv sync --locked --extra dev
+      - name: Check fixture invariants and mutation regressions
+        run: uv run --project backend --locked --extra dev python -m unittest discover -s tests/integration -p 'test_*.py' -v
+      - name: Check actual calculate, evaluation and grid HTTP handoffs
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=backend uv run --project backend --locked --extra dev python -m uvicorn app.main:app --host 127.0.0.1 --port 8765 > /tmp/betterbaseline-point-api.log 2>&1 &
+          api_pid=$!
+          trap 'kill "$api_pid" 2>/dev/null || true' EXIT
+          if ! uv run --project backend --locked --extra dev python tests/integration/run_point_checks.py; then
+            cat /tmp/betterbaseline-point-api.log
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.15.0"
+      - name: Install locked frontend and integration browser dependencies
+        run: |
+          npm ci --prefix frontend
+          npm ci --prefix tests/integration
+          cd tests/integration && npx playwright install chromium --with-deps
+      - name: Build production live frontend
+        working-directory: frontend
+        env:
+          NEXT_PUBLIC_API_MODE: live
+          NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:8765
+        run: npm run build
+      - name: Check independent UI downloads with external traffic blocked
+        run: bash tests/integration/run_browser_checks.sh
+      - name: Retain real requests, responses, downloads and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-integration-evidence
+          path: /tmp/betterbaseline-integration/
+          if-no-files-found: error

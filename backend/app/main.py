@@ -15,6 +15,7 @@ from .errors import (
 )
 from .middleware.compute import ComputeGuardMiddleware
 from .routers import design_router, grid_router, health_router, scenarios_router
+from .routers.trials import router as trials_router
 from .schemas import ErrorEnvelope
 from .services.compute import ComputeResourceGuard, ResourceSaturatedError
 from .settings import Settings, settings
@@ -94,6 +95,8 @@ def create_app(app_settings: Optional[Settings] = None) -> FastAPI:
     application.include_router(design_router, responses=validation_error_responses)
     application.include_router(scenarios_router, responses=scaffold_responses)
     application.include_router(grid_router, responses=scaffold_responses)
+    # #68/#67 are merged: optional metadata registration is handed to #69.
+    application.include_router(trials_router)
 
     return application
 

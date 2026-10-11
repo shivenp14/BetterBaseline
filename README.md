@@ -8,6 +8,35 @@ A clinical trial can be designed for 80% statistical power **only under the assu
 
 > **Project status:** Implemented local planning workspace with real FastAPI calculations, charts, seeded simulation, and validated JSON export. See the [judge runbook](docs/DEMO_SCRIPT.md) for measured rehearsals and remaining acceptance gates. This is a synthetic planning demonstration, not clinical validation.
 
+## The real-world question behind Better Baseline
+
+**What if fewer patients experience the event than your trial was designed to expect?**
+
+In May 2025, Regeneron and Sanofi reported that AERIFY-1 met its primary endpoint
+and AERIFY-2 missed it at 52 weeks. The sponsors also reported fewer COPD
+exacerbations than anticipated and reduced statistical power in both trials.
+See their [results announcement](https://investor.regeneron.com/news-releases/news-release-details/itepekimab-met-primary-endpoint-one-two-chronic-obstructive/)
+and the registry records for [AERIFY-1](https://clinicaltrials.gov/study/NCT04701983)
+and [AERIFY-2](https://clinicaltrials.gov/study/NCT04751487).
+
+This motivates our planning question: **how sensitive is a trial's ability to
+detect an assumed benefit to the event rate used to size it?** Better Baseline
+lets a team freeze enrollment, lower the assumed control risk, and see where
+conditional power falls below its target. That can prompt a discussion about
+more conservative assumptions, enrollment margins, or whether the proposed
+design is feasible before recruitment begins.
+
+**How could this have helped with an AERIFY-like planning problem?** It could have
+made sensitivity to fewer events easier to inspect and communicate during design
+review. An AERIFY-specific analysis would need its original planning assumptions
+and a validated recurrent-event model: its endpoint was an annualized exacerbation
+rate, while our MVP supports binary risks. The example below illustrates the
+mechanism, not a reconstruction of AERIFY-2 or proof that its outcome was preventable.
+
+For the full evidence boundary, read the [historical case study](docs/HISTORICAL_CASE_STUDY.md).
+For public-facing copy, see the [Devpost story](docs/DEVPOST_STORY.md) and
+[presentation guide](docs/PRESENTATION_GUIDE.md).
+
 ## The idea in 30 seconds
 
 1. **Plan:** Enter a baseline event rate, hypothetical treatment effect, desired power, and dropout assumptions.
@@ -32,7 +61,7 @@ For a hypothetical two-arm trial with a binary adverse endpoint:
 
 The insight: a design that looks adequately powered under a single forecast may be sensitive to plausible changes in the baseline rate.
 
-## What makes it more than an AI wrapper?
+## How the tool makes design risk visible
 
 The core product is **statistical computation**, not generated text:
 
@@ -48,11 +77,11 @@ The core product is **statistical computation**, not generated text:
 
 | Layer | Technology | Purpose |
 | --- | --- | --- |
-| Frontend | Next.js, React, TypeScript | Design controls, comparisons, charts |
-| Visualization | Semantic SVG charts | Power curves, heatmap, threshold boundary |
+| Frontend | Next.js, React, TypeScript, CSS modules | Design controls, comparisons, charts |
+| Visualization | SVG charts and accessible tables | Power curves, heatmap, threshold boundary |
 | API | Python, FastAPI, Pydantic | Validated scenario endpoints and contracts |
 | Statistical core | NumPy, SciPy, statsmodels | Analytic power, sample sizing, Monte Carlo |
-| Optional trial metadata | ClinicalTrials.gov API v2 | Source-linked study metadata; **not** assumed original design inputs |
+| Optional trial metadata | ClinicalTrials.gov API v2 | Optional source-linked study metadata; **not** original design inputs |
 | QA and delivery | pytest, GitHub Actions, Docker | Numerical regression tests and reproducible deployment |
 
 No database, authentication, paid AI API, or individual patient records are required for the hackathon MVP.
@@ -101,6 +130,13 @@ npm run dev
 
 Open **http://localhost:3000**. The default configuration selects LIVE mode and the local API. Bundled presets need no NCT lookup. Calculate & Lock Design, evaluate stress, load the grid, run the selected simulation, and download/reopen JSON using the [105-second walkthrough](docs/DEMO_SCRIPT.md).
 
+Set `NEXT_PUBLIC_API_MODE=demo`
+in `frontend/.env.local` only when intentionally using labeled fixtures and local
+analytic calculations. In live mode, the backend calculates the fixed-enrollment
+power surface and target-power boundary; demo mode is explicitly labeled. The
+default `baseline-collapse-v1` preset contains synthetic assumptions, even when
+the backend calculates its results.
+
 For production startup and prebuilt offline containers, follow [Deployment](docs/DEPLOYMENT.md). API addresses are embedded at frontend build time; rebuild when changing them.
 
 Run checks from the repository root:
@@ -119,7 +155,7 @@ The integration command starts its own temporary backend. The [judge runbook](do
 
 ## API overview
 
-The v1 API has three essential endpoints:
+The v1 API has three core calculation endpoints:
 
 | Endpoint | What it does |
 | --- | --- |
@@ -127,13 +163,14 @@ The v1 API has three essential endpoints:
 | `POST /api/v1/scenarios/evaluate` | Evaluate a fixed design under a stress scenario; optionally run seeded simulation |
 | `POST /api/v1/scenarios/grid` | Return the analytic power surface for charts |
 
-Optional: `GET /api/v1/trials/{nct_id}` for public trial metadata. See the [infrastructure specification](docs/02_INFRASTRUCTURE_ARCHITECTURE.md) for request/response examples and field definitions.
+Optional: `GET /api/v1/trials/{nct_id}` looks up public trial metadata without filling planning assumptions. See the [infrastructure specification](docs/02_INFRASTRUCTURE_ARCHITECTURE.md) for request/response examples and field definitions.
 
-## Development priorities
+## Next steps
 
-**Ship first:** validated sample-size calculation → immutable planned design vs. stress scenario → live power comparison → sensitivity heatmap → seeded Monte Carlo → reproducible export.
-
-**Only if time permits:** ClinicalTrials.gov metadata import and curated real-world context. An explicit demo mode remains available for synthetic fixture exploration.
+Extend validation and usability testing, then add endpoint-specific models for
+recurrent events and survival outcomes. Historical replay would also require
+curated protocols and verified planning assumptions. Adaptive re-estimation is a
+future research direction, not a feature of this MVP.
 
 ## Documentation
 
@@ -145,7 +182,7 @@ Optional: `GET /api/v1/trials/{nct_id}` for public trial metadata. See the [infr
 
 **Ownership tracks:** A covers the statistical core; B covers API/contracts/provenance; C covers frontend workspace/charts/export; D covers QA, deployment, fixtures, and documentation. These are product tracks, not permanent people assignments. Active issues own their named files; shared wiring transfers only after the predecessor merges and records its handoff. #83 owns this README, `docs/DEMO_SCRIPT.md`, and `scripts/demo/**`; #85 retains presentation ownership.
 
-**For contributors:** Start with the spec's MVP constraints and numerical test fixture. Freeze the API contract before splitting into parallel branches. Keep one reproducible synthetic demo working throughout development.
+**For contributors:** Start with the spec's MVP constraints, the statistical methods, and the numerical fixtures. Preserve the frozen-enrollment invariant and keep historical context separate from numerical input provenance.
 
 ## Scientific scope and responsibility
 
