@@ -195,6 +195,13 @@
         },
         "dropout": {
           "$ref": "#/$defs/ArmProportions"
+        },
+        "provenance": {
+          "additionalProperties": {
+            "$ref": "#/$defs/FieldProvenance"
+          },
+          "title": "Provenance",
+          "type": "object"
         }
       },
       "required": [
@@ -243,16 +250,23 @@
           "title": "Warnings",
           "type": "array"
         },
-        "inputs_hash": {
-          "title": "Inputs Hash",
-          "type": "string"
-        },
         "diagnostics": {
           "items": {
             "$ref": "#/$defs/StatisticalDiagnostic"
           },
           "title": "Diagnostics",
           "type": "array"
+        },
+        "provenance": {
+          "additionalProperties": {
+            "$ref": "#/$defs/FieldProvenance"
+          },
+          "title": "Provenance",
+          "type": "object"
+        },
+        "inputs_hash": {
+          "title": "Inputs Hash",
+          "type": "string"
         }
       },
       "required": [
@@ -414,17 +428,23 @@
         "exported_at": {
           "title": "Exported At",
           "type": "string"
+        },
+        "inputs_hash": {
+          "title": "Inputs Hash",
+          "type": "string"
         }
       },
       "required": [
         "planned_design",
         "fixed_enrollment",
-        "exported_at"
+        "exported_at",
+        "inputs_hash"
       ],
       "title": "ExportPayload",
       "type": "object"
     },
     "FieldProvenance": {
+      "description": "Per-field source and audit metadata shared by all v1 routes and exports.",
       "properties": {
         "source": {
           "enum": [
@@ -471,6 +491,42 @@
           ],
           "default": null,
           "title": "Source Url"
+        },
+        "source_location": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Location"
+        },
+        "verified_by_user": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Verified By User"
+        },
+        "is_observed_registry_result": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Is Observed Registry Result"
         }
       },
       "required": [
@@ -480,6 +536,7 @@
       "type": "object"
     },
     "GridAxisSpec": {
+      "additionalProperties": false,
       "properties": {
         "min": {
           "exclusiveMaximum": 1.0,
@@ -509,6 +566,7 @@
       "type": "object"
     },
     "GridDropoutAxisSpec": {
+      "additionalProperties": false,
       "properties": {
         "min": {
           "default": 0.0,
@@ -537,6 +595,29 @@
     },
     "GridPoint": {
       "properties": {
+        "expected_evaluable_n": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExpectedRetainedCounts"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "invalid_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Invalid Reason"
+        },
         "p_control": {
           "maximum": 1.0,
           "minimum": 0.0,
@@ -635,6 +716,90 @@
           ],
           "default": null,
           "title": "Seed"
+        },
+        "invalid_test_policy": {
+          "anyOf": [
+            {
+              "const": "nonrejection_over_all_replicates",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Invalid Test Policy"
+        },
+        "mean_retained_control": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mean Retained Control"
+        },
+        "mean_retained_treatment": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mean Retained Treatment"
+        },
+        "mean_control_events": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mean Control Events"
+        },
+        "mean_treatment_events": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mean Treatment Events"
+        },
+        "rng": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rng"
+        },
+        "software_versions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Software Versions",
+          "type": "object"
         }
       },
       "required": [
@@ -717,6 +882,13 @@
         },
         "simulation": {
           "$ref": "#/$defs/SimulationOptions"
+        },
+        "provenance": {
+          "additionalProperties": {
+            "$ref": "#/$defs/FieldProvenance"
+          },
+          "title": "Provenance",
+          "type": "object"
         }
       },
       "required": [
@@ -739,7 +911,14 @@
           "$ref": "#/$defs/AnalyticEvaluation"
         },
         "monte_carlo": {
-          "$ref": "#/$defs/MonteCarloEvaluation"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MonteCarloEvaluation"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "warnings": {
           "items": {
@@ -748,15 +927,22 @@
           "title": "Warnings",
           "type": "array"
         },
-        "metadata": {
-          "$ref": "#/$defs/ScenarioMetadata"
-        },
         "diagnostics": {
           "items": {
             "$ref": "#/$defs/StatisticalDiagnostic"
           },
           "title": "Diagnostics",
           "type": "array"
+        },
+        "metadata": {
+          "$ref": "#/$defs/ScenarioMetadata"
+        },
+        "provenance": {
+          "additionalProperties": {
+            "$ref": "#/$defs/FieldProvenance"
+          },
+          "title": "Provenance",
+          "type": "object"
         }
       },
       "required": [
@@ -768,8 +954,16 @@
       "type": "object"
     },
     "ScenarioGridRequest": {
+      "additionalProperties": false,
       "description": "Request for generating the 2D power grid surface and 1D power curve.\n\nThe power curve slices analytic power across x_baseline holding dropout fixed\nat selected_scenario.dropout (or 0.0 if omitted). Each curve point uses floored\nexpected retention floor(enrolled_n * (1 - dropout)) and the effective effect.",
       "properties": {
+        "provenance": {
+          "additionalProperties": {
+            "$ref": "#/$defs/FieldProvenance"
+          },
+          "title": "Provenance",
+          "type": "object"
+        },
         "planned_design": {
           "$ref": "#/$defs/TrialAssumptions"
         },
@@ -830,6 +1024,67 @@
     },
     "ScenarioGridResponse": {
       "properties": {
+        "grid_label": {
+          "const": "expected_count_approximation",
+          "default": "expected_count_approximation",
+          "title": "Grid Label",
+          "type": "string"
+        },
+        "fixed_enrollment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ArmCounts"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "below_target": {
+          "items": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array"
+          },
+          "title": "Below Target",
+          "type": "array"
+        },
+        "analytic_delta": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Selected minus original planned power in fraction units, independent of grid-domain validity; null when either comparison point is unavailable.",
+          "title": "Analytic Delta"
+        },
+        "software_versions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Software Versions",
+          "type": "object"
+        },
+        "provenance": {
+          "additionalProperties": {
+            "$ref": "#/$defs/FieldProvenance"
+          },
+          "title": "Provenance",
+          "type": "object"
+        },
         "model_version": {
           "const": "binary-v1",
           "default": "binary-v1",
@@ -904,6 +1159,7 @@
           "default": null
         },
         "frontier_points": {
+          "description": "Unique interpolated target-frontier coordinates for markers. This list conveys no connectivity; use contour_segments to draw edges, never join frontier_points in list order.",
           "items": {
             "$ref": "#/$defs/GridPoint"
           },
@@ -911,6 +1167,7 @@
           "type": "array"
         },
         "contour_segments": {
+          "description": "Independent adjacent frontier edges, preserving disconnected paths and avoiding invalid cells.",
           "items": {
             "$ref": "#/$defs/ContourSegment"
           },
@@ -950,6 +1207,13 @@
           "title": "Warnings",
           "type": "array"
         },
+        "diagnostics": {
+          "items": {
+            "$ref": "#/$defs/StatisticalDiagnostic"
+          },
+          "title": "Diagnostics",
+          "type": "array"
+        },
         "computed_at": {
           "title": "Computed At",
           "type": "string"
@@ -957,13 +1221,6 @@
         "inputs_hash": {
           "title": "Inputs Hash",
           "type": "string"
-        },
-        "diagnostics": {
-          "items": {
-            "$ref": "#/$defs/StatisticalDiagnostic"
-          },
-          "title": "Diagnostics",
-          "type": "array"
         }
       },
       "required": [
@@ -989,6 +1246,24 @@
         "inputs_hash": {
           "title": "Inputs Hash",
           "type": "string"
+        },
+        "software_versions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Software Versions",
+          "type": "object"
+        },
+        "fixed_enrollment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ArmCounts"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -1025,118 +1300,6 @@
         }
       },
       "title": "SimulationOptions",
-      "type": "object"
-    },
-    "StressScenario": {
-      "properties": {
-        "control_event_rate": {
-          "description": "Hypothetical true control rate",
-          "exclusiveMaximum": 1.0,
-          "exclusiveMinimum": 0.0,
-          "title": "Control Event Rate",
-          "type": "number"
-        },
-        "dropout": {
-          "$ref": "#/$defs/ArmProportions"
-        },
-        "effect_override": {
-          "anyOf": [
-            {
-              "discriminator": {
-                "mapping": {
-                  "absolute_risk_reduction": "#/$defs/AbsoluteRiskReductionEffect",
-                  "relative_risk": "#/$defs/RelativeRiskEffect"
-                },
-                "propertyName": "kind"
-              },
-              "oneOf": [
-                {
-                  "$ref": "#/$defs/RelativeRiskEffect"
-                },
-                {
-                  "$ref": "#/$defs/AbsoluteRiskReductionEffect"
-                }
-              ]
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Optional effect override",
-          "title": "Effect Override"
-        }
-      },
-      "required": [
-        "control_event_rate"
-      ],
-      "title": "StressScenario",
-      "type": "object"
-    },
-    "TrialAssumptions": {
-      "properties": {
-        "model_version": {
-          "const": "binary-v1",
-          "default": "binary-v1",
-          "title": "Model Version",
-          "type": "string"
-        },
-        "control_event_rate": {
-          "description": "Baseline control event probability",
-          "exclusiveMaximum": 1.0,
-          "exclusiveMinimum": 0.0,
-          "title": "Control Event Rate",
-          "type": "number"
-        },
-        "effect": {
-          "discriminator": {
-            "mapping": {
-              "absolute_risk_reduction": "#/$defs/AbsoluteRiskReductionEffect",
-              "relative_risk": "#/$defs/RelativeRiskEffect"
-            },
-            "propertyName": "kind"
-          },
-          "oneOf": [
-            {
-              "$ref": "#/$defs/RelativeRiskEffect"
-            },
-            {
-              "$ref": "#/$defs/AbsoluteRiskReductionEffect"
-            }
-          ],
-          "title": "Effect"
-        },
-        "alpha": {
-          "default": 0.05,
-          "description": "Significance level",
-          "exclusiveMaximum": 1.0,
-          "exclusiveMinimum": 0.0,
-          "title": "Alpha",
-          "type": "number"
-        },
-        "target_power": {
-          "default": 0.8,
-          "description": "Target statistical power",
-          "exclusiveMaximum": 1.0,
-          "exclusiveMinimum": 0.0,
-          "title": "Target Power",
-          "type": "number"
-        },
-        "allocation_ratio": {
-          "default": 1.0,
-          "description": "Allocation ratio (MVP: 1.0)",
-          "title": "Allocation Ratio",
-          "type": "number"
-        },
-        "dropout": {
-          "$ref": "#/$defs/ArmProportions"
-        }
-      },
-      "required": [
-        "control_event_rate",
-        "effect"
-      ],
-      "title": "TrialAssumptions",
       "type": "object"
     },
     "StatisticalDiagnostic": {
@@ -1290,6 +1453,118 @@
         "message"
       ],
       "title": "StatisticalDiagnostic",
+      "type": "object"
+    },
+    "StressScenario": {
+      "properties": {
+        "control_event_rate": {
+          "description": "Hypothetical true control rate",
+          "exclusiveMaximum": 1.0,
+          "exclusiveMinimum": 0.0,
+          "title": "Control Event Rate",
+          "type": "number"
+        },
+        "dropout": {
+          "$ref": "#/$defs/ArmProportions"
+        },
+        "effect_override": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "absolute_risk_reduction": "#/$defs/AbsoluteRiskReductionEffect",
+                  "relative_risk": "#/$defs/RelativeRiskEffect"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/RelativeRiskEffect"
+                },
+                {
+                  "$ref": "#/$defs/AbsoluteRiskReductionEffect"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional effect override",
+          "title": "Effect Override"
+        }
+      },
+      "required": [
+        "control_event_rate"
+      ],
+      "title": "StressScenario",
+      "type": "object"
+    },
+    "TrialAssumptions": {
+      "properties": {
+        "model_version": {
+          "const": "binary-v1",
+          "default": "binary-v1",
+          "title": "Model Version",
+          "type": "string"
+        },
+        "control_event_rate": {
+          "description": "Baseline control event probability",
+          "exclusiveMaximum": 1.0,
+          "exclusiveMinimum": 0.0,
+          "title": "Control Event Rate",
+          "type": "number"
+        },
+        "effect": {
+          "discriminator": {
+            "mapping": {
+              "absolute_risk_reduction": "#/$defs/AbsoluteRiskReductionEffect",
+              "relative_risk": "#/$defs/RelativeRiskEffect"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/RelativeRiskEffect"
+            },
+            {
+              "$ref": "#/$defs/AbsoluteRiskReductionEffect"
+            }
+          ],
+          "title": "Effect"
+        },
+        "alpha": {
+          "default": 0.05,
+          "description": "Significance level",
+          "exclusiveMaximum": 1.0,
+          "exclusiveMinimum": 0.0,
+          "title": "Alpha",
+          "type": "number"
+        },
+        "target_power": {
+          "default": 0.8,
+          "description": "Target statistical power",
+          "exclusiveMaximum": 1.0,
+          "exclusiveMinimum": 0.0,
+          "title": "Target Power",
+          "type": "number"
+        },
+        "allocation_ratio": {
+          "default": 1.0,
+          "description": "Allocation ratio (MVP: 1.0)",
+          "title": "Allocation Ratio",
+          "type": "number"
+        },
+        "dropout": {
+          "$ref": "#/$defs/ArmProportions"
+        }
+      },
+      "required": [
+        "control_event_rate",
+        "effect"
+      ],
+      "title": "TrialAssumptions",
       "type": "object"
     }
   },

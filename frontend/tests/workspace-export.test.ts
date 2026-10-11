@@ -28,6 +28,7 @@ async function main() {
   const payload = buildWorkspaceExport(state, "2026-10-11T16:00:00.000Z");
   assert.equal(hasCurrentExportableResults(state), true);
   assert.equal(payload.design_result?.inputs_hash, "sha256:manual-edit-current");
+  assert.match(payload.inputs_hash, /^sha256:[0-9a-f]{64}$/);
   assert.equal(payload.provenance["/planned_design/control_event_rate"].source, "manual_user");
   assert.equal(payload.evaluation_result, undefined);
   assert.equal(payload.grid_result, undefined);
@@ -64,8 +65,9 @@ async function main() {
   const actualDownload = JSON.parse(await downloadedBlob!.text());
   assert.equal(actualDownload.provenance["/planned_design/control_event_rate"].source, "manual_user");
   assert.equal(actualDownload.design_result.inputs_hash, "sha256:manual-edit-current");
+  assert.equal(actualDownload.inputs_hash, payload.inputs_hash, "downloaded JSON includes the canonical export-level hash");
   assert.equal(actualDownload.evaluation_result, undefined, "non-current results are omitted");
-  console.log("Workspace export regression checks passed (canonical shape, current results and downloaded manual provenance).");
+  console.log("Workspace export regression checks passed (canonical shape/hash, current results and downloaded manual provenance).");
 }
 
 void main();
