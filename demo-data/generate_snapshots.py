@@ -5,15 +5,17 @@ Run from the repository root with the backend's locked Python 3.12 environment:
     uv run --locked --directory backend python ../demo-data/generate_snapshots.py
 
 Pass --check to fail if checked-in generated content differs. Operational
-computed_at timestamps are omitted from response bodies so repeated runs are
-byte-for-byte stable; the exact engine source commit and package versions remain
-recorded in each snapshot.
+computed_at timestamps are omitted from response bodies. Provenance, metadata,
+inputs, counts, masks, and seeded simulation outcomes remain exact; only listed
+continuous analytic results allow 1e-12 relative / 1e-15 absolute math-library
+rounding differences across platforms.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import math
 import platform
 import subprocess
 import sys
@@ -196,6 +198,61 @@ def _diff_summary(expected: object, actual: object, pointer: str = "") -> list[s
     return []
 
 
+def _is_platform_sensitive_float(pointer: str) -> bool:
+    """Allow only continuous analytic fields to vary at floating-point noise."""
+    if pointer == "/design/nominal_power_evaluable" or pointer.startswith("/point/analytic/"):
+        return True
+    if pointer in {
+        "/point/monte_carlo/mcse_two_sided",
+        "/point/monte_carlo/mcse_favorable",
+        "/grid/analytic_delta",
+        "/grid/worst_case_power",
+    }:
+        return True
+    parts = pointer.split("/")
+    if len(parts) == 5 and parts[:2] == ["", "grid"]:
+        if parts[2] == "power" and parts[3].isdigit() and parts[4].isdigit():
+            return True
+        if parts[2] == "power_curve" and parts[3].isdigit() and parts[4] in {"p_control", "power"}:
+            return True
+    if (
+        len(parts) == 4
+        and parts[:2] == ["", "grid"]
+        and parts[2] in {"planned_point", "selected_point"}
+        and parts[3] in {"p_control", "dropout", "power"}
+    ):
+        return True
+    if (
+        len(parts) == 6
+        and parts[:2] == ["", "grid"]
+        and parts[2] == "contour_segments"
+        and parts[3].isdigit()
+        and parts[4] in {"start", "end"}
+        and parts[5] in {"p_control", "dropout"}
+    ):
+        return True
+    return False
+
+
+def _matches_snapshot(expected: object, actual: object, pointer: str = "") -> bool:
+    """Compare snapshots strictly except for documented continuous float noise."""
+    if type(expected) is not type(actual):
+        return False
+    if isinstance(expected, dict):
+        return expected.keys() == actual.keys() and all(
+            _matches_snapshot(expected[key], actual[key], f"{pointer}/{key}")
+            for key in expected
+        )
+    if isinstance(expected, list):
+        return len(expected) == len(actual) and all(
+            _matches_snapshot(left, right, f"{pointer}/{index}")
+            for index, (left, right) in enumerate(zip(expected, actual))
+        )
+    if isinstance(expected, float) and _is_platform_sensitive_float(pointer):
+        return math.isclose(expected, actual, rel_tol=1e-12, abs_tol=1e-15)
+    return expected == actual
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="compare generated files without writing")
@@ -233,7 +290,12 @@ def main() -> int:
         mismatches = []
         for path, content in outputs.items():
             if args.check:
-                if not path.exists() or path.read_bytes() != content:
+                if not path.exists():
+                    mismatches.append(path.relative_to(ROOT).as_posix())
+                    continue
+                expected = json.loads(path.read_bytes())
+                actual = json.loads(content)
+                if not _matches_snapshot(expected, actual):
                     mismatches.append(path.relative_to(ROOT).as_posix())
             else:
                 path.write_bytes(content)
@@ -248,7 +310,10 @@ def main() -> int:
                     print(f"  {path.relative_to(ROOT).as_posix()}{difference}", file=sys.stderr)
             return 1
         if args.check:
-            print("All three generated snapshots and manifests match the backend output.")
+            print(
+                "All three generated snapshots and manifests match: discrete data and provenance exact; "
+                "continuous analytic floats within 1e-12 relative / 1e-15 absolute tolerance."
+            )
         else:
             print("Generated measured final response snapshots for all three presets.")
         return 0

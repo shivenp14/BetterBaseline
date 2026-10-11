@@ -289,6 +289,35 @@ class DemoPresetTests(unittest.TestCase):
         self.assertEqual(command.call_count, 2)
         self.assertEqual(command.call_args_list[1].args[0], ["git", "rev-parse", "--is-shallow-repository"])
 
+    def test_generator_snapshot_check_tolerates_only_continuous_float_noise(self):
+        spec = importlib.util.spec_from_file_location("preset_generator", DATA / "generate_snapshots.py")
+        generator = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(generator)
+        expected = {
+            "engine_commit": "fc12dd0",
+            "grid": {"selected_point": {"power": .47}, "power": [[.47]]},
+            "point": {"monte_carlo": {"significant_two_sided_fraction": .5, "mcse_two_sided": .005}},
+        }
+        rounding_only = {
+            "engine_commit": "fc12dd0",
+            "grid": {"selected_point": {"power": .47 + 2e-13}, "power": [[.47 - 2e-13]]},
+            "point": {"monte_carlo": {"significant_two_sided_fraction": .5, "mcse_two_sided": .005 + 5e-16}},
+        }
+        changed_seeded_result = {
+            **rounding_only,
+            "point": {"monte_carlo": {"significant_two_sided_fraction": .5001, "mcse_two_sided": .005}},
+        }
+        changed_provenance = {**rounding_only, "engine_commit": "incorrect"}
+        outside_tolerance = {
+            "engine_commit": "fc12dd0",
+            "grid": {"selected_point": {"power": .47 + 2e-12}, "power": [[.47]]},
+            "point": expected["point"],
+        }
+        self.assertTrue(generator._matches_snapshot(expected, rounding_only))
+        self.assertFalse(generator._matches_snapshot(expected, changed_seeded_result))
+        self.assertFalse(generator._matches_snapshot(expected, changed_provenance))
+        self.assertFalse(generator._matches_snapshot(expected, outside_tolerance))
+
 
 if __name__ == "__main__":
     unittest.main()

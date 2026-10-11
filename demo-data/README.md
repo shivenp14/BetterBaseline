@@ -55,8 +55,10 @@ The design output includes the backend's actual integer sample size and achieved
 power; analytic retention floors and simulated random aggregates remain distinct.
 
 Operational `computed_at` timestamps are intentionally omitted from response
-bodies so regeneration is byte-for-byte stable. The omission is listed in each
-snapshot. No other response fields are synthesized or rounded. These are measured
+bodies. The omission is listed in each snapshot. Snapshot `--check` compares
+provenance, metadata, inputs, counts, masks, and seeded simulation outputs exactly.
+For continuous analytic outputs only, it allows differences up to 1e-12 relative
+or 1e-15 absolute to account for platform math-library rounding. These are measured
 computations of synthetic inputs, not clinical evidence or independent statistical
 validation.
 
