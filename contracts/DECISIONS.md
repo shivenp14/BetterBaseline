@@ -51,3 +51,7 @@
 16. **Canonical Planning Documentation:**
    - The three planning docs use Better Baseline naming and these canonical API fields. A/B/C/D denote task categories; live issue assignees and recorded file handoffs determine ownership.
    - JSON Schema describes structural types and scalar constraints; Pydantic validators additionally enforce cross-field/domain invariants such as equal arms and grid summary consistency.
+17. **Provenance Audit Metadata and Origin Integrity (Issue #67):**
+   - `FieldProvenance` preserves optional audit fields (`source_location`, `verified_by_user`, and `is_observed_registry_result`) across normalization and serialized `ExportPayload` outputs.
+   - Full JSON pointers (e.g. `/planned_design/control_event_rate` vs `/stress_scenario/control_event_rate`) are retained as unique map keys without lossy path stripping.
+   - Observed registry records (`clinicaltrials_registry` or with `is_observed_registry_result: true`) cannot be relabeled as `protocol_curated` planning assumptions.

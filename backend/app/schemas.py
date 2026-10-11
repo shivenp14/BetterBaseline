@@ -391,6 +391,9 @@ class FieldProvenance(BaseModel):
     description: Optional[str] = None
     retrieved_at: Optional[str] = None
     source_url: Optional[str] = None
+    source_location: Optional[str] = None
+    verified_by_user: Optional[bool] = None
+    is_observed_registry_result: Optional[bool] = None
 
 
 class ExportPayload(BaseModel):
