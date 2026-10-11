@@ -1,20 +1,14 @@
-import type { ApiDesignCalculateResponse, ApiProvenanceMap, EvaluateRequest, StatisticalDiagnostic, TrialAssumptions } from "./contracts";
-import type { WorkspaceState, ProvenanceLedger } from "./workspace-contracts";
-import type { CurveApiResponse } from "../components/PowerCurve";
-import type { HeatmapApiResponse } from "../components/StressHeatmap";
+import type { ApiDesignCalculateResponse, ApiGridPoint, ApiProvenanceMap, ApiScenarioGridResponse, EvaluateRequest, FixedEnrollment, StatisticalDiagnostic, TrialAssumptions } from "./contracts";
+import type { WorkspaceState } from "./workspace-contracts";
 import { parseSimulationResult, validateSimulationRequest, type SimulationResult } from "./simulation-client";
 import { computeWorkspaceExportInputsHash } from "./workspace-export";
 
 /** Raw backend coordinates and all result metadata must survive the API adapter. */
-export type ExportGridResult = CurveApiResponse & HeatmapApiResponse & {
-  model_version: "binary-v1";
-  computed_at: string;
-  software_versions: Record<string, string>;
-  provenance: ProvenanceLedger;
-  below_target: (boolean | null)[][];
-  invalid_cell_count: number;
+export type ExportGridResult = Omit<ApiScenarioGridResponse, "fixed_enrollment" | "planned_point" | "selected_point" | "worst_case_power"> & {
+  fixed_enrollment: FixedEnrollment;
+  planned_point: ApiGridPoint & { power: number | null };
+  selected_point: ApiGridPoint & { power: number | null; is_valid: boolean };
   worst_case_power: number | null;
-  frontier_points: unknown[];
 };
 export type ExportEvaluationResult = Omit<SimulationResult, "provenance"> & { provenance: ApiProvenanceMap; diagnostics?: StatisticalDiagnostic[] };
 export type ExportDesignResult = ApiDesignCalculateResponse;
@@ -95,7 +89,7 @@ export function normalizeExportProvenance(value: unknown): ApiProvenanceMap {
   const ledger = record(value, "provenance");
   const normalized: ApiProvenanceMap = {};
   for (const [pointer, raw] of Object.entries(ledger)) {
-    requireValue(pointer.startsWith("/"), "Provenance keys must be JSON field pointers.");
+    requireValue(pointer.length > 0, "Provenance keys must name a field.");
     const source = record(raw, `provenance.${pointer}`);
     requireValue(["manual_user", "synthetic_preset", "protocol_curated", "clinicaltrials_registry"].includes(String(source.source)), `Invalid provenance source for ${pointer}.`);
     for (const key of ["description", "retrieved_at", "source_url", "source_location"]) requireValue(source[key] === undefined || source[key] === null || typeof source[key] === "string", `Invalid source metadata for ${pointer}.`);
@@ -143,7 +137,7 @@ export function validateScenarioExport(value: unknown): ScenarioExportPayload {
   jsonValues(value);
   const v = record(value, "export");
   const keys = ["export_schema_version", "model_version", "planned_design", "fixed_enrollment", "stress_scenario", "design_result", "evaluation_result", "grid_result", "software_versions", "provenance", "exported_at", "inputs_hash"];
-  requireValue(Object.keys(v).length === keys.length && keys.every(k => Object.hasOwn(v, k)), "Export must use the complete v1 field set.");
+  requireValue(Object.keys(v).length === keys.length && keys.every(k => Object.prototype.hasOwnProperty.call(v, k)), "Export must use the complete v1 field set.");
   requireValue(v.export_schema_version === 1 && v.model_version === "binary-v1", "Unsupported export schema or model version.");
   timestamp(v.exported_at, "exported_at"); versions(v.software_versions, "software_versions");
   const payload = v as unknown as ScenarioExportPayload;

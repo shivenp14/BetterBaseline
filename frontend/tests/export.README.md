@@ -53,3 +53,41 @@ comparison, curve, heatmap/table, one selected Monte Carlo panel, provenance,
 method disclosures and export. Stress edits debounce analytic evaluation/grid;
 only submitting the Monte Carlo panel performs seeded simulation. Browser
 acceptance evidence and its reproduction command are recorded with the final PR.
+
+## Production browser acceptance
+
+Start the backend and frontend from this checkout with matching CORS and live API
+configuration (for example frontend `http://127.0.0.1:8176`, backend
+`http://127.0.0.1:8177`). Use an installed Playwright module and Chromium:
+
+```sh
+PAGE_URL=http://127.0.0.1:8176 \
+PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs \
+CHROMIUM_EXECUTABLE=/path/to/chromium \
+EXPORT_TEST_PYTHON=/path/to/backend/.venv/bin/python \
+node tests/export.browser.mjs
+```
+
+`CHROMIUM_EXECUTABLE` is optional when Playwright's matching browser is installed.
+The script uses the production page and fresh real HTTP numerical responses.
+It verifies all panels, calculate/freeze/stress/chart assembly, exact mouse/Enter/
+Space heatmap selection, one selected MC request per submit, default and edited
+seed/reps, synthetic/manual/ARR and switched-preset exports, seven actual file
+downloads and file-input reopens, canonical hash rejection, invalid planning/seed/
+ARR inputs, failure recovery, and delayed real grid/MC response rejection.
+Failure injection supplies only explicit HTTP errors; delayed numerical responses
+come from the running backend. No numerical mock/cached fallback is used.
+
+Evidence is saved to `EXPORT_BROWSER_OUTPUT` (default
+`/private/tmp/issue76-browser-acceptance`): downloaded JSON, a report and a full-page
+screenshot. Latest run: 34 numerical requests, 9 explicit selected simulation
+requests (7 completed exports, 1 injected failure, 1 superseded run), 0 page errors.
+RR enrollment stays 903/903 throughout stress edits; ARR locks 195/195 and retains
+literal null cells/masks; switching to stable preset locks 951/951. These are
+conditional synthetic calculations, not clinical evidence.
+
+The T3 browser snapshot provider timed out twice. Acceptance used the repository's
+Playwright workflow with the installed cached Chromium executable; no package or
+lockfile changes were needed. Existing StressControls/PresetSelector inline styles
+are inherited from their merged components; this issue adds no custom styling and
+does not modify those component files.

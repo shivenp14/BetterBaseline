@@ -230,6 +230,7 @@ export function workspaceReducer(
     }
     case "UPDATE_SIMULATION_PROVENANCE": {
       return { ...state, provenanceLedger: action.pointers.reduce((ledger, pointer) => markFieldManual(ledger, pointer, "Selected simulation configuration edited"), state.provenanceLedger),
+        activeCalculateRevision: null, designStatus: state.designStatus === "calculating" ? "idle" : state.designStatus,
         activeEvaluateRevision: null, activeGridRevision: null, evaluateStatus: "stale", gridStatus: "stale", displayedInputsHash: null,
         requestRevision: state.requestRevision + 1, inputGeneration: state.inputGeneration + 1 };
     }

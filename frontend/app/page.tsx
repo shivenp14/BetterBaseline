@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from "react";
 import { calculateDesign, evaluateScenario, getApiMode, getStressGrid } from "@/lib/api";
 import type { CalculateRequest } from "@/lib/contracts";
 import type { WorkspaceState } from "@/lib/workspace-contracts";
@@ -29,10 +29,12 @@ export default function Home() {
   const [formResetKey, setFormResetKey] = useState(0), [runs, setRuns] = useState<ExportRuns>(emptyRuns);
   const [simulationDraft, setSimulationDraft] = useState({ seed: "42", replicates: "10000" });
   const stateRef = useRef(state), generation = useRef(state.inputGeneration), token = useRef(0);
+  const cancelRefresh = useRef<(() => void) | null>(null);
+  const nextToken = useCallback(() => { token.current = Math.max(token.current, stateRef.current.requestRevision) + 1; return token.current; }, []);
   const calculateAbort = useRef<AbortController | null>(null), evaluateAbort = useRef<AbortController | null>(null), gridAbort = useRef<AbortController | null>(null);
   useLayoutEffect(() => { stateRef.current = state; }, [state]);
   useEffect(() => () => { calculateAbort.current?.abort(); evaluateAbort.current?.abort(); gridAbort.current?.abort(); }, []);
-  function changeInputs() { generation.current++; calculateAbort.current?.abort(); evaluateAbort.current?.abort(); gridAbort.current?.abort(); }
+  function changeInputs() { generation.current++; cancelRefresh.current?.(); calculateAbort.current?.abort(); evaluateAbort.current?.abort(); gridAbort.current?.abort(); }
   function selectPreset(presetId?: string) {
     changeInputs(); setRuns(emptyRuns()); setSimulationDraft({ seed: "42", replicates: "10000" }); setFormResetKey(k => k + 1);
     dispatch(presetId ? { type: "LOAD_PRESET", presetId } : { type: "RESET_TO_PRESET" });
@@ -46,7 +48,7 @@ export default function Home() {
     if (captured.inputGeneration !== generation.current) return;
     changeInputs(); setRuns(emptyRuns());
     const controller = new AbortController(); calculateAbort.current = controller;
-    const revision = ++token.current, expected = generation.current;
+    const revision = nextToken(), expected = generation.current;
     dispatch({ type: "START_CALCULATE", requestRevision: revision, expectedInputGeneration: captured.inputGeneration });
     try {
       const response = await calculateDesign({ ...request, provenance_ledger: captured.provenanceLedger }, controller.signal);
@@ -63,7 +65,7 @@ export default function Home() {
     const captured = structuredClone(stateRef.current);
     if (captured.inputGeneration !== generation.current || captured.designStatus !== "success" || !captured.frozenEnrollment) return;
     gridAbort.current?.abort(); const controller = new AbortController(); gridAbort.current = controller;
-    const revision = ++token.current;
+    const revision = nextToken();
     dispatch({ type: "START_GRID", requestRevision: revision, expectedInputGeneration: captured.inputGeneration });
     try {
       const preset = getPresetById(captured.presetId);
@@ -78,12 +80,12 @@ export default function Home() {
       if (controller.signal.aborted || captured.inputGeneration !== generation.current) return;
       dispatch({ type: "GRID_ERROR", error: error instanceof Error ? error.message : String(error), requestRevision: revision });
     }
-  }, []);
+  }, [nextToken]);
   const evaluateAnalytic = useCallback(async () => {
     const captured = structuredClone(stateRef.current);
     if (captured.inputGeneration !== generation.current || captured.designStatus !== "success" || !captured.frozenEnrollment) return;
     evaluateAbort.current?.abort(); const controller = new AbortController(); evaluateAbort.current = controller;
-    const revision = ++token.current;
+    const revision = nextToken();
     dispatch({ type: "START_EVALUATE", requestRevision: revision, expectedInputGeneration: captured.inputGeneration });
     try {
       const response = await evaluateScenario(buildStressEvaluationRequest(captured), controller.signal, "analytic");
@@ -93,10 +95,17 @@ export default function Home() {
       if (controller.signal.aborted || captured.inputGeneration !== generation.current) return;
       dispatch({ type: "EVALUATE_ERROR", error: error instanceof Error ? error.message : String(error), requestRevision: revision });
     }
-  }, []);
+  }, [nextToken]);
   useEffect(() => {
     if (state.designStatus !== "success") return;
-    return scheduleDebounced(() => { void evaluateAnalytic(); void loadGrid(); }, 350);
+    const expectedGeneration = state.inputGeneration; let active = true;
+    const cancelTimer = scheduleDebounced(() => {
+      if (!active || generation.current !== expectedGeneration) return;
+      cancelRefresh.current = null; void evaluateAnalytic(); void loadGrid();
+    }, 350);
+    const cancel = () => { active = false; cancelTimer(); };
+    cancelRefresh.current = cancel;
+    return () => { cancel(); if (cancelRefresh.current === cancel) cancelRefresh.current = null; };
   }, [state.inputGeneration, state.designStatus, evaluateAnalytic, loadGrid]);
   const runSimulation: RunSimulation = useCallback(async (request, signal) => {
     const captured = structuredClone(stateRef.current);
@@ -105,9 +114,11 @@ export default function Home() {
     const expected = { planned_design: captured.plannedDraft, fixed_enrollment: captured.frozenEnrollment,
       stress_scenario: { control_event_rate: captured.stressBaseline, dropout: { control: captured.stressDropout, treatment: captured.stressDropout }, effect_override: null }, provenance: captured.provenanceLedger, simulation: request.simulation };
     if (simulationIdentity(request) !== simulationIdentity(expected)) throw new Error("Simulation selection does not match current inputs.");
+    cancelRefresh.current?.(); cancelRefresh.current = null;
+    if (captured.gridStatus === "stale" || captured.gridStatus === "idle" || captured.gridStatus === "error") void loadGrid();
     evaluateAbort.current?.abort(); const controller = new AbortController(); evaluateAbort.current = controller;
     const abort = () => controller.abort(); signal.addEventListener("abort", abort, { once: true }); if (signal.aborted) controller.abort();
-    const revision = ++token.current;
+    const revision = nextToken();
     setRuns(old => ({ ...old, evaluation: null }));
     dispatch({ type: "START_EVALUATE", requestRevision: revision, expectedInputGeneration: captured.inputGeneration });
     try {
@@ -120,19 +131,20 @@ export default function Home() {
       if (!controller.signal.aborted && captured.inputGeneration === generation.current) dispatch({ type: "EVALUATE_ERROR", error: error instanceof Error ? error.message : String(error), requestRevision: revision });
       throw error;
     } finally { signal.removeEventListener("abort", abort); }
-  }, []);
+  }, [nextToken, loadGrid]);
   const selection: SimulationSelection | null = state.designStatus === "success" && state.frozenEnrollment ? {
     planned_design: state.plannedDraft, fixed_enrollment: state.frozenEnrollment,
     stress_scenario: { control_event_rate: state.stressBaseline, dropout: { control: state.stressDropout, treatment: state.stressDropout }, effect_override: null }, provenance: state.provenanceLedger,
   } : null;
   const completedGrid = runs.grid ? { requestState: chartState(runs.grid.requestState), response: runs.grid.response } : null;
   const curve = workspaceCurveProps(chartState(state), completedGrid), heatmap = workspaceHeatmapProps(chartState(state), completedGrid);
-  let payload: ScenarioExportPayload | null = null, exportReason = "Complete current calculations and a selected simulation before exporting.";
-  try {
-    const options = parseSimulationOptions(simulationDraft.seed, simulationDraft.replicates);
-    if (!runs.evaluation || runs.evaluation.response.monte_carlo.seed !== options.seed || runs.evaluation.response.monte_carlo.replicates !== options.replicates) throw new Error("Run the displayed seed and replicate configuration before exporting.");
-    payload = buildScenarioExport(state, runs, runs.evaluation.response.metadata.computed_at);
-  } catch (error) { exportReason = error instanceof Error ? error.message : exportReason; }
+  const { payload, exportReason } = useMemo((): { payload: ScenarioExportPayload | null; exportReason?: string } => {
+    try {
+      const options = parseSimulationOptions(simulationDraft.seed, simulationDraft.replicates);
+      if (!runs.evaluation || runs.evaluation.response.monte_carlo.seed !== options.seed || runs.evaluation.response.monte_carlo.replicates !== options.replicates) throw new Error("Run the displayed seed and replicate configuration before exporting.");
+      return { payload: buildScenarioExport(state, runs) };
+    } catch (error) { return { payload: null, exportReason: error instanceof Error ? error.message : "Complete current calculations and a selected simulation before exporting." }; }
+  }, [state, runs, simulationDraft]);
   return <main>
     <header><h1>Better Baseline</h1><p>Trial planning workspace backed by a local calculation service.</p><p><strong>Execution mode:</strong> {getApiMode() === "demo" ? "DEMO — fixtures and client calculations; no backend execution" : "LIVE — fresh calculations require the backend service"}</p></header>
     <PresetSelector selectedPresetId={state.presetId} onSelectPreset={selectPreset} onResetPreset={() => selectPreset()} />

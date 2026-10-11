@@ -41,6 +41,7 @@ async function calculateFixture(manual = false, arr = false) {
   if (manual) {
     Object.assign(ledger["/planned_design/alpha"], { source: "protocol_curated", source_location: "Protocol §3 — α", verified_by_user: true, is_observed_registry_result: false });
     Object.assign(ledger["/stress_scenario/control_event_rate"], { source: "clinicaltrials_registry", source_url: "https://clinicaltrials.gov/study/NCT00000000", source_location: "Observed result table", description: "Observed registry result used for hypothetical sensitivity", verified_by_user: false, is_observed_registry_result: true });
+    ledger["audit😀"] = { source: "manual_user", description: "Supplemental Unicode audit key — preserved verbatim", source_location: "§4", verified_by_user: false };
   }
   const design = await post("design/calculate", { ...planned, provenance: ledger });
   const inputs = { planned_design: planned, fixed_enrollment: design.enrolled_n, stress_scenario: stress, simulation: { seed: 42, replicates: 1000 }, provenance: ledger };
@@ -129,6 +130,10 @@ test("independent evaluate/grid tokens do not stale current input snapshots", ()
   assert.strictEqual(workspaceReducer(next, { type: "GRID_SUCCESS", requestRevision: 19, response: state.gridResult }), next);
   const edited = workspaceReducer(next, { type: "UPDATE_SIMULATION_PROVENANCE", pointers: ["/simulation/seed"] });
   assert.throws(() => buildScenarioExport(edited, runs));
+  const calculating = workspaceReducer(next, { type: "START_CALCULATE", requestRevision: 22, expectedInputGeneration: next.inputGeneration });
+  const interrupted = workspaceReducer(calculating, { type: "UPDATE_SIMULATION_PROVENANCE", pointers: ["/simulation/replicates"] });
+  assert.equal(interrupted.designStatus, "idle"); assert.equal(interrupted.activeCalculateRevision, null);
+  assert.strictEqual(workspaceReducer(interrupted, { type: "CALCULATE_SUCCESS", requestRevision: 22, response: state.calculatedDesign }), interrupted);
 });
 test("omitted audit fields equal null, preserve full audit records, and reject tampered canonical hashes", () => {
   const { state, runs } = currentRuns();
