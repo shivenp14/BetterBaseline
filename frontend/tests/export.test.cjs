@@ -34,9 +34,14 @@ function provenance(planned, stress, manual) {
   for (const p of ["/fixed_enrollment/control", "/fixed_enrollment/treatment", "/simulation/seed", "/simulation/replicates"]) result[p] = { source: manual ? "manual_user" : "synthetic_preset", description: "Test configuration", retrieved_at: null, source_url: null };
   return result;
 }
-async function calculateFixture(manual = false, arr = false) {
+async function calculateFixture(manual = false, arr = false, boundary = false) {
   const planned = { model_version: "binary-v1", control_event_rate: .2, effect: { kind: arr ? "absolute_risk_reduction" : "relative_risk", value: arr ? .1 : .75 }, alpha: .05, target_power: .8, allocation_ratio: 1, dropout: { control: 0, treatment: 0 } };
   const stress = { control_event_rate: arr ? .2 : .1, dropout: { control: .1, treatment: .1 }, effect_override: null };
+  if (boundary) {
+    planned.dropout = { control: .097, treatment: .097 };
+    stress.control_event_rate = .12;
+    stress.dropout = { control: .07, treatment: .07 };
+  }
   const ledger = provenance(planned, stress, manual);
   if (manual) {
     Object.assign(ledger["/planned_design/alpha"], { source: "protocol_curated", source_location: "Protocol §3 — α", verified_by_user: true, is_observed_registry_result: false });
@@ -85,6 +90,18 @@ test("fresh synthetic and manual HTTP runs round-trip without losing any input/r
   assert.equal(manualFixture.provenance["/stress_scenario/control_event_rate"].is_observed_registry_result, true);
   assert.equal(arrFixture.grid_result.invalid_cell_count, 2);
   assert.equal(arrFixture.grid_result.power[0][0], null);
+});
+test("decimal retention boundary from fresh HTTP results downloads and reopens", async () => {
+  const data = await calculateFixture(false, false, true);
+  assert.deepEqual(data.fixed_enrollment, { control: 1000, treatment: 1000 });
+  assert.deepEqual(data.evaluation_result.analytic.assumed_evaluable_n, { control: 930, treatment: 930 });
+  assert.equal(Math.floor(1000 * (1 - .07)), 929); // Reproduce the binary-rounding bug.
+  assert.deepEqual(parseScenarioExport(serializeScenarioExport(data)), data);
+  const html = renderToStaticMarkup(React.createElement(ScenarioExport, { payload: data }));
+  const encoded = html.match(/href="data:application\/json;charset=utf-8,([^"]+)"/)[1].replaceAll("&#x27;", "'").replaceAll("&amp;", "&");
+  assert.deepEqual(parseScenarioExport(decodeURIComponent(encoded)), data);
+  const result = spawnSync(python, ["-c", "import sys,json; from app.schemas import ExportPayload; p=json.load(sys.stdin); assert ExportPayload.model_validate(p).inputs_hash==p['inputs_hash']"], { cwd: backend, input: JSON.stringify(data), encoding: "utf8" });
+  assert.equal(result.status, 0, result.stderr);
 });
 test("downloads reopen as complete JSON; unavailable/invalid snapshots have no download link", () => {
   const html = renderToStaticMarkup(React.createElement(ScenarioExport, { payload: fixture }));

@@ -2,6 +2,7 @@ import type { ApiDesignCalculateResponse, ApiGridPoint, ApiProvenanceMap, ApiSce
 import type { WorkspaceState } from "./workspace-contracts";
 import { parseSimulationResult, validateSimulationRequest, type SimulationResult } from "./simulation-client";
 import { computeWorkspaceExportInputsHash } from "./workspace-export";
+import { expectedRetainedCount } from "./expected-retained";
 
 /** Raw backend coordinates and all result metadata must survive the API adapter. */
 export type ExportGridResult = Omit<ApiScenarioGridResponse, "fixed_enrollment" | "planned_point" | "selected_point" | "worst_case_power"> & {
@@ -192,7 +193,7 @@ export function validateScenarioExport(value: unknown): ScenarioExportPayload {
   const selected = point(grid.selected_point, "selected point"), planned = point(grid.planned_point, "planned point");
   requireValue(selected.p_control === payload.stress_scenario.control_event_rate && selected.dropout === payload.stress_scenario.dropout.control && planned.p_control === payload.planned_design.control_event_rate && planned.dropout === payload.planned_design.dropout.control, "Grid points disagree with assumptions.");
   const analytic = record(evaluation.analytic, "analytic");
-  const retained = Math.floor(payload.fixed_enrollment.control * (1 - payload.stress_scenario.dropout.control));
+  const retained = expectedRetainedCount(payload.fixed_enrollment.control, payload.stress_scenario.dropout.control);
   requireValue(same(analytic.assumed_evaluable_n, { control: retained, treatment: retained }) && (retained === 0) === (analytic.conditional_power_approx === null), "Analytic counts disagree with expected retained enrollment.");
   requireValue(selected.power === analytic.conditional_power_approx, "Selected grid and evaluation powers disagree.");
   const curve = grid.power_curve;
