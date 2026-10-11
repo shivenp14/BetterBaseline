@@ -3,10 +3,10 @@
   "preset_id": "baseline-collapse-v1",
   "result_status": "measured_generated_backend_output",
   "inputs_hash": "sha256:d4dfd5525e9b355437d458dd211996674bd3b263509125fdceaf1b3bf8643380",
-  "engine_commit": "c162d88aa7ff57843128a3e8bef821667aeb8331",
+  "engine_commit": "74998ccbc9649e9796baf4b1c414a7f7ed60a83f",
   "generation": {
     "command": "uv run --locked --directory backend python ../demo-data/generate_snapshots.py",
-    "engine_commit": "c162d88aa7ff57843128a3e8bef821667aeb8331",
+    "engine_commit": "74998ccbc9649e9796baf4b1c414a7f7ed60a83f",
     "seed": 42,
     "replicates": 10000,
     "grid_request": {
