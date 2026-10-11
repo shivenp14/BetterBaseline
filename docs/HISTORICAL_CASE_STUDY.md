@@ -18,7 +18,22 @@ not at 52 weeks. Both trials experienced fewer exacerbations than expected,
 reducing statistical power. COVID-era enrollment is a possible contributor;
 neither this observation nor the binary demo proves the cause of AERIFY-2's result.
 
-## Default illustrative inputs
+## What the tool could have helped a team examine
+
+The counterfactual is a planning workflow: specify an assumed treatment effect,
+freeze the proposed enrollment, and explore lower event risks before recruitment.
+A visible loss of conditional power could prompt review of conservative inputs,
+enrollment margins, or design feasibility with a clinical statistician. These are
+possible responses to sensitivity, not evaluated recommendations for AERIFY.
+
+An analysis of AERIFY itself would require the original protocol/statistical
+analysis plan, its planning assumptions, and a validated model for recurrent
+events. We have not established the power of an alternative AERIFY design or
+whether it would have met the endpoint. The present tool demonstrates the
+binary-outcome analogue. See the [presentation guide](PRESENTATION_GUIDE.md) and
+[Devpost replacement story](DEVPOST_STORY.md) for consistent public wording.
+
+### Default illustrative inputs
 
 The workspace continues to initialize with `baseline-collapse-v1`. The historical
 panel's load button also selects or resets that preset through the existing

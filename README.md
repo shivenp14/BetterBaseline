@@ -6,7 +6,36 @@ A clinical trial can be designed for 80% statistical power **only under the assu
 
 **Better Baseline** makes those vulnerabilities visible. It is a reproducible, interactive planning tool for exploring how uncertain assumptions affect the statistical power and sample size of a proposed trial.
 
-> **Project status:** HackRU implementation blueprint. This folder currently contains planning documents; the application and commands below describe the intended build, not a deployed or verified product.
+> **Project status:** Hackathon research prototype with a Next.js workspace and a FastAPI statistical backend. The MVP models two-arm binary endpoints and includes synthetic demos, sensitivity charts, seeded simulations, and scenario exports. It requires independent statistical review before use in real study planning.
+
+## The real-world question behind Better Baseline
+
+**What if fewer patients experience the event than your trial was designed to expect?**
+
+In May 2025, Regeneron and Sanofi reported that AERIFY-1 met its primary endpoint
+and AERIFY-2 missed it at 52 weeks. The sponsors also reported fewer COPD
+exacerbations than anticipated and reduced statistical power in both trials.
+See their [results announcement](https://investor.regeneron.com/news-releases/news-release-details/itepekimab-met-primary-endpoint-one-two-chronic-obstructive/)
+and the registry records for [AERIFY-1](https://clinicaltrials.gov/study/NCT04701983)
+and [AERIFY-2](https://clinicaltrials.gov/study/NCT04751487).
+
+This motivates our planning question: **how sensitive is a trial's ability to
+detect an assumed benefit to the event rate used to size it?** Better Baseline
+lets a team freeze enrollment, lower the assumed control risk, and see where
+conditional power falls below its target. That can prompt a discussion about
+more conservative assumptions, enrollment margins, or whether the proposed
+design is feasible before recruitment begins.
+
+**How could this have helped with an AERIFY-like planning problem?** It could have
+made sensitivity to fewer events easier to inspect and communicate during design
+review. An AERIFY-specific analysis would need its original planning assumptions
+and a validated recurrent-event model: its endpoint was an annualized exacerbation
+rate, while our MVP supports binary risks. The example below illustrates the
+mechanism, not a reconstruction of AERIFY-2 or proof that its outcome was preventable.
+
+For the full evidence boundary, read the [historical case study](docs/HISTORICAL_CASE_STUDY.md).
+For public-facing copy, see the [Devpost story](docs/DEVPOST_STORY.md) and
+[presentation guide](docs/PRESENTATION_GUIDE.md).
 
 ## The idea in 30 seconds
 
@@ -32,7 +61,7 @@ For a hypothetical two-arm trial with a binary adverse endpoint:
 
 The insight: a design that looks adequately powered under a single forecast may be sensitive to plausible changes in the baseline rate.
 
-## What makes it more than an AI wrapper?
+## How the tool makes design risk visible
 
 The core product is **statistical computation**, not generated text:
 
@@ -44,20 +73,20 @@ The core product is **statistical computation**, not generated text:
 
 **MVP boundaries:** individually randomized, two-arm, 1:1 superiority trials; one binary primary endpoint; a two-sided test. Survival outcomes, adaptive designs, multiple endpoints, and real-world efficacy predictions are **not** part of the initial release.
 
-## Planned technology
+## Technology
 
 | Layer | Technology | Purpose |
 | --- | --- | --- |
-| Frontend | Next.js, React, TypeScript, Tailwind | Design controls, comparisons, charts |
-| Visualization | Plotly or a compatible chart library | Power curves, heatmap, threshold boundary |
+| Frontend | Next.js, React, TypeScript, CSS modules | Design controls, comparisons, charts |
+| Visualization | SVG charts and accessible tables | Power curves, heatmap, threshold boundary |
 | API | Python, FastAPI, Pydantic | Validated scenario endpoints and contracts |
 | Statistical core | NumPy, SciPy, statsmodels | Analytic power, sample sizing, Monte Carlo |
-| Optional trial metadata | ClinicalTrials.gov API v2 | Source-linked study metadata; **not** assumed original design inputs |
+| Optional trial metadata | ClinicalTrials.gov API v2 | Optional source-linked study metadata; **not** original design inputs |
 | QA and delivery | pytest, GitHub Actions, Docker | Numerical regression tests and reproducible deployment |
 
 No database, authentication, paid AI API, or individual patient records are required for the hackathon MVP.
 
-### Intended data flow
+### Data flow
 
 ```text
 User inputs + synthetic presets
@@ -80,21 +109,11 @@ User inputs + synthetic presets
  Charts · comparisons · export
 ```
 
-## Getting started (after the code is implemented)
+## Run locally
 
-**Prerequisites:** Python 3.12, Node.js LTS, and npm. Install and pin compatible dependency versions when scaffolding.
+**Prerequisites:** Python 3.12, uv, Node.js LTS, and npm. Use the committed dependency locks.
 
 Start the backend:
-
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -e '.[dev]'
-uvicorn app.main:app --reload --port 8000
-```
-
-Start the frontend in another terminal:
 
 ```bash
 cd backend
@@ -114,9 +133,10 @@ npm run dev
 Open **http://localhost:3000**. The default frontend configuration sends fresh
 calculate and evaluate requests to the local API. Set `NEXT_PUBLIC_API_MODE=demo`
 in `frontend/.env.local` only when intentionally using labeled fixtures and local
-analytic calculations. The backend grid endpoint is currently a #66 scaffold that
-returns HTTP 501; the live frontend reports that limitation and does not substitute
-client-side grid formulas.
+analytic calculations. In live mode, the backend calculates the fixed-enrollment
+power surface and target-power boundary; demo mode is explicitly labeled. The
+default `baseline-collapse-v1` preset contains synthetic assumptions, even when
+the backend calculates its results.
 
 Run backend tests and the frontend's real-service integration check:
 
@@ -133,7 +153,7 @@ workspace invariant commands.
 
 ## API overview
 
-The planned v1 API has three essential endpoints:
+The v1 API has three core calculation endpoints:
 
 | Endpoint | What it does |
 | --- | --- |
@@ -141,23 +161,24 @@ The planned v1 API has three essential endpoints:
 | `POST /api/v1/scenarios/evaluate` | Evaluate a fixed design under a stress scenario; optionally run seeded simulation |
 | `POST /api/v1/scenarios/grid` | Return the analytic power surface for charts |
 
-Optional: `GET /api/v1/trials/{nct_id}` for public trial metadata. See the [infrastructure specification](02_INFRASTRUCTURE_ARCHITECTURE.md) for request/response examples and field definitions.
+Optional: `GET /api/v1/trials/{nct_id}` looks up public trial metadata without filling planning assumptions. See the [infrastructure specification](docs/02_INFRASTRUCTURE_ARCHITECTURE.md) for request/response examples and field definitions.
 
-## Development priorities
+## Next steps
 
-**Ship first:** validated sample-size calculation → immutable planned design vs. stress scenario → live power comparison → sensitivity heatmap → seeded Monte Carlo → reproducible export.
-
-**Only if time permits:** ClinicalTrials.gov metadata import and curated real-world context. An explicit demo mode remains available for synthetic fixture exploration.
+Extend validation and usability testing, then add endpoint-specific models for
+recurrent events and survival outcomes. Historical replay would also require
+curated protocols and verified planning assumptions. Adaptive re-estimation is a
+future research direction, not a feature of this MVP.
 
 ## Documentation
 
 | Read | Document | Contents |
 | --- | --- | --- |
-| **1** | [Product & Statistical Specification](01_BETTER_BASELINE_SPEC.md) | The problem, scope, mathematical definitions, UX requirements, scientific guardrails, and acceptance criteria |
-| **2** | [Infrastructure & Architecture](02_INFRASTRUCTURE_ARCHITECTURE.md) | Repository layout, stack decisions, JSON contracts, API design, caching, deployment, and CI |
-| **3** | [Implementation Playbook](03_IMPLEMENTATION_PLAYBOOK.md) | Module-by-module tasks, code examples, tests, four-person ownership, and the 24-hour build schedule |
+| **1** | [Product & Statistical Specification](docs/01_BASELINE_BREAKER_SPEC.md) | The problem, scope, mathematical definitions, UX requirements, scientific guardrails, and acceptance criteria |
+| **2** | [Infrastructure & Architecture](docs/02_INFRASTRUCTURE_ARCHITECTURE.md) | Repository layout, stack decisions, JSON contracts, API design, caching, deployment, and CI |
+| **3** | [Implementation Playbook](docs/03_IMPLEMENTATION_PLAYBOOK.md) | Module-by-module tasks, code examples, tests, four-person ownership, and the 24-hour build schedule |
 
-**For contributors:** Start with the spec's MVP constraints and numerical test fixture. Freeze the API contract before splitting into parallel branches. Keep one reproducible synthetic demo working throughout development.
+**For contributors:** Start with the spec's MVP constraints, the statistical methods, and the numerical fixtures. Preserve the frozen-enrollment invariant and keep historical context separate from numerical input provenance.
 
 ## Scientific scope and responsibility
 
@@ -170,4 +191,4 @@ Optional: `GET /api/v1/trials/{nct_id}` for public trial metadata. See the [infr
 
 ---
 
-*Built as a HackRU project concept. Current deliverables are the specification, architecture, and implementation plan—not a claim of a validated or production-ready clinical application.*
+*Built for HackRU. Better Baseline makes conditional design risk visible; clinical use requires endpoint-specific methods and independent validation.*
