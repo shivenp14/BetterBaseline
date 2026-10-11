@@ -30,6 +30,6 @@ if [[ ! -f uv.lock ]]; then
 fi
 
 # Install the backend and dev extra only from the committed lock. pytest
-# discovers every module under tests/, so new mandatory tests are included.
+# discovers backend tests and repository fixture tests, including new modules.
 uv sync --locked --python "$python_bin" --extra dev
-uv run --locked --python "$python_bin" pytest -q
+uv run --locked --python "$python_bin" pytest -q tests "$repo_root/tests"
