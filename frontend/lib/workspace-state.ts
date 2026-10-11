@@ -10,6 +10,7 @@ import type {
 } from "./contracts";
 import { getPresetById } from "./presets";
 import { getApiMode } from "./api";
+import type { ExtendedEvaluateRequest } from "./api";
 
 export type WorkspaceAction =
   | { type: "LOAD_PRESET"; presetId: string }
@@ -19,10 +20,10 @@ export type WorkspaceAction =
   | { type: "CALCULATE_ERROR"; error: string; requestRevision: number }
   | { type: "UPDATE_STRESS_BASELINE"; baseline: number }
   | { type: "UPDATE_STRESS_DROPOUT"; dropout: number }
-  | { type: "START_EVALUATE" }
+  | { type: "START_EVALUATE"; requestRevision?: number }
   | { type: "EVALUATE_SUCCESS"; response: EvaluateResponse; requestRevision: number }
   | { type: "EVALUATE_ERROR"; error: string; requestRevision: number }
-  | { type: "START_GRID" }
+  | { type: "START_GRID"; requestRevision?: number }
   | { type: "GRID_SUCCESS"; response: GridResponse; requestRevision: number }
   | { type: "GRID_ERROR"; error: string; requestRevision: number }
   | { type: "RESET_TO_PRESET" };
@@ -79,6 +80,23 @@ export function markFieldManual(
       retrieved_at: new Date().toISOString(),
       source_url: null,
     },
+  };
+}
+
+/** Build the real stress request from the current draft and immutable enrollment lock. */
+export function buildStressEvaluationRequest(state: WorkspaceState): ExtendedEvaluateRequest {
+  if (!state.frozenEnrollment) throw new Error("Calculate a design before evaluating stress.");
+  return {
+    planned_design: state.plannedDraft,
+    fixed_enrollment: state.frozenEnrollment,
+    stress_scenario: {
+      control_event_rate: state.stressBaseline,
+      dropout: { control: state.stressDropout, treatment: state.stressDropout },
+      effect_override: null,
+    },
+    simulation: { replicates: 10000, seed: 42 },
+    preset_id: state.presetId,
+    provenance_ledger: state.provenanceLedger,
   };
 }
 
@@ -220,6 +238,9 @@ export function workspaceReducer(
       if (state.designStatus === "calculating") return state;
       return {
         ...state,
+        // Every evaluation gets a unique revision. AbortController cancellation
+        // is best-effort; the revision also rejects transports that resolve late.
+        requestRevision: action.requestRevision ?? state.requestRevision + 1,
         evaluateStatus: "evaluating",
         evaluateError: null,
       };
@@ -253,6 +274,7 @@ export function workspaceReducer(
       if (state.designStatus === "calculating") return state;
       return {
         ...state,
+        requestRevision: action.requestRevision ?? state.requestRevision + 1,
         gridStatus: "loading",
         gridError: null,
       };

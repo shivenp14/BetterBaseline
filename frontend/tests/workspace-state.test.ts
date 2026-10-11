@@ -553,6 +553,22 @@ function testCalculateInvalidationDoesNotClearNewerRequest() {
   console.log("✔ Stress edits clear pending calculation and old completions preserve newer requests");
 }
 
+function testSupersededEvaluationRevisionIsRejected() {
+  let state = initializeWorkspaceState("baseline-collapse-v1");
+  state = workspaceReducer(state, { type: "START_EVALUATE" });
+  const firstRevision = state.requestRevision;
+  state = workspaceReducer(state, { type: "START_EVALUATE" });
+  const newerRequestState = state;
+  assert.ok(state.requestRevision > firstRevision, "each evaluation receives a distinct revision");
+  state = workspaceReducer(state, {
+    type: "EVALUATE_SUCCESS",
+    response: initializeWorkspaceState("baseline-collapse-v1").evaluateResult!,
+    requestRevision: firstRevision,
+  });
+  assert.strictEqual(state, newerRequestState, "late result cannot replace a newer evaluation for the same inputs");
+  console.log("✔ Superseded same-input evaluation response is rejected by revision guard");
+}
+
 async function runAll() {
   testPresetLoading();
   testStressAdjustmentPreservesFrozenEnrollment();
@@ -566,6 +582,7 @@ async function runAll() {
   await testRolandReviewFixes();
   await testFieldProvenanceRoundTripsThroughLiveAndFixtureResults();
   testCalculateInvalidationDoesNotClearNewerRequest();
+  testSupersededEvaluationRevisionIsRejected();
   console.log("\nALL WORKSPACE STATE INVARIANT TESTS PASSED!");
 }
 

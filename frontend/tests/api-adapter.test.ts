@@ -101,7 +101,12 @@ async function run() {
   assert.equal(gridBody.preset_id, undefined);
   gridAvailable = true;
   const liveGrid = await getStressGrid(gridRequest);
-  assert.deepEqual(liveGrid.planned_point, { baseline: 0.2, dropout: 0.1 });
+  assert.equal(liveGrid.planned_point.baseline, 0.2);
+  assert.equal((liveGrid.planned_point as unknown as { p_control: number }).p_control, 0.2,
+    "grid adapter retains canonical point coordinates for export");
+  assert.equal((liveGrid.planned_point as unknown as { power: number }).power, 0.8,
+    "grid adapter retains canonical point results for export");
+  assert.equal((liveGrid.frontier_points[0] as unknown as { p_control: number }).p_control, 0.2);
   assert.equal(liveGrid.selected_point, null, "missing backend selected point remains unavailable instead of falling back to planned point");
   assert.deepEqual(liveGrid.provenance.field_provenance, ledger, "successful live grid response keeps the full request ledger for result/export consumers");
   gridAvailable = false;

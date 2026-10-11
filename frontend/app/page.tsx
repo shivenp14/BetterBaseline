@@ -1,18 +1,21 @@
 "use client";
 
-import { useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { calculateDesign, evaluateScenario, getApiMode, getStressGrid } from "@/lib/api";
 import type { CalculateRequest } from "@/lib/contracts";
 import { getPresetById } from "@/lib/presets";
 import { plannedFieldUpdateAction } from "@/lib/workspace-planning";
 import type { DraftField, PlanningDraft } from "@/lib/validation";
 import {
+  buildStressEvaluationRequest,
   initializeWorkspaceState,
   workspaceReducer,
 } from "@/lib/workspace-state";
 import { PresetSelector } from "@/components/PresetSelector";
 import { DesignForm } from "@/components/DesignForm";
 import { StressControls } from "@/components/StressControls";
+import { buildWorkspaceExport, downloadWorkspaceExport, hasCurrentExportableResults } from "@/lib/workspace-export";
+import { scheduleDebounced } from "@/lib/debounce";
 
 function percent(value: number, digits = 0): string {
   return `${(value * 100).toFixed(digits)}%`;
@@ -27,6 +30,8 @@ export default function Home() {
   const calculateAbortRef = useRef<AbortController | null>(null);
   const evaluateAbortRef = useRef<AbortController | null>(null);
   const gridAbortRef = useRef<AbortController | null>(null);
+  const stressEvaluationPendingRef = useRef(false);
+  const nextRequestRevisionRef = useRef(0);
 
   const {
     presetId,
@@ -60,22 +65,26 @@ export default function Home() {
 
   function handleSelectPreset(nextPresetId: string) {
     abortAllPending();
+    stressEvaluationPendingRef.current = false;
     dispatch({ type: "LOAD_PRESET", presetId: nextPresetId });
   }
 
   function handleResetPreset() {
     abortAllPending();
+    stressEvaluationPendingRef.current = false;
     dispatch({ type: "RESET_TO_PRESET" });
     setFormResetKey((key) => key + 1);
   }
 
   function handleStressBaselineChange(val: number) {
     abortAllPending();
+    stressEvaluationPendingRef.current = true;
     dispatch({ type: "UPDATE_STRESS_BASELINE", baseline: val });
   }
 
   function handleStressDropoutChange(val: number) {
     abortAllPending();
+    stressEvaluationPendingRef.current = true;
     dispatch({ type: "UPDATE_STRESS_DROPOUT", dropout: val });
   }
 
@@ -87,7 +96,8 @@ export default function Home() {
     abortAllPending();
     const controller = new AbortController();
     calculateAbortRef.current = controller;
-    const revision = requestRevision + 1;
+    const revision = Math.max(requestRevision, nextRequestRevisionRef.current) + 1;
+    nextRequestRevisionRef.current = revision;
 
     dispatch({ type: "START_CALCULATE", requestRevision: revision });
     try {
@@ -106,30 +116,18 @@ export default function Home() {
     }
   }
 
-  async function handleEvaluate() {
-    if (designStatus === "calculating" || !frozenEnrollment) return;
+  const handleEvaluate = useCallback(async () => {
+    if (designStatus === "calculating" || !frozenEnrollment ||
+      (getApiMode() === "live" && designStatus !== "success")) return;
     evaluateAbortRef.current?.abort();
     const controller = new AbortController();
     evaluateAbortRef.current = controller;
-    const revision = requestRevision;
+    const revision = Math.max(requestRevision, nextRequestRevisionRef.current) + 1;
+    nextRequestRevisionRef.current = revision;
 
-    dispatch({ type: "START_EVALUATE" });
+    dispatch({ type: "START_EVALUATE", requestRevision: revision });
     try {
-      const response = await evaluateScenario(
-        {
-          planned_design: plannedDraft,
-          fixed_enrollment: frozenEnrollment,
-          stress_scenario: {
-            control_event_rate: stressBaseline,
-            dropout: { control: stressDropout, treatment: stressDropout },
-            effect_override: null,
-          },
-          simulation: { replicates: 10000, seed: 42 },
-          preset_id: presetId,
-          provenance_ledger: provenanceLedger,
-        },
-        controller.signal
-      );
+      const response = await evaluateScenario(buildStressEvaluationRequest(state), controller.signal);
       dispatch({ type: "EVALUATE_SUCCESS", response, requestRevision: revision });
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === "AbortError") return;
@@ -139,16 +137,26 @@ export default function Home() {
         requestRevision: revision,
       });
     }
-  }
+  }, [designStatus, frozenEnrollment, requestRevision, state]);
+
+  useEffect(() => {
+    if (!stressEvaluationPendingRef.current || !frozenEnrollment || designStatus === "calculating" ||
+      (getApiMode() === "live" && designStatus !== "success")) return;
+    return scheduleDebounced(() => {
+      stressEvaluationPendingRef.current = false;
+      void handleEvaluate();
+    }, 350);
+  }, [stressBaseline, stressDropout, frozenEnrollment, designStatus, handleEvaluate]);
 
   async function handleLoadGrid() {
     if (designStatus === "calculating" || !frozenEnrollment || !displayedGrid) return;
     gridAbortRef.current?.abort();
     const controller = new AbortController();
     gridAbortRef.current = controller;
-    const revision = requestRevision;
+    const revision = Math.max(requestRevision, nextRequestRevisionRef.current) + 1;
+    nextRequestRevisionRef.current = revision;
 
-    dispatch({ type: "START_GRID" });
+    dispatch({ type: "START_GRID", requestRevision: revision });
     try {
       const response = await getStressGrid(
         {
@@ -175,6 +183,11 @@ export default function Home() {
         requestRevision: revision,
       });
     }
+  }
+
+  function handleDownloadExport() {
+    const payload = buildWorkspaceExport(state);
+    downloadWorkspaceExport(payload);
   }
 
   return (
@@ -520,6 +533,18 @@ export default function Home() {
             ))}
           </tbody>
         </table>
+      </section>
+
+      <section aria-labelledby="export-heading">
+        <h2 id="export-heading">7. Export current results</h2>
+        <p>Downloads a canonical JSON snapshot with the active assumptions, frozen enrollment, current field provenance, and only results that match the current inputs.</p>
+        <button
+          type="button"
+          onClick={handleDownloadExport}
+          disabled={!frozenEnrollment || !hasCurrentExportableResults(state)}
+        >
+          Download current results (JSON)
+        </button>
       </section>
 
       <footer>
