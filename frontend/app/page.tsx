@@ -51,7 +51,7 @@ export default function Home() {
     try {
       const response = await calculateDesign({ ...request, provenance_ledger: captured.provenanceLedger }, controller.signal);
       if (controller.signal.aborted || generation.current !== expected) return;
-      const canonical = { ...response }; delete (canonical as Partial<typeof canonical>).provenance; delete (canonical as Partial<typeof canonical>).mock; delete canonical.execution;
+      const canonical = { ...response, provenance: response.provenance.field_provenance ?? {}, diagnostics: response.diagnostics ?? [] }; delete (canonical as Partial<typeof canonical>).mock; delete canonical.execution;
       setRuns(old => ({ ...old, design: { requestState: captured, response: canonical } }));
       dispatch({ type: "CALCULATE_SUCCESS", response, requestRevision: revision });
     } catch (error) {
@@ -113,7 +113,7 @@ export default function Home() {
     try {
       const response = await evaluateScenario({ ...buildStressEvaluationRequest(captured), simulation: request.simulation }, controller.signal);
       if (controller.signal.aborted || captured.inputGeneration !== generation.current) throw new DOMException("Simulation aborted", "AbortError");
-      const result = { ...parseSimulationResult({ ...response, provenance: response.provenance.field_provenance ?? {} }, request), diagnostics: response.diagnostics ?? [] };
+      const result = { ...parseSimulationResult({ ...response, provenance: response.provenance.field_provenance ?? {} }, request), provenance: response.provenance.field_provenance ?? {}, diagnostics: response.diagnostics ?? [] };
       setRuns(old => ({ ...old, evaluation: { requestState: captured, response: result } }));
       dispatch({ type: "EVALUATE_SUCCESS", response, requestRevision: revision }); return result;
     } catch (error) {

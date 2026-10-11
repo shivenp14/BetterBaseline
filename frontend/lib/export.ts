@@ -1,8 +1,9 @@
-import type { CalculateResponse, EvaluateRequest, StatisticalDiagnostic, TrialAssumptions } from "./contracts";
+import type { ApiDesignCalculateResponse, ApiProvenanceMap, EvaluateRequest, StatisticalDiagnostic, TrialAssumptions } from "./contracts";
 import type { WorkspaceState, ProvenanceLedger } from "./workspace-contracts";
 import type { CurveApiResponse } from "../components/PowerCurve";
 import type { HeatmapApiResponse } from "../components/StressHeatmap";
 import { parseSimulationResult, validateSimulationRequest, type SimulationResult } from "./simulation-client";
+import { computeWorkspaceExportInputsHash } from "./workspace-export";
 
 /** Raw backend coordinates and all result metadata must survive the API adapter. */
 export type ExportGridResult = CurveApiResponse & HeatmapApiResponse & {
@@ -15,8 +16,8 @@ export type ExportGridResult = CurveApiResponse & HeatmapApiResponse & {
   worst_case_power: number | null;
   frontier_points: unknown[];
 };
-export type ExportEvaluationResult = SimulationResult & { diagnostics?: StatisticalDiagnostic[] };
-export type ExportDesignResult = Omit<CalculateResponse, "provenance" | "execution" | "mock">;
+export type ExportEvaluationResult = Omit<SimulationResult, "provenance"> & { provenance: ApiProvenanceMap; diagnostics?: StatisticalDiagnostic[] };
+export type ExportDesignResult = ApiDesignCalculateResponse;
 
 /** ExportPayload v1 field set from backend/app/schemas.py. Full evaluation
  * extensions from #65 are retained, including both MCSEs and sampled counts.
@@ -32,8 +33,9 @@ export interface ScenarioExportPayload {
   evaluation_result: ExportEvaluationResult;
   grid_result: ExportGridResult;
   software_versions: Record<string, string>;
-  provenance: ProvenanceLedger;
+  provenance: ApiProvenanceMap;
   exported_at: string;
+  inputs_hash: string;
 }
 export interface CompletedExportRun<T> { requestState: WorkspaceState; response: T }
 export interface ExportRuns {
@@ -89,15 +91,31 @@ function versions(value: unknown, field: string, required = ["python", "numpy", 
   for (const key of required) text(v[key], `${field}.${key}`);
   Object.values(v).forEach(v => text(v, field));
 }
-function sourceLedger(value: unknown): ProvenanceLedger {
+export function normalizeExportProvenance(value: unknown): ApiProvenanceMap {
   const ledger = record(value, "provenance");
+  const normalized: ApiProvenanceMap = {};
   for (const [pointer, raw] of Object.entries(ledger)) {
     requireValue(pointer.startsWith("/"), "Provenance keys must be JSON field pointers.");
     const source = record(raw, `provenance.${pointer}`);
     requireValue(["manual_user", "synthetic_preset", "protocol_curated", "clinicaltrials_registry"].includes(String(source.source)), `Invalid provenance source for ${pointer}.`);
-    for (const key of ["description", "retrieved_at", "source_url"]) requireValue(source[key] === undefined || source[key] === null || typeof source[key] === "string", `Invalid source metadata for ${pointer}.`);
+    for (const key of ["description", "retrieved_at", "source_url", "source_location"]) requireValue(source[key] === undefined || source[key] === null || typeof source[key] === "string", `Invalid source metadata for ${pointer}.`);
+    for (const key of ["verified_by_user", "is_observed_registry_result"]) requireValue(source[key] === undefined || source[key] === null || typeof source[key] === "boolean", `Invalid audit flag for ${pointer}.`);
+    const observed = source.is_observed_registry_result === true || (String(source.source_url ?? "").toLowerCase().includes("clinicaltrials.gov") && String(source.description ?? "").toLowerCase().includes("observed"));
+    requireValue(!(source.source === "protocol_curated" && observed), "Registry observed results cannot be relabeled as protocol planning assumptions.");
+    normalized[pointer] = {
+      source: source.source as ApiProvenanceMap[string]["source"], description: source.description as string | null | undefined ?? null,
+      retrieved_at: source.retrieved_at as string | null | undefined ?? null, source_url: source.source_url as string | null | undefined ?? null,
+      source_location: source.source_location as string | null | undefined ?? null, verified_by_user: source.verified_by_user as boolean | null | undefined ?? null,
+      is_observed_registry_result: source.is_observed_registry_result as boolean | null | undefined ?? null,
+    };
   }
-  return ledger as ProvenanceLedger;
+  return normalized;
+}
+function sameProvenance(a: unknown, b: unknown): boolean {
+  const canonical = (v: unknown) => Object.fromEntries(Object.entries(normalizeExportProvenance(v)).map(([p, source]) => [p, { ...source,
+    // #127's normalization infers observed registry results and emits null for false.
+    is_observed_registry_result: source.is_observed_registry_result === true || (String(source.source_url ?? "").toLowerCase().includes("clinicaltrials.gov") && String(source.description ?? "").toLowerCase().includes("observed")) ? true : null }]));
+  return same(canonical(a), canonical(b));
 }
 function inputPointers(payload: ScenarioExportPayload): string[] {
   const paths: string[] = [];
@@ -124,20 +142,20 @@ function point(value: unknown, field: string, dropout = true) {
 export function validateScenarioExport(value: unknown): ScenarioExportPayload {
   jsonValues(value);
   const v = record(value, "export");
-  const keys = ["export_schema_version", "model_version", "planned_design", "fixed_enrollment", "stress_scenario", "design_result", "evaluation_result", "grid_result", "software_versions", "provenance", "exported_at"];
+  const keys = ["export_schema_version", "model_version", "planned_design", "fixed_enrollment", "stress_scenario", "design_result", "evaluation_result", "grid_result", "software_versions", "provenance", "exported_at", "inputs_hash"];
   requireValue(Object.keys(v).length === keys.length && keys.every(k => Object.hasOwn(v, k)), "Export must use the complete v1 field set.");
   requireValue(v.export_schema_version === 1 && v.model_version === "binary-v1", "Unsupported export schema or model version.");
   timestamp(v.exported_at, "exported_at"); versions(v.software_versions, "software_versions");
   const payload = v as unknown as ScenarioExportPayload;
   const evaluation = record(v.evaluation_result, "evaluation_result");
   const mc = record(evaluation.monte_carlo, "monte_carlo");
-  const ledger = sourceLedger(v.provenance);
+  const ledger = normalizeExportProvenance(v.provenance);
   inputPointers(payload).forEach(p => requireValue(ledger[p], `Missing field provenance: ${p}.`));
   const request = { planned_design: payload.planned_design, fixed_enrollment: payload.fixed_enrollment, stress_scenario: payload.stress_scenario,
     simulation: { seed: mc.seed as number, replicates: mc.replicates as number }, provenance: ledger };
   try { validateSimulationRequest(request); parseSimulationResult(evaluation, request); }
   catch (error) { throw new ScenarioExportError(error instanceof Error ? error.message : "Invalid evaluation result."); }
-  requireValue(same(evaluation.provenance, ledger), "Evaluation provenance does not match exported inputs.");
+  requireValue(sameProvenance(evaluation.provenance, ledger), "Evaluation provenance does not match exported inputs.");
   const metadata = record(evaluation.metadata, "evaluation metadata"); timestamp(metadata.computed_at, "evaluation computed_at");
   versions(metadata.software_versions, "evaluation software_versions"); versions(mc.software_versions, "Monte Carlo software_versions", ["python", "numpy", "scipy"]);
   const mcVersions = record(mc.software_versions, "Monte Carlo software_versions");
@@ -152,11 +170,12 @@ export function validateScenarioExport(value: unknown): ScenarioExportPayload {
     : payload.planned_design.control_event_rate - payload.planned_design.effect.value;
   requireValue(Math.abs(design.p_treatment - expectedTreatment) < 1e-12, "Design treatment risk disagrees with planned assumptions.");
   text(design.inputs_hash, "design inputs_hash"); warnings(design.warnings, "design warnings");
+  normalizeExportProvenance(design.provenance);
   const grid = record(v.grid_result, "grid_result");
   requireValue(grid.model_version === "binary-v1" && grid.method === "cohen_h_normal_v1" && grid.grid_label === "expected_count_approximation", "Unsupported grid method.");
   text(grid.inputs_hash, "grid inputs_hash"); timestamp(grid.computed_at, "grid computed_at"); warnings(grid.warnings, "grid warnings");
   versions(grid.software_versions, "grid software_versions");
-  requireValue(same(grid.software_versions, v.software_versions) && same(grid.fixed_enrollment, v.fixed_enrollment) && same(grid.provenance, ledger), "Grid environment, enrollment or provenance disagrees with inputs.");
+  requireValue(same(grid.software_versions, v.software_versions) && same(grid.fixed_enrollment, v.fixed_enrollment) && sameProvenance(grid.provenance, ledger), "Grid environment, enrollment or provenance disagrees with inputs.");
   requireValue(grid.target_power === payload.planned_design.target_power, "Grid target power disagrees with inputs.");
   const x = grid.x_baseline, y = grid.y_dropout;
   for (const [axis, name] of [[x, "baseline"], [y, "dropout"]] as const) {
@@ -194,12 +213,14 @@ export function validateScenarioExport(value: unknown): ScenarioExportPayload {
   requireValue(Array.isArray(grid.frontier_points) && Array.isArray(grid.contour_segments), "Raw frontier and segmented contour data are required.");
   grid.frontier_points.forEach(p => point(p, "frontier point"));
   grid.contour_segments.forEach(raw => { const edge = record(raw, "contour segment"); for (const key of ["start", "end"]) { const p = record(edge[key], "contour endpoint"); finite(p.p_control, "contour baseline"); finite(p.dropout, "contour dropout"); } });
+  const expectedHash = computeWorkspaceExportInputsHash(payload.planned_design, payload.fixed_enrollment, payload.stress_scenario, ledger);
+  requireValue(payload.inputs_hash === expectedHash, "Export inputs_hash does not match canonical assumptions and provenance.");
   return structuredClone(payload);
 }
 
 function planningIdentity(state: WorkspaceState) { return [state.plannedDraft, state.calculatedDesign?.inputs_hash, state.frozenEnrollment]; }
 export function exportWorkspaceIdentity(state: WorkspaceState): string {
-  return JSON.stringify([state.inputGeneration, ...planningIdentity(state), state.stressBaseline, state.stressDropout, state.provenanceLedger]);
+  return JSON.stringify([state.inputGeneration, ...planningIdentity(state), state.stressBaseline, state.stressDropout, normalizeExportProvenance(state.provenanceLedger)]);
 }
 
 export function buildScenarioExport(state: WorkspaceState, runs: ExportRuns, exportedAt = new Date().toISOString()): ScenarioExportPayload {
@@ -208,10 +229,14 @@ export function buildScenarioExport(state: WorkspaceState, runs: ExportRuns, exp
   requireValue(same(runs.design.requestState.plannedDraft, state.plannedDraft) && runs.design.response.inputs_hash === state.calculatedDesign?.inputs_hash, "The calculated design is stale.");
   for (const run of [runs.evaluation, runs.grid]) requireValue(exportWorkspaceIdentity(run.requestState) === exportWorkspaceIdentity(state), "Results do not match the displayed inputs and provenance.");
   requireValue(state.evaluateResult?.metadata.inputs_hash === runs.evaluation.response.metadata.inputs_hash && state.gridResult?.inputs_hash === runs.grid.response.inputs_hash, "Workspace result hashes do not match captured results.");
+  const provenance = normalizeExportProvenance(runs.evaluation.response.provenance);
+  requireValue(sameProvenance(provenance, state.provenanceLedger), "Returned provenance does not match current inputs.");
+  const stress = { control_event_rate: state.stressBaseline, dropout: { control: state.stressDropout, treatment: state.stressDropout }, effect_override: null };
   return validateScenarioExport({ export_schema_version: 1, model_version: "binary-v1", planned_design: state.plannedDraft,
     fixed_enrollment: state.frozenEnrollment, stress_scenario: { control_event_rate: state.stressBaseline, dropout: { control: state.stressDropout, treatment: state.stressDropout }, effect_override: null },
     design_result: runs.design.response, evaluation_result: runs.evaluation.response, grid_result: runs.grid.response,
-    software_versions: runs.evaluation.response.metadata.software_versions, provenance: state.provenanceLedger, exported_at: exportedAt });
+    software_versions: runs.evaluation.response.metadata.software_versions, provenance, exported_at: exportedAt,
+    inputs_hash: computeWorkspaceExportInputsHash(state.plannedDraft, state.frozenEnrollment, stress, provenance) });
 }
 export function serializeScenarioExport(payload: ScenarioExportPayload): string { return JSON.stringify(validateScenarioExport(payload), null, 2) + "\n"; }
 export function parseScenarioExport(json: string): ScenarioExportPayload {

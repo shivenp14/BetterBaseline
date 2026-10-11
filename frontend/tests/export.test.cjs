@@ -13,9 +13,10 @@ const { renderToStaticMarkup } = require("react-dom/server");
 require.extensions[".ts"] = require.extensions[".tsx"] = (module, filename) => module._compile(ts.transpileModule(fs.readFileSync(filename, "utf8"), {
   fileName: filename, compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
 }).outputText, filename);
-const { validateScenarioExport, serializeScenarioExport, parseScenarioExport, buildScenarioExport } = require("../lib/export.ts");
+const { validateScenarioExport, serializeScenarioExport, parseScenarioExport, buildScenarioExport, normalizeExportProvenance } = require("../lib/export.ts");
+const { computeWorkspaceExportInputsHash } = require("../lib/workspace-export.ts");
 const { ScenarioExport } = require("../components/ScenarioExport.tsx");
-const { initializeWorkspaceState } = require("../lib/workspace-state.ts");
+const { initializeWorkspaceState, workspaceReducer } = require("../lib/workspace-state.ts");
 const python = process.env.EXPORT_TEST_PYTHON || "python3";
 const backend = path.resolve(__dirname, "../../backend");
 let server, origin, log = "", fixture, manualFixture, arrFixture;
@@ -37,11 +38,16 @@ async function calculateFixture(manual = false, arr = false) {
   const planned = { model_version: "binary-v1", control_event_rate: .2, effect: { kind: arr ? "absolute_risk_reduction" : "relative_risk", value: arr ? .1 : .75 }, alpha: .05, target_power: .8, allocation_ratio: 1, dropout: { control: 0, treatment: 0 } };
   const stress = { control_event_rate: arr ? .2 : .1, dropout: { control: .1, treatment: .1 }, effect_override: null };
   const ledger = provenance(planned, stress, manual);
-  const design = await post("design/calculate", planned);
+  if (manual) {
+    Object.assign(ledger["/planned_design/alpha"], { source: "protocol_curated", source_location: "Protocol §3 — α", verified_by_user: true, is_observed_registry_result: false });
+    Object.assign(ledger["/stress_scenario/control_event_rate"], { source: "clinicaltrials_registry", source_url: "https://clinicaltrials.gov/study/NCT00000000", source_location: "Observed result table", description: "Observed registry result used for hypothetical sensitivity", verified_by_user: false, is_observed_registry_result: true });
+  }
+  const design = await post("design/calculate", { ...planned, provenance: ledger });
   const inputs = { planned_design: planned, fixed_enrollment: design.enrolled_n, stress_scenario: stress, simulation: { seed: 42, replicates: 1000 }, provenance: ledger };
   const evaluation = await post("scenarios/evaluate", inputs);
   const grid = await post("scenarios/grid", { planned_design: planned, fixed_enrollment: design.enrolled_n, selected_scenario: stress, x_baseline: { min: .05, max: .35, steps: 3 }, y_dropout: { min: 0, max: .4, steps: 2 }, provenance: ledger });
-  return { export_schema_version: 1, model_version: "binary-v1", planned_design: planned, fixed_enrollment: design.enrolled_n, stress_scenario: stress, design_result: design, evaluation_result: evaluation, grid_result: grid, software_versions: evaluation.metadata.software_versions, provenance: ledger, exported_at: "2026-10-11T00:00:00Z" };
+  const canonicalLedger = normalizeExportProvenance(evaluation.provenance);
+  return { export_schema_version: 1, model_version: "binary-v1", planned_design: planned, fixed_enrollment: design.enrolled_n, stress_scenario: stress, design_result: design, evaluation_result: evaluation, grid_result: grid, software_versions: evaluation.metadata.software_versions, provenance: canonicalLedger, exported_at: "2026-10-11T00:00:00Z", inputs_hash: computeWorkspaceExportInputsHash(planned, design.enrolled_n, stress, canonicalLedger) };
 }
 before(async () => {
   const listener = net.createServer(); await new Promise(resolve => listener.listen(0, "127.0.0.1", resolve));
@@ -72,6 +78,10 @@ test("fresh synthetic and manual HTTP runs round-trip without losing any input/r
   }
   assert.equal(fixture.provenance["/planned_design/control_event_rate"].source, "synthetic_preset");
   assert.equal(manualFixture.provenance["/planned_design/control_event_rate"].source, "manual_user");
+  assert.equal(manualFixture.provenance["/planned_design/alpha"].source_location, "Protocol §3 — α");
+  assert.equal(manualFixture.provenance["/planned_design/alpha"].verified_by_user, true);
+  assert.equal(manualFixture.provenance["/stress_scenario/control_event_rate"].verified_by_user, false);
+  assert.equal(manualFixture.provenance["/stress_scenario/control_event_rate"].is_observed_registry_result, true);
   assert.equal(arrFixture.grid_result.invalid_cell_count, 2);
   assert.equal(arrFixture.grid_result.power[0][0], null);
 });
@@ -79,6 +89,7 @@ test("downloads reopen as complete JSON; unavailable/invalid snapshots have no d
   const html = renderToStaticMarkup(React.createElement(ScenarioExport, { payload: fixture }));
   const url = html.match(/href="data:application\/json;charset=utf-8,([^"]+)"/)[1].replaceAll("&#x27;", "'").replaceAll("&amp;", "&");
   assert.deepEqual(parseScenarioExport(decodeURIComponent(url)), fixture);
+  assert.match(JSON.parse(decodeURIComponent(url)).inputs_hash, /^sha256:[a-f0-9]{64}$/);
   assert.match(html, /download="better-baseline-scenario-v1.json"/);
   for (const payload of [null, { ...fixture, grid_result: null }]) {
     const disabled = renderToStaticMarkup(React.createElement(ScenarioExport, { payload }));
@@ -86,13 +97,13 @@ test("downloads reopen as complete JSON; unavailable/invalid snapshots have no d
   }
 });
 test("complete artifacts validate through backend ExportPayload plus full #65 evaluation extension", () => {
-  const result = spawnSync(python, ["-c", "import sys,json; from app.schemas import ExportPayload; from app.routers.scenarios import EvaluationResponse; p=json.load(sys.stdin); ExportPayload.model_validate(p); e=EvaluationResponse.model_validate(p['evaluation_result']); assert e.model_dump(mode='json')==p['evaluation_result']; print('validated')"], { cwd: backend, input: JSON.stringify(manualFixture), encoding: "utf8" });
+  const result = spawnSync(python, ["-c", "import sys,json; from app.schemas import ExportPayload; from app.routers.scenarios import EvaluationResponse; p=json.load(sys.stdin); assert 'inputs_hash' in p; parsed=ExportPayload.model_validate(p); assert parsed.inputs_hash==p['inputs_hash']; e=EvaluationResponse.model_validate(p['evaluation_result']); assert e.model_dump(mode='json')==p['evaluation_result']; print('validated')"], { cwd: backend, input: JSON.stringify(manualFixture), encoding: "utf8" });
   assert.equal(result.status, 0, result.stderr); assert.match(result.stdout, /validated/);
 });
 function currentRuns() {
   const state = initializeWorkspaceState();
-  Object.assign(state, { plannedDraft: fixture.planned_design, frozenEnrollment: fixture.fixed_enrollment, stressBaseline: fixture.stress_scenario.control_event_rate, stressDropout: fixture.stress_scenario.dropout.control, provenanceLedger: fixture.provenance,
-    calculatedDesign: fixture.design_result, evaluateResult: fixture.evaluation_result, gridResult: fixture.grid_result, designStatus: "success", evaluateStatus: "success", gridStatus: "success", requestRevision: 4 });
+  Object.assign(state, structuredClone({ plannedDraft: fixture.planned_design, frozenEnrollment: fixture.fixed_enrollment, stressBaseline: fixture.stress_scenario.control_event_rate, stressDropout: fixture.stress_scenario.dropout.control, provenanceLedger: fixture.provenance,
+    calculatedDesign: fixture.design_result, evaluateResult: fixture.evaluation_result, gridResult: fixture.grid_result, designStatus: "success", evaluateStatus: "success", gridStatus: "success", requestRevision: 4 }));
   const capture = response => ({ requestState: structuredClone(state), response: structuredClone(response) });
   return { state, runs: { design: capture(fixture.design_result), evaluation: capture(fixture.evaluation_result), grid: capture(fixture.grid_result) } };
 }
@@ -106,6 +117,29 @@ test("current export binds endpoint hashes to detached requests; edits and pendi
     statuses.forEach(status => assert.throws(() => buildScenarioExport({ ...state, [field]: status }, runs)));
   }
   assert.throws(() => buildScenarioExport(state, { ...runs, grid: null }));
+});
+test("independent evaluate/grid tokens do not stale current input snapshots", () => {
+  const { state, runs } = currentRuns();
+  let next = workspaceReducer(state, { type: "START_EVALUATE", requestRevision: 20, expectedInputGeneration: state.inputGeneration });
+  next = workspaceReducer(next, { type: "START_GRID", requestRevision: 21, expectedInputGeneration: state.inputGeneration });
+  assert.throws(() => buildScenarioExport(next, runs));
+  next = workspaceReducer(next, { type: "EVALUATE_SUCCESS", requestRevision: 20, response: state.evaluateResult });
+  next = workspaceReducer(next, { type: "GRID_SUCCESS", requestRevision: 21, response: state.gridResult });
+  assert.deepEqual(buildScenarioExport(next, runs, fixture.exported_at), fixture);
+  assert.strictEqual(workspaceReducer(next, { type: "GRID_SUCCESS", requestRevision: 19, response: state.gridResult }), next);
+  const edited = workspaceReducer(next, { type: "UPDATE_SIMULATION_PROVENANCE", pointers: ["/simulation/seed"] });
+  assert.throws(() => buildScenarioExport(edited, runs));
+});
+test("omitted audit fields equal null, preserve full audit records, and reject tampered canonical hashes", () => {
+  const { state, runs } = currentRuns();
+  for (const source of Object.values(state.provenanceLedger)) for (const key of Object.keys(source)) if (source[key] === null) delete source[key];
+  assert.deepEqual(buildScenarioExport(state, runs, fixture.exported_at), fixture);
+  const data = structuredClone(manualFixture);
+  for (const source of Object.values(data.provenance)) for (const key of Object.keys(source)) if (source[key] === null) delete source[key];
+  assert.deepEqual(parseScenarioExport(JSON.stringify(data)), data);
+  for (const mutate of [p => delete p.inputs_hash, p => p.inputs_hash = "sha256:" + "0".repeat(64), p => p.provenance["/simulation/seed"].description = "tampered", p => p.evaluation_result.provenance["/planned_design/alpha"].verified_by_user = false, p => p.provenance["/planned_design/alpha"].verified_by_user = "yes", p => p.provenance["/planned_design/alpha"].is_observed_registry_result = true]) {
+    const bad = structuredClone(manualFixture); mutate(bad); assert.throws(() => parseScenarioExport(JSON.stringify(bad)));
+  }
 });
 test("reload rejects missing replay metadata, contradictory grids, versions, sources and malformed JSON", () => {
   const mutations = [p => p.export_schema_version = 2, p => p.extra = true, p => delete p.grid_result, p => delete p.evaluation_result.monte_carlo.rng, p => delete p.evaluation_result.monte_carlo.mcse_favorable,
