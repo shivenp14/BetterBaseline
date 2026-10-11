@@ -301,9 +301,11 @@ export function computeLiveGrid(
   fixedEnrollment: FixedEnrollment,
   xBaseline: number[],
   yDropout: number[],
-  selectedPoint: GridPoint
+  selectedPoint: GridPoint,
+  effectOverride?: TrialAssumptions["effect"] | null
 ): GridResponse {
   const enrolledPerArm = fixedEnrollment.control;
+  const gridEffect = effectOverride ?? plannedDesign.effect;
   const powerMatrix: (number | null)[][] = [];
   const invalidMask: boolean[][] = [];
   const frontierPoints: GridPoint[] = [];
@@ -316,7 +318,7 @@ export function computeLiveGrid(
 
     for (let c = 0; c < xBaseline.length; c++) {
       const baseline = xBaseline[c];
-      const pTreat = resolveTreatmentRisk(baseline, plannedDesign.effect);
+      const pTreat = resolveTreatmentRisk(baseline, gridEffect);
 
       if (pTreat === null || retained <= 0) {
         powerRow.push(null);

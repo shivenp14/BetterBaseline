@@ -20,7 +20,7 @@ export function PresetSelector({
     <section aria-labelledby="preset-heading">
       <h2 id="preset-heading">Synthetic Presets & Scenario Selection</h2>
       <p>
-        Select a versioned offline preset or reset the current scenario to initial defaults.
+        Select a versioned synthetic preset or reset the current scenario to initial defaults.
         Editing assumptions will update field provenance to <code>manual_user</code>.
       </p>
 

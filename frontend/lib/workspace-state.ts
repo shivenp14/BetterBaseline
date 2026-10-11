@@ -9,6 +9,7 @@ import type {
   TrialAssumptions,
 } from "./contracts";
 import { getPresetById } from "./presets";
+import { getApiMode } from "./api";
 
 export type WorkspaceAction =
   | { type: "LOAD_PRESET"; presetId: string }
@@ -28,21 +29,36 @@ export type WorkspaceAction =
 
 export function initializeWorkspaceState(presetId = "baseline-collapse-v1"): WorkspaceState {
   const preset = getPresetById(presetId);
+  const apiMode = getApiMode();
+  const initialExecution = apiMode === "demo"
+    ? { mode: "demo" as const, label: "Demo fixture — not backend execution" }
+    : { mode: "demo" as const, label: "Demo fixture — stale until a backend request succeeds" };
+  const initialDesign = JSON.parse(JSON.stringify(preset.design_response));
+  const initialEvaluate = JSON.parse(JSON.stringify(preset.evaluate_response));
+  const initialGrid = JSON.parse(JSON.stringify(preset.grid_response));
+  for (const result of [initialDesign, initialEvaluate, initialGrid]) {
+    result.execution = initialExecution;
+  }
+  initialDesign.provenance.field_provenance = JSON.parse(JSON.stringify(preset.provenance));
+  initialEvaluate.provenance.field_provenance = JSON.parse(JSON.stringify(preset.provenance));
+  initialGrid.provenance.field_provenance = JSON.parse(JSON.stringify(preset.provenance));
   return {
     presetId: preset.preset_id,
     plannedDraft: JSON.parse(JSON.stringify(preset.planned_design)),
-    calculatedDesign: preset.design_response,
-    frozenEnrollment: JSON.parse(JSON.stringify(preset.fixed_enrollment)),
+    calculatedDesign: initialDesign,
+    frozenEnrollment: apiMode === "demo"
+      ? JSON.parse(JSON.stringify(preset.fixed_enrollment))
+      : null,
     designStatus: "idle",
     designError: null,
     activeCalculateRevision: null,
     stressBaseline: preset.stress_scenario.control_event_rate,
     stressDropout: preset.stress_scenario.dropout.control,
     provenanceLedger: JSON.parse(JSON.stringify(preset.provenance)),
-    evaluateResult: preset.evaluate_response,
+    evaluateResult: initialEvaluate,
     evaluateStatus: "idle",
     evaluateError: null,
-    gridResult: preset.grid_response,
+    gridResult: initialGrid,
     gridStatus: "idle",
     gridError: null,
     displayedInputsHash: preset.inputs_hash,

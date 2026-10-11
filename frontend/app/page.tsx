@@ -1,7 +1,7 @@
 "use client";
 
 import { useReducer, useRef } from "react";
-import { calculateDesign, evaluateScenario, getStressGrid } from "@/lib/api";
+import { calculateDesign, evaluateScenario, getApiMode, getStressGrid } from "@/lib/api";
 import {
   initializeWorkspaceState,
   workspaceReducer,
@@ -28,6 +28,7 @@ export default function Home() {
     calculatedDesign,
     frozenEnrollment,
     designStatus,
+    designError,
     stressBaseline,
     stressDropout,
     provenanceLedger,
@@ -36,6 +37,7 @@ export default function Home() {
     evaluateError,
     gridResult,
     gridStatus,
+    gridError,
     displayedInputsHash,
     requestRevision,
   } = state;
@@ -147,6 +149,11 @@ export default function Home() {
           fixed_enrollment: frozenEnrollment,
           x_baseline: displayedGrid.x_baseline,
           y_dropout: displayedGrid.y_dropout,
+          selected_scenario: {
+            control_event_rate: stressBaseline,
+            dropout: { control: stressDropout, treatment: stressDropout },
+            effect_override: null,
+          },
           preset_id: presetId,
           provenance_ledger: provenanceLedger,
         },
@@ -167,10 +174,8 @@ export default function Home() {
     <main>
       <header>
         <h1>Better Baseline</h1>
-        <p>Offline synthetic trial planning shell</p>
-        <p>
-          <strong>Offline demo.</strong> No backend or network calls.
-        </p>
+        <p>Trial planning workspace backed by a local calculation service.</p>
+        <p><strong>Execution mode:</strong> {getApiMode() === "demo" ? "DEMO — fixtures and client calculations; no backend execution" : "LIVE — fresh calculations require the backend service"}</p>
       </header>
 
       {/* Preset Selector */}
@@ -229,7 +234,7 @@ export default function Home() {
         </ul>
 
         {displayedDesign && (
-          <p>Method label: {displayedDesign.method} (illustrative only).</p>
+          <p>Method label: {displayedDesign.method}. {designStatus === "success" ? displayedDesign.execution?.label : "Preset fixture or stale result — run a fresh calculation for current assumptions."}</p>
         )}
 
         <button
@@ -239,8 +244,13 @@ export default function Home() {
         >
           {designStatus === "calculating"
             ? "Calculating..."
-            : "Recalculate & Lock Design (local mock)"}
+            : getApiMode() === "demo" ? "Calculate & Lock Design (demo)" : "Calculate & Lock Design"}
         </button>
+
+        {designError && <p role="alert"><strong>Calculation failed:</strong> {designError}</p>}
+        {displayedDesign && (displayedDesign.execution?.mode === "demo" || designStatus !== "success") && (
+          <p role="status"><strong>Demo/stale result.</strong> This preset fixture is not a fresh calculation. {displayedDesign.execution?.label}</p>
+        )}
 
         {displayedDesign && (
           <ul>
@@ -268,11 +278,10 @@ export default function Home() {
         <section aria-labelledby="power-heading">
           <h2 id="power-heading">3. Power by baseline risk</h2>
           <p>
-            Illustrative fixture values at the first dropout row. Native
-            numerical table view.
+            Backend or demo values at the first dropout row. Native numerical table view.
           </p>
           <table>
-            <caption>Mock power curve data</caption>
+            <caption>Power curve data ({displayedGrid.execution?.label ?? "execution source unavailable"})</caption>
             <thead>
               <tr>
                 <th scope="col">Control event risk</th>
@@ -293,8 +302,7 @@ export default function Home() {
             </tbody>
           </table>
           <p>
-            Target power: {percent(displayedGrid.target_power)}. Values are
-            illustrative and do not describe trial outcomes.
+            Target power: {percent(displayedGrid.target_power)}. Values are statistical estimates and do not describe trial outcomes.
           </p>
         </section>
       )}
@@ -304,8 +312,7 @@ export default function Home() {
         <section aria-labelledby="grid-heading">
           <h2 id="grid-heading">4. Assumption sensitivity grid</h2>
           <p>
-            Cell indexing follows [dropout][baseline]. All cell values are mock
-            data. The contract represents invalid cells as null with a matching
+            Cell indexing follows [dropout][baseline]. The contract represents invalid cells as null with a matching
             invalid mask.
           </p>
           <p>
@@ -314,7 +321,7 @@ export default function Home() {
           </p>
           <table>
             <caption>
-              Illustrative mock power grid by symmetric dropout and baseline
+              Power grid by symmetric dropout and baseline
               event risk
             </caption>
             <thead>
@@ -350,9 +357,10 @@ export default function Home() {
             {percent(displayedGrid.planned_point.dropout)}.
           </p>
           <p>
-            Selected point: baseline{" "}
-            {percent(displayedGrid.selected_point.baseline)}, dropout{" "}
-            {percent(displayedGrid.selected_point.dropout)}.
+            Selected point: {displayedGrid.selected_point
+              ? <>baseline {percent(displayedGrid.selected_point.baseline)}, dropout{" "}
+                {percent(displayedGrid.selected_point.dropout)}.</>
+              : "Unavailable from backend."}
           </p>
           <button
             type="button"
@@ -361,9 +369,10 @@ export default function Home() {
           >
             {gridStatus === "loading"
               ? "Loading Grid..."
-              : "Load grid response (local mock)"}
+              : getApiMode() === "demo" ? "Load grid response (demo)" : "Load grid response from backend"}
           </button>
           <span> Status: {gridStatus.toUpperCase()}</span>
+          {gridError && <p role="alert"><strong>Grid request failed:</strong> {gridError}</p>}
           <ul>
             {displayedGrid.warnings.map((warning) => (
               <li key={warning}>{warning}</li>
@@ -391,6 +400,10 @@ export default function Home() {
             </p>
           )}
           <p>Analytic method: {displayedEvaluate.analytic.method}.</p>
+          <p>{evaluateStatus === "success" ? displayedEvaluate.execution?.label : "Preset fixture or stale result — run a fresh evaluation for current assumptions."}</p>
+          {(displayedEvaluate.execution?.mode === "demo" || evaluateStatus !== "success") && (
+            <p role="status"><strong>Demo/stale result.</strong> This fixture is not a fresh backend evaluation.</p>
+          )}
           <ul>
             <li>
               Conditional power:{" "}
@@ -449,7 +462,7 @@ export default function Home() {
               <li>
                 Monte Carlo simulation:{" "}
                 <em>
-                  Unavailable for custom client-side inputs; backend simulation required for pooled-z results.
+                  Unavailable in demo mode; select live mode and run the backend for pooled-z results.
                 </em>
               </li>
             )}
@@ -504,7 +517,7 @@ export default function Home() {
 
       <footer>
         <p>
-          <strong>Planning support only.</strong> This offline synthetic shell is
+          <strong>Planning support only.</strong> This workspace is
           not clinical evidence, medical advice, or a validated design tool.
           Conditional power depends on assumptions and method. Review real study
           decisions with a qualified statistician.
