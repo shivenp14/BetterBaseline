@@ -169,6 +169,33 @@ def _json_bytes(value: dict) -> bytes:
     return (json.dumps(value, indent=2, sort_keys=False, allow_nan=False) + "\n").encode()
 
 
+def _diff_summary(expected: object, actual: object, pointer: str = "") -> list[str]:
+    """Describe a bounded set of exact JSON differences for failed --check runs."""
+    if isinstance(expected, dict) and isinstance(actual, dict):
+        differences = []
+        for key in expected.keys() | actual.keys():
+            child = f"{pointer}/{key}"
+            if key not in expected or key not in actual:
+                differences.append(f"{child}: key missing from one value")
+            else:
+                differences.extend(_diff_summary(expected[key], actual[key], child))
+            if len(differences) >= 12:
+                return differences[:12]
+        return differences
+    if isinstance(expected, list) and isinstance(actual, list):
+        differences = []
+        if len(expected) != len(actual):
+            differences.append(f"{pointer}: list lengths differ ({len(expected)} != {len(actual)})")
+        for index, (left, right) in enumerate(zip(expected, actual)):
+            differences.extend(_diff_summary(left, right, f"{pointer}/{index}"))
+            if len(differences) >= 12:
+                break
+        return differences[:12]
+    if type(expected) is not type(actual) or expected != actual:
+        return [f"{pointer}: expected {expected!r}, got {actual!r}"]
+    return []
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="compare generated files without writing")
@@ -212,6 +239,13 @@ def main() -> int:
                 path.write_bytes(content)
         if mismatches:
             print("Generated snapshots are stale: " + ", ".join(mismatches), file=sys.stderr)
+            for path in outputs:
+                if path.relative_to(ROOT).as_posix() not in mismatches:
+                    continue
+                expected = json.loads(path.read_text())
+                actual = json.loads(outputs[path])
+                for difference in _diff_summary(expected, actual):
+                    print(f"  {path.relative_to(ROOT).as_posix()}{difference}", file=sys.stderr)
             return 1
         if args.check:
             print("All three generated snapshots and manifests match the backend output.")
