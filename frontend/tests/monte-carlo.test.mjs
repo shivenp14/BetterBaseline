@@ -5,7 +5,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { request, selection, alternative, nullFixture } from './monte-carlo.fixtures.mjs';
 const load=createRequire(import.meta.url);
-const { parseSimulationOptions, simulationIdentity, createSimulationClient, createHttpSimulationTransport }=load(`${process.env.C6_RENDER_ROOT}/lib/simulation-client.js`);
+const { parseSimulationOptions, simulationIdentity, createSimulationClient, createSharedSimulationTransport }=load(`${process.env.C6_RENDER_ROOT}/lib/simulation-client.js`);
 const { MonteCarloPanel, MonteCarloResults }=load(`${process.env.C6_RENDER_ROOT}/components/MonteCarloPanel.js`);
 const { MethodDisclosures }=load(`${process.env.C6_RENDER_ROOT}/components/MethodDisclosures.js`);
 const render=(component,props)=>renderToStaticMarkup(React.createElement(component,props));
@@ -42,11 +42,21 @@ test('mismatched identity, missing split MCSE and unavailable simulation fail vi
     const copy=structuredClone(alternative);change(copy);await assert.rejects(createSimulationClient(async()=>copy)(request,new AbortController().signal));
   }
 });
-test('HTTP adapter honors abort signal and server error message',async()=>{
-  let calls=0;const controller=new AbortController();const transport=createHttpSimulationTransport('http://localhost:8000/',async(url,options)=>{
-    calls++;assert.equal(url,'http://localhost:8000/api/v1/scenarios/evaluate');assert.equal(options.signal,controller.signal);assert.deepEqual(JSON.parse(options.body),request);return new Response(JSON.stringify(alternative));});
-  await createSimulationClient(transport)(request,controller.signal);assert.equal(calls,1);
-  await assert.rejects(createHttpSimulationTransport('',async()=>new Response(JSON.stringify({error:{message:'Invalid ARR'}}),{status:422}))(request,controller.signal),/Invalid ARR/);
+test('shared helper receives one selection/options payload and preserves backend metadata',async()=>{
+  let calls=0;const controller=new AbortController();
+  const transport=createSharedSimulationTransport(async(sent,signal)=>{
+    calls++;assert.equal(signal,controller.signal);
+    assert.deepEqual(sent,{planned_design:request.planned_design,fixed_enrollment:request.fixed_enrollment,
+      stress_scenario:request.stress_scenario,simulation:request.simulation,preset_id:'selected-simulation',provenance_ledger:request.provenance});
+    return {...alternative,mock:false,execution:{mode:'backend',label:'Backend'},provenance:{field_provenance:alternative.provenance}};
+  });
+  assert.deepEqual(await createSimulationClient(transport)(request,controller.signal),alternative);assert.equal(calls,1);
+});
+test('shared demo or unmarked execution is unavailable; server failures remain visible',async()=>{
+  for(const flags of [{mock:true,execution:{mode:'demo'}},{mock:false},{mock:false,execution:{mode:'demo'}}]) {
+    await assert.rejects(createSimulationClient(createSharedSimulationTransport(async()=>({...alternative,...flags,provenance:{field_provenance:alternative.provenance}})))(request,new AbortController().signal),/demo mode/);
+  }
+  await assert.rejects(createSimulationClient(createSharedSimulationTransport(async()=>{throw new Error('RESOURCE_SATURATED: Retry');}))(request,new AbortController().signal),/RESOURCE_SATURATED/);
 });
 test('null and alternative renders keep fractions, MCSEs and counts separate',()=>{
   for(const result of [alternative,nullFixture]){

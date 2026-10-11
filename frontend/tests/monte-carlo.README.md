@@ -1,11 +1,12 @@
 # #75 isolated simulation panel handoff
 
-This is preparation for #75, not completed #72/#76 integration. Only
+This completes the isolated #75 component and shared #72 API integration.
+#76 owns production page/state/export assembly. Only
 MonteCarloPanel.tsx, MethodDisclosures.tsx, simulation-client.ts and
 monte-carlo.* tests are delivered. Shared page/API/contracts/package files are
 unchanged. The panel is unstyled semantic HTML.
 
-## Interface and pending gate
+## Interface and completed handoff
 
 `MonteCarloPanel` takes an immutable `SimulationSelection` (planned design,
 frozen enrollment, exact selected baseline/dropout/effect, optional field
@@ -16,25 +17,29 @@ complete validated result. Keep the adapter reference stable across equivalent
 parent rerenders. Pass a null selection or unavailable reason whenever the
 parent's design/selection is stale, missing or invalid.
 
-`createSimulationClient(transport)` wraps the eventual shared request helper,
-checks cancellation before/after transport, validates runtime response fields,
-and preserves both MCSEs, warnings, count aggregates, provenance and metadata.
-The request uses the real #65 wire names (`provenance`, not `provenance_ledger`;
-no UI-only `preset_id`). Selection/options identity includes both effects,
-frozen N, dropout, alpha, target, seed, replicates and field sources.
+`createSimulationClient(transport)` validates the runtime backend response and
+checks cancellation before/after transport. `createSharedSimulationTransport()`
+uses the unchanged #72 `evaluateScenario` helper. `runSelectedSimulation` is a
+stable module-level validated adapter for the #76 parent to pass as runSimulation.
 
-At the last check, #72/#105 is unmerged. Its proposed API helper supplies
-fixtures/local computations and does not yet expose the real simulation fetch
-seam. C1's published EvaluateResponse also lacks the live optional simulation,
-count aggregates, RNG/software and field-provenance shape. Local types here
-mirror the merged #65 endpoint and must be reconciled with #72's final shared
-contracts before readiness. Do not feed fixture-only evaluateScenario outputs
-into this client as live simulations. #76 owns production assembly and export.
+The adapter translates selection `provenance` into `provenance_ledger` for the
+shared helper, which sends the backend's `provenance` field and strips UI-only
+`preset_id`. Its response envelope's `provenance.field_provenance` is normalized
+back into the panel's field ledger. Both MCSEs, warnings, count aggregates,
+RNG/software versions, timestamps and input hash are preserved and checked.
+Shared EvaluateResponse types do not yet declare all live backend metadata;
+#75 checks those fields at runtime rather than editing shared contracts or
+inventing missing data. The temporary independent HTTP transport is removed.
 
-`createHttpSimulationTransport(baseUrl)` exists only as the isolated HTTP
-acceptance seam until the final #72 helper is available. No competing production
-page wiring or shared API changes are made. Final #75 acceptance still needs
-that handoff and selected-state integration.
+Live simulation requires `mock: false` and execution mode `backend`. Explicit
+demo mode is rejected with an unavailable message; no demo result is presented
+as a live run. Missing simulation, malformed or mismatched metadata, server
+limits and connection failures remain visible errors. The app defaults to live
+mode; NEXT_PUBLIC_API_BASE_URL configures the shared helper's backend URL.
+Selection/options identity includes both effects, frozen N, dropout, alpha,
+target, seed, replicates and field sources. #76 passes null selection or an
+unavailable reason for a stale or missing planned design and retains only the
+current onResult callback for export. No #76 production wiring is included.
 
 ## Behavior
 
@@ -70,7 +75,7 @@ temporary app/c6-harness/page.tsx containing:
 export { default } from "../../tests/monte-carlo.harness";
 ```
 
-Run the frontend on 127.0.0.1:3000. Install Playwright/Chromium separately
+Run the frontend on localhost:3000 (the default permitted Next dev origin). Install Playwright/Chromium separately
 without changing manifests and run:
 
 ```sh
@@ -83,4 +88,10 @@ ignores cancellation. Fixture objects are used only in the standalone unit and
 server-render suite. Browser checks cover a fresh 10k seeded response, native
 keyboard controls and bounds, one call per run, pending duplicate rejection,
 out-of-order completion, effect/selection changes, failure/invalid/unavailable
-states, and unmount abort. No final production workspace integration is claimed.
+states, and unmount abort. Acceptance additionally verifies the actual HTTP payload has the field ledger,
+seed/replicates and no UI-only keys, and that returned field provenance is visible.
+Production page assembly and downloaded-export acceptance remain with #76.
+
+Validated: 11 unit/render tests, real shared-helper browser checks, lint,
+typecheck and a clean production build. Temporary acceptance wiring and generated
+Next files are excluded from the PR.

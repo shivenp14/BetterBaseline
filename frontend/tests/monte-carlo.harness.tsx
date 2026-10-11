@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { MonteCarloPanel } from "../components/MonteCarloPanel";
-import { createHttpSimulationTransport, createSimulationClient, parseSimulationResult,
+import { createSharedSimulationTransport, createSimulationClient, parseSimulationResult,
   type RunSimulation, type SimulationSelection } from "../lib/simulation-client";
 const initial: SimulationSelection = {
   planned_design: { model_version: "binary-v1", allocation_ratio: 1, control_event_rate: .2,
@@ -19,7 +19,7 @@ export default function MonteCarloHarness() {
   const [finished, setFinished] = useState<number[]>([]);
   const [accepted, setAccepted] = useState<number[]>([]);
   const runSimulation: RunSimulation = useMemo(() => {
-    const transport = createHttpSimulationTransport("http://127.0.0.1:8000");
+    const transport = createSharedSimulationTransport();
     const run = createSimulationClient(transport);
     return async (request, signal) => {
       setCalls(count => count + 1);

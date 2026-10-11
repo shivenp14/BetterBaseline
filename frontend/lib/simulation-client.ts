@@ -1,4 +1,6 @@
-/** Isolated #75 adapter. #72 supplies the final shared transport; #76 wires it. */
+/** #75 validates shared #72 execution; #76 owns production assembly. */
+import { evaluateScenario } from "./api";
+import type { EvaluateRequest, EvaluateResponse } from "./contracts";
 import type { Effect, FixedEnrollment, TrialAssumptions } from "./contracts";
 export interface FieldSource {
   source: "manual_user" | "synthetic_preset" | "protocol_curated" | "clinicaltrials_registry";
@@ -134,13 +136,21 @@ export function createSimulationClient(transport: SimulationTransport): RunSimul
     return parseSimulationResult(response, snapshot);
   };
 }
-/** Temporary HTTP seam for isolated acceptance, replaced by #72's shared helper at handoff. */
-export function createHttpSimulationTransport(apiBase: string, fetcher: typeof fetch = fetch): SimulationTransport {
+/** Use #72's unchanged helper; normalize its app-level provenance envelope. */
+export function createSharedSimulationTransport(
+  evaluate: (request: EvaluateRequest, signal?: AbortSignal) => Promise<EvaluateResponse> = evaluateScenario,
+): SimulationTransport {
   return async (request, signal) => {
-    const response = await fetcher(`${apiBase.replace(/\/$/, "")}/api/v1/scenarios/evaluate`, {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(request), signal });
-    const body: unknown = await response.json();
-    if (!response.ok) throw new Error(text(object(object(body).error).message));
-    return body;
+    const response = await evaluate({
+      planned_design: request.planned_design, fixed_enrollment: request.fixed_enrollment,
+      stress_scenario: request.stress_scenario, simulation: request.simulation,
+      preset_id: "selected-simulation", provenance_ledger: request.provenance ?? {},
+    }, signal);
+    if (response.mock !== false || response.execution?.mode !== "backend") {
+      throw new Error("Live simulation unavailable: shared API is in demo mode.");
+    }
+    return { ...response, provenance: response.provenance.field_provenance ?? {} };
   };
 }
+/** Stable module-level adapter suitable for the #76 parent. */
+export const runSelectedSimulation = createSimulationClient(createSharedSimulationTransport());
