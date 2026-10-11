@@ -298,4 +298,3 @@ def test_input_hash_is_canonical_for_dict_and_model():
     assert compute_inputs_hash(model) == compute_inputs_hash(model.model_dump(mode="json"))
     with pytest.raises(ValueError, match="Out of range float values"):
         compute_inputs_hash({"bad": float("nan")})
-
