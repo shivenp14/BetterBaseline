@@ -13,7 +13,7 @@ import json
 import platform
 from typing import Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from pydantic import ConfigDict, Field
 
 from ..cache import make_cache_key
@@ -23,7 +23,7 @@ from ..schemas import (
     FieldProvenance, MonteCarloEvaluation, ScenarioEvaluateRequest,
     ScenarioEvaluateResponse, ScenarioMetadata, SimulationOptions,
 )
-from ..services.compute import execute_guarded_computation, get_compute_guard
+from ..services.compute import ComputeResourceGuard, execute_guarded_computation
 from ..statistics.analytic import analytic_power
 from ..statistics.diagnostics import analytic_diagnostics
 from ..statistics.effect import resolve_treatment_risk
@@ -69,12 +69,24 @@ class EvaluationResponse(ScenarioEvaluateResponse):
 
 router = APIRouter(
     prefix='/api/v1/scenarios', tags=['scenarios'],
-    responses={422: {'model': ErrorEnvelope, 'description': 'Validation Error'}},
+    responses={
+        422: {'model': ErrorEnvelope, 'description': 'Validation Error'},
+        413: {'model': ErrorEnvelope, 'description': 'Payload Too Large'},
+        429: {
+            'model': ErrorEnvelope,
+            'description': 'Compute Resource Saturated',
+            'headers': {
+                'Retry-After': {
+                    'description': 'Seconds to wait before retrying.',
+                    'schema': {'type': 'integer'},
+                }
+            },
+        },
+    },
 )
 
 
-def _evaluate(request: EvaluationRequest) -> EvaluationResponse:
-    guard = get_compute_guard()
+def _evaluate(request: EvaluationRequest, guard: ComputeResourceGuard) -> EvaluationResponse:
     enrollment = request.fixed_enrollment
     guard.check_enrollment(enrollment.control, enrollment.treatment)
     for arm in ('control', 'treatment'):
@@ -131,11 +143,12 @@ def _evaluate(request: EvaluationRequest) -> EvaluationResponse:
 
 
 @router.post('/evaluate', response_model=EvaluationResponse)
-def evaluate_scenario(request: EvaluationRequest) -> EvaluationResponse:
+def evaluate_scenario(request: EvaluationRequest, http_request: Request) -> EvaluationResponse:
     """Evaluate stressed reality without solving or modifying planned enrollment."""
     cache_key = make_cache_key(
         route='/api/v1/scenarios/evaluate',
         model_version='binary-v1',
         params=request,
     )
-    return execute_guarded_computation(_evaluate, request, cache_key=cache_key)
+    guard = http_request.app.state.compute_guard
+    return execute_guarded_computation(_evaluate, request, guard, cache_key=cache_key, guard=guard)

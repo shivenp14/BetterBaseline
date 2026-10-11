@@ -10,7 +10,6 @@ from app.main import create_app
 from app.services.compute import (
     ComputeResourceGuard,
     execute_guarded_computation,
-    get_compute_guard,
 )
 from app.settings import Settings
 from app.statistics.errors import StatisticalInputError
@@ -100,7 +99,7 @@ def test_concurrency_saturation_returns_429_with_retry_after():
     import time
 
     app = create_app()
-    guard = get_compute_guard()
+    guard = app.state.compute_guard
     # Temporarily drain the semaphore
     acquired = guard.semaphore.acquire(blocking=False)
     assert acquired is True
@@ -173,12 +172,73 @@ def test_design_calculate_uses_cache():
     resp1 = client.post("/api/v1/design/calculate", json=payload)
     assert resp1.status_code == 200
     assert len(guard.cache) == 1
-
     resp2 = client.post("/api/v1/design/calculate", json=payload)
     assert resp2.status_code == 200
     assert resp1.json() == resp2.json()
     assert len(guard.cache) == 1
 
+
+def test_compute_guards_are_isolated_per_app():
+    """App construction and requests keep cache, limits, and permits local to each app."""
+    strict_app = create_app(Settings(max_enrolled_per_arm=10_000, max_concurrent_compute=1))
+    default_app = create_app(Settings())
+    strict_guard = strict_app.state.compute_guard
+    default_guard = default_app.state.compute_guard
+    assert strict_guard is not default_guard
+
+    # A later default app must not replace the strict app's configured validation guard.
+    evaluate_payload = {
+        "planned_design": {
+            "model_version": "binary-v1",
+            "control_event_rate": 0.20,
+            "effect": {"kind": "relative_risk", "value": 0.75},
+            "alpha": 0.05,
+            "target_power": 0.80,
+            "allocation_ratio": 1.0,
+            "dropout": {"control": 0.0, "treatment": 0.0},
+        },
+        "fixed_enrollment": {"control": 10_001, "treatment": 10_001},
+        "stress_scenario": {
+            "control_event_rate": 0.20,
+            "dropout": {"control": 0.0, "treatment": 0.0},
+        },
+        "simulation": None,
+    }
+    with TestClient(strict_app) as strict_client, TestClient(default_app) as default_client:
+        strict_response = strict_client.post("/api/v1/scenarios/evaluate", json=evaluate_payload)
+        default_response = default_client.post("/api/v1/scenarios/evaluate", json=evaluate_payload)
+    assert strict_response.status_code == 422
+    assert default_response.status_code == 200
+
+    # Populate the same design cache key in both apps; neither cache serves the other's result.
+    design_payload = {
+        "control_event_rate": 0.20,
+        "effect": {"kind": "relative_risk", "value": 0.80},
+        "target_power": 0.80,
+        "alpha": 0.05,
+        "dropout": {"control": 0.10, "treatment": 0.10},
+    }
+    strict_guard.cache.clear()
+    default_guard.cache.clear()
+    with TestClient(strict_app) as strict_client, TestClient(default_app) as default_client:
+        assert strict_client.post("/api/v1/design/calculate", json=design_payload).status_code == 200
+        assert len(strict_guard.cache) == 1
+        assert len(default_guard.cache) == 0
+        assert default_client.post("/api/v1/design/calculate", json=design_payload).status_code == 200
+    assert len(strict_guard.cache) == 1
+    assert len(default_guard.cache) == 1
+
+    # Saturating the strict app's sole permit leaves the default app available.
+    acquired = strict_guard.semaphore.acquire(blocking=False)
+    assert acquired
+    strict_guard.cache.clear()
+    default_guard.cache.clear()
+    try:
+        with TestClient(strict_app) as strict_client, TestClient(default_app) as default_client:
+            assert strict_client.post("/api/v1/design/calculate", json=design_payload).status_code == 429
+            assert default_client.post("/api/v1/design/calculate", json=design_payload).status_code == 200
+    finally:
+        strict_guard.semaphore.release()
 
 # ── REGRESSION TESTS (ROLAND'S REVIEW COMMENT FIXES) ──
 
@@ -256,7 +316,7 @@ def test_configured_compute_limits_enforced_on_scenario_evaluation():
 def test_identical_seeded_evaluations_reuse_cache():
     """Identical seeded evaluations reuse the LRU cache."""
     app = create_app()
-    guard = get_compute_guard()
+    guard = app.state.compute_guard
     guard.cache.clear()
 
     client = TestClient(app)

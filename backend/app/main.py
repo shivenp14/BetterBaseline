@@ -16,11 +16,7 @@ from .errors import (
 from .middleware.compute import ComputeGuardMiddleware
 from .routers import design_router, grid_router, health_router, scenarios_router
 from .schemas import ErrorEnvelope
-from .services.compute import (
-    ComputeResourceGuard,
-    ResourceSaturatedError,
-    set_compute_guard,
-)
+from .services.compute import ComputeResourceGuard, ResourceSaturatedError
 from .settings import Settings, settings
 from .statistics.errors import StatisticalInputError
 
@@ -55,7 +51,6 @@ def create_app(app_settings: Optional[Settings] = None) -> FastAPI:
         cache_capacity=cfg.cache_size,
     )
     application.state.compute_guard = guard
-    set_compute_guard(guard)
 
     # Compute guard middleware (payload size, concurrency, telemetry)
     application.add_middleware(ComputeGuardMiddleware, cfg=cfg)
