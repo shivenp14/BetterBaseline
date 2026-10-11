@@ -79,3 +79,20 @@ and the hash of a real representative result. Replayed outputs must match that
 result throughout measurement. These report hashes are local benchmark audit
 identities, not B6 cache keys or export provenance propagation evidence. API
 cache identity and actual frontend-export traceability remain integration gates.
+
+
+## D6 real HTTP report identity
+
+The pre-#116 HTTP reports retain exact route request payloads and the unchanged
+D1 fixture provenance ledger separately. They do not claim the ledger was sent
+through the service or that an actual UI export preserves it. Route-provided
+input hashes retain their original format: design currently returns a shortened
+hash, while grid/evaluation return a `sha256:`-prefixed digest. The benchmark
+records these values without relabeling them as cache keys.
+
+Only generation timestamps are excluded from deterministic replay comparison;
+actual timestamps are retained separately. Hashes, software/method identifiers,
+seed/replicates, warnings and numerical values remain part of the semantic result
+identity. Service source hashes and harness hashes identify the measured local
+code. Cache identity, cache timestamp behavior and UI-export traceability await
+#116 and the live frontend/export handoffs.

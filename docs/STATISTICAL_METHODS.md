@@ -114,8 +114,10 @@ The power curve evaluates every baseline at the exact selected dropout.
 Planned/selected points can be off-axis and are evaluated directly. Every
 point reports `below_target` against the requested target. Analytical delta is
 selected minus planned power as a fraction. All-invalid domains return null
-worst-case power and delta, and an empty frontier with a warning; independent
-valid off-grid points still retain their own power.
+worst-case power and an empty frontier with a warning. Independent valid off-grid
+points retain their power; the merged #66 API preserves their selected-minus-
+original-planned delta even when the entire grid domain is invalid. The A4 core
+summary alone returns a null delta for an all-invalid domain.
 
 Frontiers use linear interpolation on valid grid edges, restricted to cells
 with four valid corners. Separate connected paths are canonically oriented
@@ -167,10 +169,10 @@ D1's hand-authored mock response values.
 
 | Remaining measurement | Status |
 |---|---|
-| API cold/warm compute cache | Not yet measured; requires registered routes and B6 #68 controls |
+| API cold/warm compute cache | Not yet measured; requires B6 #68 controls (PR #116) |
 | Fresh frontend round trip | Not yet measured; requires live frontend/API integration and B6 cache identity |
 
-D6 remains incomplete at the B6 dependency boundary. Cold/warm API conditions
+D6 remains incomplete at the B6 dependency boundary (PR #116). Cold/warm API conditions
 must use B6's supported reset and inspection controls, with cache clearing
 outside timing. A browser cache reset does not clear the backend cache. Frontend
 measurements must cover a fresh request through rendered real output, retain
@@ -179,3 +181,41 @@ fixture-only shell or cached result can establish that acceptance.
 
 This documentation describes tested computational behavior and its limits;
 it makes no speedup, clinical, regulatory, or rare-event validation claim.
+
+
+## D6 real local HTTP measurements before #116
+
+The [HTTP harness](../scripts/benchmarks/README.md#real-uncached-http-benchmark-pre-116)
+measured the merged design/grid/evaluate routes from this checkout on 11 October
+2026. Each workload used its own new single-worker loopback service, a persistent
+HTTP/1.1 connection, three excluded warmups and 30 measured serial requests. The
+process was warm and the compute wrapper was the exact uncached pass-through
+scaffold. These are **not** measurements of #116's cold/warm cache behavior.
+
+Timing covers POST transmission through complete response-body receipt, including
+server validation, numerical work and serialization. Client JSON parsing, result
+checks, server startup and frontend rendering are excluded. Every response was
+checked against its typed response model and actual numerical calculations outside
+timing. Grid checks use each API-returned axis coordinate, including its floating
+representation. The original core reports use explicit decimal axes; the measured
+HTTP route constructs its axes with linspace. Neither check is independent
+scientific validation.
+
+| Real HTTP workload | Median (ms) | p95 (ms) | Raw evidence |
+|---|---:|---:|---|
+| Design calculation | 0.514 | 0.605 | [JSON](../scripts/benchmarks/reports/http/baseline-collapse-design.json) |
+| 31-baseline × 21-dropout grid | 9.704 | 11.453 | [JSON](../scripts/benchmarks/reports/http/baseline-collapse-grid.json) |
+| Selected 10,000-replicate simulation | 4.419 | 4.538 | [JSON](../scripts/benchmarks/reports/http/baseline-collapse-monte-carlo.json) |
+
+The recorded environment is macOS 27.0 arm64 with eight logical CPUs, Python
+3.12.4, NumPy 2.5.4, SciPy 1.18.1 and statsmodels 0.15.0. Reports retain every
+raw duration, source/harness hashes and the exact real response. API timestamps
+vary per computation and are recorded; only those generation timestamps are
+excluded from semantic replay comparison. No cache key or speedup is inferred.
+The HTTP harness deliberately stops when the compute-wrapper source changes.
+
+**Stop boundary:** #68 / PR #116 must merge before implementing its supported
+cold/warm cache conditions, reset/inspection behavior and cache timestamp claims.
+Fresh frontend request-to-render measurements additionally require the real
+frontend/API handoff. Neither remaining condition has been measured; #82 stays
+open and its delivery PR stays a draft.

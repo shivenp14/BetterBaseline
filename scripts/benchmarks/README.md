@@ -37,8 +37,9 @@ inputs. Design checks verify minimum N and enrollment inflation; simulation
 checks verify seed/replicate identity and separate MCSE. Every measured call
 must replay the reference result exactly.
 
-HTTP and frontend round-trip commands remain unimplemented until the routes and
-#68 compute/cache hooks land. Before recording those results:
+The merged routes can now be measured with the isolated uncached HTTP command
+below. Cold/warm cache and frontend round-trip measurements remain gated on
+#68 (PR #116) and live frontend integration. Before recording those results:
 
 1. Select the real fresh-calculation frontend adapter, not C1 mock fixtures.
 2. Measure from the user-triggered request until its result is rendered; retain
@@ -51,7 +52,8 @@ HTTP and frontend round-trip commands remain unimplemented until the routes and
 5. Capture at least 30 runs per reported condition and retain raw samples,
    environment, payload/hash, methods, and latency scope with median/p95.
 
-No public API/cache or browser timings have been measured by this preparation.
+Real local uncached HTTP timings are retained below. No completed #68 cache or
+browser timings are claimed.
 
 ## Retained evidence and verification
 
@@ -73,5 +75,43 @@ power, malformed grid witnesses, seeded replay and raw-report percentile/hash
 integrity. No runtime threshold is asserted. Stored reports describe their
 original capture; rerunning measures new hardware/load conditions.
 
-This is partial D6 delivery. API/cache and actual browser round-trip workloads
-are not implemented or measured until the B6 and live integration handoffs.
+This is partial D6 delivery. Cold/warm API cache and actual browser round-trip
+workloads remain pending the B6 and live integration handoffs.
+
+## Real uncached HTTP benchmark (pre-#116)
+
+```sh
+PYTHONPATH=backend python scripts/benchmarks/http_uncached.py --workload design --output /tmp/design-http.json
+PYTHONPATH=backend python scripts/benchmarks/http_uncached.py --workload grid --output /tmp/grid-http.json
+PYTHONPATH=backend python scripts/benchmarks/http_uncached.py --workload monte-carlo --output /tmp/mc-http.json
+```
+
+Each command starts and stops its own single-worker loopback uvicorn service
+from this checkout. Run commands sequentially without competing benchmark
+processes. It uses a persistent HTTP/1.1 connection, three excluded warmups and
+30 measured requests. Timing starts immediately before sending the POST and ends
+after receiving the complete response body; server input validation, computation
+and response serialization are included. Client JSON decoding, numerical checks,
+service startup, fixture parsing and reporting are outside timing. This is not
+a browser render measurement.
+
+Every response passes its registered Pydantic response model and agrees with
+real numerical calculations: design counts/nominal power, all 651 grid cells
+and the exact selected-dropout curve, or seeded simulation metrics plus analytic
+point power. This checks route agreement, not an independent statistical oracle.
+Replay comparison excludes only `computed_at` (grid) or
+`metadata.computed_at` (simulation); hashes, numeric results, methods, warnings,
+seed and software fields must remain identical. Actual timestamps are retained.
+
+The harness verifies the exact source hash of the current pass-through compute
+scaffold and refuses changed implementations. It must be revisited after #116;
+that refusal is the explicit dependency boundary, not a cache-control mechanism.
+It installs no hooks, clears no cache and edits no product files. It cannot label
+requests as #68 cache misses/hits or establish a speedup.
+
+[HTTP reports](reports/http/) include raw timings, representative real responses,
+fixture provenance, exact requests, hardware/library metadata, checkout commit,
+all service source hashes and the HTTP harness hash. Measurements describe the
+recorded sources; their checkout includes local harness work identified by hash.
+The original core reports remain unchanged. Run the unittest command above to
+audit both sets of reports and reject mutated result identities/numeric values.
