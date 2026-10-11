@@ -89,3 +89,19 @@ hosting account, record the exact limitation and demonstrate the complete local
 fallback. UI fixture mode is a labeled degraded supplement only.
 
 Stop services with `docker compose down`. No volumes or database are required.
+
+## Recorded preparation checks (2026-10-11 UTC)
+
+- Managed Docker 28.4.0: frontend image builds with the optional proxy CA.
+  Base resolved to node:24-bookworm-slim digest
+  `sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20`;
+  resulting local image ID:
+  `sha256:488bdc479ac8568051aee20d8d660aa8af28023093fe277ded11d0a7c3a42f72`.
+- Container UID 1000; built-in health status healthy; GET / returns HTTP 200.
+  Headless Chromium renders the Better Baseline heading without page errors.
+  This is the existing fixture shell, not live API or offline acceptance.
+- Compose configuration parses; browser URL, loopback ports and healthy-backend
+  dependency checked. The prerequisite script exits 1, reporting missing backend
+  manifest/main/settings and frontend fetch integration. Backend container and
+  combined Compose startup cannot yet be exercised.
+- No public hosting or complete offline calculation flow has been verified.
