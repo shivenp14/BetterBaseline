@@ -70,10 +70,9 @@ def normalize_provenance(
             field_name = item.get("field") or item.get("name")
             if not field_name:
                 continue
-            # Strip JSON pointer prefix if present (e.g., "/planned_design/control_event_rate")
-            clean_field = field_name.lstrip("/").split("/")[-1]
+            # Preserve complete field path/pointer so planned and stress fields remain distinct
             record = _validate_and_build_record(item)
-            result[clean_field] = record
+            result[field_name] = record
     elif isinstance(raw_provenance, dict):
         for key, val in raw_provenance.items():
             if isinstance(val, FieldProvenance):
@@ -87,7 +86,7 @@ def normalize_provenance(
     return result
 
 
-def _validate_and_build_record(data: Dict[str, Any]) -> FieldProvenance:
+def _validate_and_build_record(data: Dict[str, Any]) -> FieldProvenanceRecord:
     source = data.get("source") or data.get("origin")
     if not source:
         raise ValueError("Field provenance requires a source or origin tag")
@@ -114,14 +113,16 @@ def _validate_and_build_record(data: Dict[str, Any]) -> FieldProvenance:
         source_url=source_url,
         source_location=source_location,
         verified_by_user=verified_by_user,
+        is_observed_registry_result=is_observed_registry if is_observed_registry else None,
     )
 
 
 def _check_registry_relabeled(val: FieldProvenance) -> None:
+    is_observed_flag = getattr(val, "is_observed_registry_result", False) is True
     if val.source == "protocol_curated":
         desc = (val.description or "").lower()
         url = (val.source_url or "").lower()
-        if getattr(val, "is_observed_registry_result", False) or ("clinicaltrials.gov" in url and "observed" in desc):
+        if is_observed_flag or ("clinicaltrials.gov" in url and "observed" in desc):
             raise ValueError("Registry observed results cannot be relabeled as protocol_curated")
 
 

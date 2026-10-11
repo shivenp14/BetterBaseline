@@ -28,14 +28,14 @@ from app.schemas import (
 
 def test_normalize_provenance_from_dict_and_models():
     raw = {
-        "control_event_rate": {
+        "/planned_design/control_event_rate": {
             "source": "manual_user",
             "source_url": "https://example.com/protocol.pdf",
             "source_location": "Section 4.1",
             "verified_by_user": True,
             "description": "User verified protocol rate",
         },
-        "target_power": FieldProvenance(
+        "/planned_design/target_power": FieldProvenance(
             source="synthetic_preset",
             description="Playbook default power",
         ),
@@ -43,14 +43,14 @@ def test_normalize_provenance_from_dict_and_models():
 
     normalized = normalize_provenance(raw)
     assert len(normalized) == 2
-    assert "control_event_rate" in normalized
-    assert normalized["control_event_rate"].source == "manual_user"
-    assert normalized["control_event_rate"].source_url == "https://example.com/protocol.pdf"
-    assert normalized["control_event_rate"].source_location == "Section 4.1"
-    assert normalized["control_event_rate"].verified_by_user is True
+    assert "/planned_design/control_event_rate" in normalized
+    assert normalized["/planned_design/control_event_rate"].source == "manual_user"
+    assert normalized["/planned_design/control_event_rate"].source_url == "https://example.com/protocol.pdf"
+    assert normalized["/planned_design/control_event_rate"].source_location == "Section 4.1"
+    assert normalized["/planned_design/control_event_rate"].verified_by_user is True
 
-    assert "target_power" in normalized
-    assert normalized["target_power"].source == "synthetic_preset"
+    assert "/planned_design/target_power" in normalized
+    assert normalized["/planned_design/target_power"].source == "synthetic_preset"
 
 
 def test_normalize_provenance_empty():
@@ -70,8 +70,25 @@ def test_registry_observed_cannot_be_relabeled_as_protocol_curated():
         normalize_provenance({"control_event_rate": invalid_record})
 
 
-def test_load_and_normalize_d1_demo_presets():
-    """Verify loading and normalizing demo presets preserves field provenance."""
+def test_observed_registry_flag_preserved_across_normalization_and_relabel_rejected():
+    """Reviewer finding: is_observed_registry_result must survive normalization, and subsequent relabeling must be rejected."""
+    raw = {
+        "source": "clinicaltrials_registry",
+        "description": "Registry endpoint result",
+        "source_url": "https://clinicaltrials.gov/study/NCT01234567",
+        "is_observed_registry_result": True,
+    }
+    normalized = normalize_provenance({"control_rate": raw})
+    assert normalized["control_rate"].is_observed_registry_result is True
+
+    # Attempt to relabel the normalized record to protocol_curated must fail
+    relabelled = normalized["control_rate"].model_copy(update={"source": "protocol_curated"})
+    with pytest.raises(ValueError, match="Registry observed results cannot be relabeled as protocol_curated"):
+        normalize_provenance({"control_rate": relabelled})
+
+
+def test_load_and_normalize_d1_demo_presets_preserves_all_distinct_fields():
+    """Reviewer finding: verify all manifest records remain distinct without path collisions."""
     presets = list_demo_presets()
     assert len(presets) == 3
     assert "stable-design-v1" in presets
@@ -83,16 +100,25 @@ def test_load_and_normalize_d1_demo_presets():
     assert stable["planned_design"].control_event_rate == 0.20
     assert stable["fixed_enrollment"].control == 951
 
-    # Provenance preserved and normalized
+    manifest_records = stable["manifest"]["provenance"]
     provenance = stable["provenance"]
-    assert "control_event_rate" in provenance
-    assert provenance["control_event_rate"].source == "synthetic_preset"
-    assert provenance["control_event_rate"].verified_by_user is False
-    assert "docs/03_IMPLEMENTATION_PLAYBOOK.md" in (provenance["control_event_rate"].source_location or "")
+
+    # Every single provenance record from the manifest must be preserved distinctly
+    assert len(provenance) == len(manifest_records)
+    assert len(provenance) == 17
+
+    assert "/planned_design/control_event_rate" in provenance
+    assert "/stress_scenario/control_event_rate" in provenance
+    assert "/planned_design/dropout/control" in provenance
+    assert "/stress_scenario/dropout/control" in provenance
+
+    assert provenance["/planned_design/control_event_rate"].source == "synthetic_preset"
+    assert provenance["/planned_design/control_event_rate"].verified_by_user is False
+    assert "docs/03_IMPLEMENTATION_PLAYBOOK.md" in (provenance["/planned_design/control_event_rate"].source_location or "")
 
 
-def test_export_payload_roundtrip_serialization():
-    """Contract round-trip test: ExportPayload preserves assumptions, results, provenance, and hashes."""
+def test_export_payload_roundtrip_serialization_preserves_audit_fields():
+    """Contract round-trip test: ExportPayload preserves assumptions, results, provenance, and audit fields."""
     planned = TrialAssumptions(
         model_version="binary-v1",
         control_event_rate=0.20,
@@ -108,11 +134,12 @@ def test_export_payload_roundtrip_serialization():
         dropout={"control": 0.06, "treatment": 0.06},
     )
     prov = {
-        "control_event_rate": {
+        "/planned_design/control_event_rate": {
             "source": "manual_user",
             "source_url": "https://example.org/study-protocol.pdf",
             "source_location": "Page 14 Table 2",
             "verified_by_user": True,
+            "is_observed_registry_result": False,
             "description": "Manual entry verified from SAP",
         }
     }
@@ -128,6 +155,13 @@ def test_export_payload_roundtrip_serialization():
     json_str = payload.model_dump_json()
     parsed = json.loads(json_str)
 
+    # Verify audit metadata survived directly in exported JSON
+    exported_prov = parsed["provenance"]["/planned_design/control_event_rate"]
+    assert exported_prov["source_location"] == "Page 14 Table 2"
+    assert exported_prov["verified_by_user"] is True
+    assert exported_prov["source"] == "manual_user"
+    assert exported_prov["source_url"] == "https://example.org/study-protocol.pdf"
+
     # Re-parse into ExportPayload
     reloaded = ExportPayload.model_validate(parsed)
     assert reloaded.export_schema_version == 1
@@ -135,9 +169,13 @@ def test_export_payload_roundtrip_serialization():
     assert reloaded.planned_design.control_event_rate == 0.20
     assert reloaded.fixed_enrollment.control == 951
     assert reloaded.stress_scenario.control_event_rate == 0.19
-    assert "control_event_rate" in reloaded.provenance
-    assert reloaded.provenance["control_event_rate"].source == "manual_user"
-    assert reloaded.provenance["control_event_rate"].source_url == "https://example.org/study-protocol.pdf"
+    assert "/planned_design/control_event_rate" in reloaded.provenance
+
+    reloaded_record = reloaded.provenance["/planned_design/control_event_rate"]
+    assert reloaded_record.source == "manual_user"
+    assert reloaded_record.source_url == "https://example.org/study-protocol.pdf"
+    assert reloaded_record.source_location == "Page 14 Table 2"
+    assert reloaded_record.verified_by_user is True
     assert "betterbaseline" in reloaded.software_versions
 
 
