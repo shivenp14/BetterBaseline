@@ -1,0 +1,429 @@
+{
+  "benchmark_schema_version": 1,
+  "measured_at_utc": "2026-10-11T09:08:43.927704+00:00",
+  "workload": "monte-carlo",
+  "preset_id": "baseline-collapse-v1",
+  "preset_version": 1,
+  "inputs": {
+    "planned_design": {
+      "model_version": "binary-v1",
+      "control_event_rate": 0.2,
+      "effect": {
+        "kind": "relative_risk",
+        "value": 0.75
+      },
+      "alpha": 0.05,
+      "target_power": 0.8,
+      "allocation_ratio": 1.0,
+      "dropout": {
+        "control": 0.0,
+        "treatment": 0.0
+      }
+    },
+    "fixed_enrollment": {
+      "control": 903,
+      "treatment": 903
+    },
+    "stress_scenario": {
+      "control_event_rate": 0.1,
+      "dropout": {
+        "control": 0.0,
+        "treatment": 0.0
+      },
+      "effect_override": null
+    },
+    "simulation": {
+      "replicates": 10000,
+      "seed": 42
+    }
+  },
+  "inputs_hash": "sha256:d4dfd5525e9b355437d458dd211996674bd3b263509125fdceaf1b3bf8643380",
+  "provenance": [
+    {
+      "field": "/planned_design/model_version",
+      "value": "binary-v1",
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/planned_design/control_event_rate",
+      "value": 0.2,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/planned_design/effect/kind",
+      "value": "relative_risk",
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/planned_design/effect/value",
+      "value": 0.75,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/planned_design/alpha",
+      "value": 0.05,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/planned_design/target_power",
+      "value": 0.8,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/planned_design/allocation_ratio",
+      "value": 1.0,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/planned_design/dropout/control",
+      "value": 0.0,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/planned_design/dropout/treatment",
+      "value": 0.0,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/fixed_enrollment/control",
+      "value": 903,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "ceil(903 / (1 - planned_dropout)); synthetic reference, not an engine result"
+    },
+    {
+      "field": "/fixed_enrollment/treatment",
+      "value": 903,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "ceil(903 / (1 - planned_dropout)); synthetic reference, not an engine result"
+    },
+    {
+      "field": "/stress_scenario/control_event_rate",
+      "value": 0.1,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/stress_scenario/dropout/control",
+      "value": 0.0,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/stress_scenario/dropout/treatment",
+      "value": 0.0,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/stress_scenario/effect_override",
+      "value": null,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/simulation/replicates",
+      "value": 10000,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    },
+    {
+      "field": "/simulation/seed",
+      "value": 42,
+      "origin": "synthetic_preset",
+      "source_url": null,
+      "source_location": "docs/03_IMPLEMENTATION_PLAYBOOK.md#9-section-h--synthetic-presets-reproducibility-and-export",
+      "verified_by_user": false,
+      "basis": "Hand-authored synthetic assumption from playbook; no clinical source"
+    }
+  ],
+  "computation_parameters": {
+    "route": "/api/v1/scenarios/evaluate",
+    "request": {
+      "planned_design": {
+        "model_version": "binary-v1",
+        "control_event_rate": 0.2,
+        "effect": {
+          "kind": "relative_risk",
+          "value": 0.75
+        },
+        "alpha": 0.05,
+        "target_power": 0.8,
+        "allocation_ratio": 1.0,
+        "dropout": {
+          "control": 0.0,
+          "treatment": 0.0
+        }
+      },
+      "fixed_enrollment": {
+        "control": 903,
+        "treatment": 903
+      },
+      "stress_scenario": {
+        "control_event_rate": 0.1,
+        "dropout": {
+          "control": 0.0,
+          "treatment": 0.0
+        },
+        "effect_override": null
+      },
+      "simulation": {
+        "replicates": 10000,
+        "seed": 42
+      }
+    }
+  },
+  "computation_sha256": "d7017a16deb9a9339cd25860a455eef2b323a8c0abda1d3222c53231bc3e2655",
+  "scope": "loopback HTTP request send through complete response body receipt; includes server parsing/validation/computation/serialization; excludes client JSON decoding, invariant checks, service startup, fixture loading, reporting and frontend rendering",
+  "cache_condition": "uncached pass-through #64 compute scaffold; warm process; NOT #68 cold/warm cache measurement",
+  "server": {
+    "workers": 1,
+    "concurrent_requests": 1,
+    "owned_fresh_process": true,
+    "connection": "persistent HTTP/1.1; initial connection in excluded warmups"
+  },
+  "environment": {
+    "python": "3.12.4",
+    "packages": {
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "statsmodels": "0.15.0"
+    },
+    "hardware": {
+      "os": "macOS-27.0-arm64-arm-64bit",
+      "machine": "arm64",
+      "processor": "arm",
+      "logical_cpu_count": 8
+    },
+    "git_commit": "6a257b55d480c61a1cd9997ed6b8f4021985df01",
+    "core_source_sha256": {
+      "backend/app/statistics/__init__.py": "2f670063cc59a0a7f2c7c4d83667e02ee69048cfc7757e5741379daa7defb9b0",
+      "backend/app/statistics/analytic.py": "515dc54d9abd610c9511bd7e2ae149854efec1a825907a024cda95aec1cc1122",
+      "backend/app/statistics/diagnostics.py": "4cd42ff168daec93d4b81ee8e52ad5d52aa569d7bbdd0c44fdcb0e5a61a56b93",
+      "backend/app/statistics/effect.py": "1ead80fe378c265cf4e9f8a4426ce9003dd2c634d859153dc4ce9572b28d2e1a",
+      "backend/app/statistics/errors.py": "2366c276bab469fd2adfd6b448655a3b81a7d2a5cb9eaa41de642bf11bda3cfc",
+      "backend/app/statistics/inputs.py": "b2a6f1a247411ad0a95cc821df2831d4a1725fbee079cc17fa0f6b34e7fc5ab0",
+      "backend/app/statistics/sample_size.py": "613f4a8a6faab1a078f8b750458450f42869352834b8a411c284546a67924139",
+      "backend/app/statistics/simulation.py": "084c16f3834a99d9aa6c4e8dcd8d7e554e5cefbeb5644a1526b41169f6f3a229",
+      "backend/app/statistics/stress_grid.py": "117f67cfad5fad577bbfb904d0c30436038e28eb45b2b11c1388e3e43cb710cd",
+      "backend/app/statistics/validation.py": "19faa5c5c902cf26752e57910b430fa83aad39ec52c18f8dbb7adfe4f2d354b6"
+    },
+    "harness_source_sha256": "ac7fc62c0c16b11422d14b99639df257d77e8d089ac4aa26d9e5db6fed47ba49"
+  },
+  "service_source_sha256": {
+    "backend/app/__init__.py": "09f8ff1d9c784fcf40437217d88364106bdc6769c4b649449b2f6ff9784c954a",
+    "backend/app/data/__init__.py": "890246426da36600cf97146d7019ca0909f1c83573dbfacba37036b02955898c",
+    "backend/app/data/provenance.py": "83aab0d273b1176c250324e7dfd3960f4ba286818432a07c9cf1a08a2d053538",
+    "backend/app/errors.py": "44bf87cbbe5548f07712e31a6bdf1e2a715b8b1b14de1f56cb5051f7e28e0090",
+    "backend/app/main.py": "d6e31127575e9e120bae47cb0ecca5f2baaf77be0d384f2f119313f53dea5ce3",
+    "backend/app/routers/__init__.py": "7271ba7dd55248bfa5256476fab9d8985c3592b475e0d156cfee86d27c1b9370",
+    "backend/app/routers/design.py": "f021548bade1521ff888900ad7e4ef1d285061ab2daeaf6d11c2dbf853401381",
+    "backend/app/routers/grid.py": "29deffccc81ad603c90b40e83f70273966bea597c56bf21947d25ff7b7931931",
+    "backend/app/routers/health.py": "640b9358f2df618104c935cdc2ed025aae4e81e778dfcc22adf1fc0437857fb1",
+    "backend/app/routers/scenarios.py": "18078692888499a45210322f5533ba76ad4ef97e19706c6aa1f12a6105ac3964",
+    "backend/app/schemas.py": "f3ff01420ea21b488a125a4c25b26341f83d909ba9099279788b79a24bf8a5d8",
+    "backend/app/services/__init__.py": "6e8bfe65afc982a683ae4fa244065e87bad6c809bdeef51b74911506f5abd786",
+    "backend/app/services/compute.py": "aba783fe64bbd8ff93bd2dd5206a979c5cabb98db2e2df7ebb5658a726a86150",
+    "backend/app/services/grid.py": "658b4a5f4794005f7ac7025d40bbe56ecafe80bd17f4abfc62037a08aaf799f9",
+    "backend/app/settings.py": "0dba0e78ed076cb83855ebeb16ac3182eda8cd8f3ed4df13ce222b7658a43d76",
+    "backend/app/statistics/__init__.py": "2f670063cc59a0a7f2c7c4d83667e02ee69048cfc7757e5741379daa7defb9b0",
+    "backend/app/statistics/analytic.py": "515dc54d9abd610c9511bd7e2ae149854efec1a825907a024cda95aec1cc1122",
+    "backend/app/statistics/diagnostics.py": "4cd42ff168daec93d4b81ee8e52ad5d52aa569d7bbdd0c44fdcb0e5a61a56b93",
+    "backend/app/statistics/effect.py": "1ead80fe378c265cf4e9f8a4426ce9003dd2c634d859153dc4ce9572b28d2e1a",
+    "backend/app/statistics/errors.py": "2366c276bab469fd2adfd6b448655a3b81a7d2a5cb9eaa41de642bf11bda3cfc",
+    "backend/app/statistics/inputs.py": "b2a6f1a247411ad0a95cc821df2831d4a1725fbee079cc17fa0f6b34e7fc5ab0",
+    "backend/app/statistics/sample_size.py": "613f4a8a6faab1a078f8b750458450f42869352834b8a411c284546a67924139",
+    "backend/app/statistics/simulation.py": "084c16f3834a99d9aa6c4e8dcd8d7e554e5cefbeb5644a1526b41169f6f3a229",
+    "backend/app/statistics/stress_grid.py": "117f67cfad5fad577bbfb904d0c30436038e28eb45b2b11c1388e3e43cb710cd",
+    "backend/app/statistics/validation.py": "19faa5c5c902cf26752e57910b430fa83aad39ec52c18f8dbb7adfe4f2d354b6"
+  },
+  "http_harness_source_sha256": "4c1288b0ca7c6f749528d362bc68915e88bfa4683feecb7d1f69de0bc51d96d9",
+  "numerical_invariants_checked": true,
+  "measurement": {
+    "measured_runs": 30,
+    "excluded_warmups": 3,
+    "raw_elapsed_ns": [
+      4562833,
+      4469709,
+      4470000,
+      4419041,
+      4525625,
+      4403542,
+      4421208,
+      4346541,
+      4418500,
+      4344000,
+      4440542,
+      4490208,
+      4416583,
+      4418708,
+      4335209,
+      4423583,
+      4385584,
+      4350292,
+      4537750,
+      4360250,
+      4314417,
+      4416333,
+      4349625,
+      4503875,
+      4428250,
+      4441375,
+      4455333,
+      4351584,
+      4299792,
+      4325041
+    ],
+    "median_ms": 4.418604,
+    "p95_ms": 4.53775,
+    "p95_definition": "nearest rank, ceil(0.95*runs), one-based",
+    "representative_result": {
+      "model_version": "binary-v1",
+      "analytic": {
+        "method": "cohen_h_normal_v1",
+        "conditional_power_approx": 0.46999657396642885,
+        "assumed_evaluable_n": {
+          "control": 903,
+          "treatment": 903
+        }
+      },
+      "monte_carlo": {
+        "method": "pooled_two_proportion_z_v1",
+        "significant_two_sided_fraction": 0.4702,
+        "significant_favorable_fraction": 0.4702,
+        "mcse_two_sided": 0.004991111699811977,
+        "mcse_favorable": 0.004991111699811977,
+        "invalid_test_fraction": 0.0,
+        "replicates": 10000,
+        "seed": 42,
+        "invalid_test_policy": "nonrejection_over_all_replicates",
+        "mean_retained_control": 903.0,
+        "mean_retained_treatment": 903.0,
+        "mean_control_events": 90.2709,
+        "mean_treatment_events": 67.7956,
+        "rng": "numpy.random.PCG64",
+        "software_versions": {
+          "python": "3.12.4",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        }
+      },
+      "warnings": [
+        "Estimate conditional on stated assumptions; not efficacy, clinical evidence, or a clinical recommendation.",
+        "Analytic counts are floored expected retention, not actual simulated retained counts.",
+        "Synthetic outcomes conditional on assumptions; not clinical evidence.",
+        "Pooled-z simulation and Cohen's-h analytic power use distinct approximations."
+      ],
+      "metadata": {
+        "computed_at": "2026-10-11T09:08:42.955505+00:00",
+        "inputs_hash": "sha256:4e6150b4d1d9ad4a1fa2f088e6d5a04aa65812829c6a8a6098cf56ccd4963321",
+        "software_versions": {
+          "python": "3.12.4",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1",
+          "statsmodels": "0.15.0"
+        },
+        "fixed_enrollment": {
+          "control": 903,
+          "treatment": 903
+        }
+      },
+      "provenance": {}
+    },
+    "result_sha256": "939307ef1f4645478dc2de8a72e7163d726fc497d99510add75bb8cb06d863c5",
+    "semantic_result_sha256": "3e70624e36eb08dc07830a3250c5266b82c1c5809ca9a1fedd8b0d28ffac1711",
+    "ignored_replay_fields": [
+      "metadata.computed_at"
+    ],
+    "measured_computed_at": [
+      "2026-10-11T09:08:43.561288+00:00",
+      "2026-10-11T09:08:43.567455+00:00",
+      "2026-10-11T09:08:43.573652+00:00",
+      "2026-10-11T09:08:43.579903+00:00",
+      "2026-10-11T09:08:43.586186+00:00",
+      "2026-10-11T09:08:43.592279+00:00",
+      "2026-10-11T09:08:43.598438+00:00",
+      "2026-10-11T09:08:43.604449+00:00",
+      "2026-10-11T09:08:43.610621+00:00",
+      "2026-10-11T09:08:43.616662+00:00",
+      "2026-10-11T09:08:43.622832+00:00",
+      "2026-10-11T09:08:43.629036+00:00",
+      "2026-10-11T09:08:43.635125+00:00",
+      "2026-10-11T09:08:43.641188+00:00",
+      "2026-10-11T09:08:43.647222+00:00",
+      "2026-10-11T09:08:43.653355+00:00",
+      "2026-10-11T09:08:43.659462+00:00",
+      "2026-10-11T09:08:43.665614+00:00",
+      "2026-10-11T09:08:43.671897+00:00",
+      "2026-10-11T09:08:43.677909+00:00",
+      "2026-10-11T09:08:43.683883+00:00",
+      "2026-10-11T09:08:43.689950+00:00",
+      "2026-10-11T09:08:43.696077+00:00",
+      "2026-10-11T09:08:43.702245+00:00",
+      "2026-10-11T09:08:43.708439+00:00",
+      "2026-10-11T09:08:43.714597+00:00",
+      "2026-10-11T09:08:43.720722+00:00",
+      "2026-10-11T09:08:43.726797+00:00",
+      "2026-10-11T09:08:43.732790+00:00",
+      "2026-10-11T09:08:43.738846+00:00"
+    ],
+    "identical_semantic_results": true
+  },
+  "timing_notice": "Hardware/load-dependent local measurements; no speedup or clinical validation claim."
+}

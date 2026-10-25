@@ -9,6 +9,8 @@ Provides strongly typed models for:
 """
 
 import math
+import hashlib
+import json
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -18,6 +20,46 @@ ModelVersion = Literal["binary-v1"]
 EffectKind = Literal["relative_risk", "absolute_risk_reduction"]
 AnalyticalMethod = Literal["cohen_h_normal_v1"]
 SimulationMethod = Literal["pooled_two_proportion_z_v1"]
+SourceTag = Literal[
+    "manual_user",
+    "synthetic_preset",
+    "protocol_curated",
+    "clinicaltrials_registry",
+]
+
+
+class FieldProvenance(BaseModel):
+    """Per-field source and audit metadata shared by all v1 routes and exports."""
+
+    source: SourceTag
+    description: Optional[str] = None
+    retrieved_at: Optional[str] = None
+    source_url: Optional[str] = None
+    source_location: Optional[str] = None
+    verified_by_user: Optional[bool] = None
+    is_observed_registry_result: Optional[bool] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_origin_alias(cls, value: Any) -> Any:
+        if isinstance(value, dict) and "origin" in value:
+            data = dict(value)
+            origin = data.pop("origin")
+            if "source" in data and data["source"] != origin:
+                raise ValueError("Field provenance source and origin tags must agree")
+            data.setdefault("source", origin)
+            return data
+        return value
+
+    @model_validator(mode="after")
+    def reject_registry_results_as_planning(self) -> "FieldProvenance":
+        observed = self.is_observed_registry_result is True or (
+            "clinicaltrials.gov" in (self.source_url or "").lower()
+            and "observed" in (self.description or "").lower()
+        )
+        if self.source == "protocol_curated" and observed:
+            raise ValueError("Registry observed results cannot be relabeled as protocol_curated")
+        return self
 
 
 class RelativeRiskEffect(BaseModel):
@@ -110,7 +152,7 @@ class SimulationOptions(BaseModel):
 
 # 1. POST /api/v1/design/calculate
 class DesignCalculateRequest(TrialAssumptions):
-    pass
+    provenance: Dict[str, FieldProvenance] = Field(default_factory=dict)
 
 
 class DesignCalculateResponse(BaseModel):
@@ -121,6 +163,8 @@ class DesignCalculateResponse(BaseModel):
     enrolled_n: ArmCounts
     nominal_power_evaluable: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
     warnings: List[str] = Field(default_factory=list)
+    diagnostics: List["StatisticalDiagnostic"] = Field(default_factory=list)
+    provenance: Dict[str, FieldProvenance] = Field(default_factory=dict)
     inputs_hash: str
 
 
@@ -130,6 +174,7 @@ class ScenarioEvaluateRequest(BaseModel):
     fixed_enrollment: ArmCounts
     stress_scenario: StressScenario
     simulation: SimulationOptions = Field(default_factory=SimulationOptions)
+    provenance: Dict[str, FieldProvenance] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def validate_scenario(self) -> "ScenarioEvaluateRequest":
@@ -163,19 +208,50 @@ class MonteCarloEvaluation(BaseModel):
     invalid_test_fraction: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
     replicates: int = Field(ge=100)
     seed: Optional[int] = Field(default=None, ge=0, le=2**32 - 1)
+    invalid_test_policy: Optional[Literal["nonrejection_over_all_replicates"]] = None
+    mean_retained_control: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
+    mean_retained_treatment: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
+    mean_control_events: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
+    mean_treatment_events: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
+    rng: Optional[str] = None
+    software_versions: Dict[str, str] = Field(default_factory=dict)
 
 
 class ScenarioMetadata(BaseModel):
     computed_at: str
     inputs_hash: str
+    software_versions: Dict[str, str] = Field(default_factory=dict)
+    fixed_enrollment: Optional[ArmCounts] = None
+
+
+class StatisticalDiagnostic(BaseModel):
+    """Stable, machine-readable description of a statistical limit or warning."""
+    code: str
+    severity: Literal["info", "warning", "error"]
+    field: str
+    method: str
+    message: str
+    arm: Optional[Literal["control", "treatment"]] = None
+    outcome: Optional[Literal["events", "non_events"]] = None
+    expected_count: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
+    threshold: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
+    count_basis: Optional[Literal["evaluable_count", "expected_random_retention"]] = None
+    invalid_test_fraction: Optional[float] = Field(default=None, ge=0, le=1, allow_inf_nan=False)
+    replicates: Optional[int] = Field(default=None, ge=1)
+    invalid_test_policy: Optional[Literal["nonrejection_over_all_replicates"]] = None
+
+
+DesignCalculateResponse.model_rebuild()
 
 
 class ScenarioEvaluateResponse(BaseModel):
     model_version: ModelVersion = "binary-v1"
     analytic: AnalyticEvaluation
-    monte_carlo: MonteCarloEvaluation
+    monte_carlo: Optional[MonteCarloEvaluation]
     warnings: List[str] = Field(default_factory=list)
+    diagnostics: List[StatisticalDiagnostic] = Field(default_factory=list)
     metadata: ScenarioMetadata
+    provenance: Dict[str, FieldProvenance] = Field(default_factory=dict)
 
 
 # 3. POST /api/v1/scenarios/grid
@@ -314,6 +390,7 @@ class ScenarioGridResponse(BaseModel):
     invalid_cell_count: int = Field(ge=0)
     worst_case_power: Optional[float] = Field(default=None, ge=0.0, le=1.0, allow_inf_nan=False)
     warnings: List[str] = Field(default_factory=list)
+    diagnostics: List[StatisticalDiagnostic] = Field(default_factory=list)
     computed_at: str
     inputs_hash: str
 
@@ -392,20 +469,24 @@ class ErrorEnvelope(BaseModel):
     error: ErrorDetail
 
 
-# 5. Provenance tracking
-SourceTag = Literal[
-    "manual_user",
-    "synthetic_preset",
-    "protocol_curated",
-    "clinicaltrials_registry",
-]
-
-
-class FieldProvenance(BaseModel):
-    source: SourceTag
-    description: Optional[str] = None
-    retrieved_at: Optional[str] = None
-    source_url: Optional[str] = None
+def compute_export_inputs_hash(
+    planned_design: TrialAssumptions,
+    fixed_enrollment: ArmCounts,
+    stress_scenario: Optional[StressScenario],
+    provenance: Dict[str, FieldProvenance],
+) -> str:
+    """Hash canonical assumptions/enrollment/stress/provenance for an export."""
+    canonical = {
+        "planned_design": planned_design.model_dump(mode="json"),
+        "fixed_enrollment": fixed_enrollment.model_dump(mode="json"),
+        "stress_scenario": stress_scenario.model_dump(mode="json") if stress_scenario else None,
+        "provenance": {
+            key: value.model_dump(mode="json")
+            for key, value in provenance.items()
+        },
+    }
+    encoded = json.dumps(canonical, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    return "sha256:" + hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
 class ExportPayload(BaseModel):
@@ -423,6 +504,38 @@ class ExportPayload(BaseModel):
     )
     provenance: Dict[str, FieldProvenance] = Field(default_factory=dict)
     exported_at: str
+    inputs_hash: str
+
+    @model_validator(mode="before")
+    @classmethod
+    def populate_export_inputs_hash(cls, value: Any) -> Any:
+        if not isinstance(value, dict) or value.get("inputs_hash"):
+            return value
+        data = dict(value)
+        if "planned_design" not in data or "fixed_enrollment" not in data:
+            return data
+        planned = TrialAssumptions.model_validate(data["planned_design"])
+        enrollment = ArmCounts.model_validate(data["fixed_enrollment"])
+        stress_raw = data.get("stress_scenario")
+        stress = StressScenario.model_validate(stress_raw) if stress_raw is not None else None
+        raw_provenance = data.get("provenance", {})
+        if not isinstance(raw_provenance, dict):
+            return data
+        provenance = {
+            str(key): FieldProvenance.model_validate(record)
+            for key, record in raw_provenance.items()
+        }
+        data["inputs_hash"] = compute_export_inputs_hash(planned, enrollment, stress, provenance)
+        return data
+
+    @model_validator(mode="after")
+    def validate_export_inputs_hash(self) -> "ExportPayload":
+        expected = compute_export_inputs_hash(
+            self.planned_design, self.fixed_enrollment, self.stress_scenario, self.provenance
+        )
+        if self.inputs_hash != expected:
+            raise ValueError("Export inputs_hash does not match canonical assumptions and provenance")
+        return self
 
 
 # Resolve grid provenance types declared below the endpoint schemas.

@@ -1,0 +1,33 @@
+name: Independent numerical validation
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analytic-and-simulation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.13"
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.26"
+      - name: Install committed backend lock
+        run: uv sync --project backend --locked --extra dev
+      - name: Measure independent analytic and pooled-z evidence
+        run: uv run --project backend --locked --extra dev python scripts/validation/run_validation.py --output-dir /tmp/betterbaseline-validation
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: numerical-validation-evidence
+          path: /tmp/betterbaseline-validation
+          if-no-files-found: error

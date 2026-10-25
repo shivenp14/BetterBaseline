@@ -84,6 +84,34 @@
                 }
               }
             }
+          },
+          "413": {
+            "description": "Payload Too Large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Compute Resource Saturated",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           }
         }
       }
@@ -94,13 +122,13 @@
           "scenarios"
         ],
         "summary": "Evaluate Scenario",
-        "description": "Scaffold endpoint for scenario evaluation.\n\nHandoff to Issue #65 (@PranavGoyal01) for full analytic evaluation and\nMonte Carlo simulation integration.",
+        "description": "Evaluate stressed reality without solving or modifying planned enrollment.",
         "operationId": "evaluate_scenario_api_v1_scenarios_evaluate_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ScenarioEvaluateRequest"
+                "$ref": "#/components/schemas/EvaluationRequest"
               }
             }
           },
@@ -112,7 +140,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ScenarioEvaluateResponse"
+                  "$ref": "#/components/schemas/EvaluationResponse"
                 }
               }
             }
@@ -136,6 +164,34 @@
                 }
               }
             }
+          },
+          "413": {
+            "description": "Payload Too Large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Compute Resource Saturated",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           }
         }
       }
@@ -146,7 +202,7 @@
           "grid"
         ],
         "summary": "Generate Scenario Grid",
-        "description": "Scaffold endpoint for 2D scenario grid and 1D power curve generation.\n\nHandoff to Issue #66 (@roland-aranas) for full grid calculation and contour extraction.",
+        "description": "Frozen-N grid with exact selected-dropout curve and separate frontier edges.\n\nfrontier_points contains unique interpolated target coordinates for markers;\nuse contour_segments for connectivity, never connect the flat list. Off-grid\nplanned/selected comparisons remain available even if all grid cells are invalid.",
         "operationId": "generate_scenario_grid_api_v1_scenarios_grid_post",
         "requestBody": {
           "content": {
@@ -188,6 +244,95 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Compute Resource Saturated",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trials/{nct_id}": {
+      "get": {
+        "tags": [
+          "trials"
+        ],
+        "summary": "Lookup Trial",
+        "description": "Return cached metadata with null, unverified planning assumptions.\n\nSynchronous bounded transport runs in FastAPI's worker pool; no lookup is\nperformed at startup or by calculate/evaluate/grid endpoints.",
+        "operationId": "lookup_trial_api_v1_trials__nct_id__get",
+        "parameters": [
+          {
+            "name": "nct_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Nct Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
           }
         }
       }
@@ -390,6 +535,13 @@
           },
           "dropout": {
             "$ref": "#/components/schemas/ArmProportions"
+          },
+          "provenance": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FieldProvenance"
+            },
+            "type": "object",
+            "title": "Provenance"
           }
         },
         "type": "object",
@@ -437,6 +589,20 @@
             },
             "type": "array",
             "title": "Warnings"
+          },
+          "diagnostics": {
+            "items": {
+              "$ref": "#/components/schemas/StatisticalDiagnostic"
+            },
+            "type": "array",
+            "title": "Diagnostics"
+          },
+          "provenance": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FieldProvenance"
+            },
+            "type": "object",
+            "title": "Provenance"
           },
           "inputs_hash": {
             "type": "string",
@@ -499,6 +665,254 @@
         ],
         "title": "ErrorEnvelope"
       },
+      "EvaluationMetadata": {
+        "properties": {
+          "computed_at": {
+            "type": "string",
+            "title": "Computed At"
+          },
+          "inputs_hash": {
+            "type": "string",
+            "title": "Inputs Hash"
+          },
+          "software_versions": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Software Versions"
+          },
+          "fixed_enrollment": {
+            "$ref": "#/components/schemas/ArmCounts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "computed_at",
+          "inputs_hash",
+          "software_versions",
+          "fixed_enrollment"
+        ],
+        "title": "EvaluationMetadata"
+      },
+      "EvaluationMonteCarlo": {
+        "properties": {
+          "method": {
+            "type": "string",
+            "const": "pooled_two_proportion_z_v1",
+            "title": "Method",
+            "default": "pooled_two_proportion_z_v1"
+          },
+          "significant_two_sided_fraction": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Significant Two Sided Fraction"
+          },
+          "significant_favorable_fraction": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Significant Favorable Fraction"
+          },
+          "mcse_two_sided": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Mcse Two Sided"
+          },
+          "mcse_favorable": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Mcse Favorable"
+          },
+          "invalid_test_fraction": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Invalid Test Fraction"
+          },
+          "replicates": {
+            "type": "integer",
+            "maximum": 100000.0,
+            "minimum": 1.0,
+            "title": "Replicates"
+          },
+          "seed": {
+            "type": "integer",
+            "maximum": 4294967295.0,
+            "minimum": 0.0,
+            "title": "Seed"
+          },
+          "invalid_test_policy": {
+            "type": "string",
+            "const": "nonrejection_over_all_replicates",
+            "title": "Invalid Test Policy"
+          },
+          "mean_retained_control": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Mean Retained Control"
+          },
+          "mean_retained_treatment": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Mean Retained Treatment"
+          },
+          "mean_control_events": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Mean Control Events"
+          },
+          "mean_treatment_events": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Mean Treatment Events"
+          },
+          "rng": {
+            "type": "string",
+            "title": "Rng"
+          },
+          "software_versions": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Software Versions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "significant_two_sided_fraction",
+          "significant_favorable_fraction",
+          "mcse_two_sided",
+          "mcse_favorable",
+          "invalid_test_fraction",
+          "replicates",
+          "seed",
+          "invalid_test_policy",
+          "mean_retained_control",
+          "mean_retained_treatment",
+          "mean_control_events",
+          "mean_treatment_events",
+          "rng",
+          "software_versions"
+        ],
+        "title": "EvaluationMonteCarlo"
+      },
+      "EvaluationRequest": {
+        "properties": {
+          "planned_design": {
+            "$ref": "#/components/schemas/TrialAssumptions"
+          },
+          "fixed_enrollment": {
+            "$ref": "#/components/schemas/ArmCounts"
+          },
+          "stress_scenario": {
+            "$ref": "#/components/schemas/StressScenario"
+          },
+          "simulation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvaluationSimulationOptions"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "provenance": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FieldProvenance"
+            },
+            "type": "object",
+            "title": "Provenance"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "planned_design",
+          "fixed_enrollment",
+          "stress_scenario"
+        ],
+        "title": "EvaluationRequest"
+      },
+      "EvaluationResponse": {
+        "properties": {
+          "model_version": {
+            "type": "string",
+            "const": "binary-v1",
+            "title": "Model Version",
+            "default": "binary-v1"
+          },
+          "analytic": {
+            "$ref": "#/components/schemas/AnalyticEvaluation"
+          },
+          "monte_carlo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvaluationMonteCarlo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "diagnostics": {
+            "items": {
+              "$ref": "#/components/schemas/StatisticalDiagnostic"
+            },
+            "type": "array",
+            "title": "Diagnostics"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/EvaluationMetadata"
+          },
+          "provenance": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FieldProvenance"
+            },
+            "type": "object",
+            "title": "Provenance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "analytic",
+          "monte_carlo",
+          "metadata",
+          "provenance"
+        ],
+        "title": "EvaluationResponse"
+      },
+      "EvaluationSimulationOptions": {
+        "properties": {
+          "replicates": {
+            "type": "integer",
+            "maximum": 100000.0,
+            "minimum": 1.0,
+            "title": "Replicates",
+            "default": 10000
+          },
+          "seed": {
+            "type": "integer",
+            "maximum": 4294967295.0,
+            "minimum": 0.0,
+            "title": "Seed",
+            "default": 42
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "EvaluationSimulationOptions"
+      },
       "ExpectedRetainedCounts": {
         "properties": {
           "control": {
@@ -519,6 +933,92 @@
         ],
         "title": "ExpectedRetainedCounts",
         "description": "Floored expected retention, distinct from positive enrollment counts."
+      },
+      "FieldProvenance": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "manual_user",
+              "synthetic_preset",
+              "protocol_curated",
+              "clinicaltrials_registry"
+            ],
+            "title": "Source"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "retrieved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieved At"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "source_location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Location"
+          },
+          "verified_by_user": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified By User"
+          },
+          "is_observed_registry_result": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Observed Registry Result"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source"
+        ],
+        "title": "FieldProvenance",
+        "description": "Per-field source and audit metadata shared by all v1 routes and exports."
       },
       "GridAxisSpec": {
         "properties": {
@@ -541,6 +1041,7 @@
             "title": "Steps"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "min",
@@ -573,11 +1074,33 @@
             "default": 10
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "GridDropoutAxisSpec"
       },
       "GridPoint": {
         "properties": {
+          "expected_evaluable_n": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExpectedRetainedCounts"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "invalid_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalid Reason"
+          },
           "p_control": {
             "type": "number",
             "maximum": 1.0,
@@ -670,72 +1193,6 @@
         ],
         "title": "MetaResponse"
       },
-      "MonteCarloEvaluation": {
-        "properties": {
-          "method": {
-            "type": "string",
-            "const": "pooled_two_proportion_z_v1",
-            "title": "Method",
-            "default": "pooled_two_proportion_z_v1"
-          },
-          "significant_two_sided_fraction": {
-            "type": "number",
-            "maximum": 1.0,
-            "minimum": 0.0,
-            "title": "Significant Two Sided Fraction"
-          },
-          "significant_favorable_fraction": {
-            "type": "number",
-            "maximum": 1.0,
-            "minimum": 0.0,
-            "title": "Significant Favorable Fraction"
-          },
-          "mcse_two_sided": {
-            "type": "number",
-            "minimum": 0.0,
-            "title": "Mcse Two Sided"
-          },
-          "mcse_favorable": {
-            "type": "number",
-            "minimum": 0.0,
-            "title": "Mcse Favorable"
-          },
-          "invalid_test_fraction": {
-            "type": "number",
-            "maximum": 1.0,
-            "minimum": 0.0,
-            "title": "Invalid Test Fraction"
-          },
-          "replicates": {
-            "type": "integer",
-            "minimum": 100.0,
-            "title": "Replicates"
-          },
-          "seed": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "maximum": 4294967295.0,
-                "minimum": 0.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Seed"
-          }
-        },
-        "type": "object",
-        "required": [
-          "significant_two_sided_fraction",
-          "significant_favorable_fraction",
-          "mcse_two_sided",
-          "mcse_favorable",
-          "invalid_test_fraction",
-          "replicates"
-        ],
-        "title": "MonteCarloEvaluation"
-      },
       "PowerCurvePoint": {
         "properties": {
           "p_control": {
@@ -791,64 +1248,15 @@
         ],
         "title": "RelativeRiskEffect"
       },
-      "ScenarioEvaluateRequest": {
-        "properties": {
-          "planned_design": {
-            "$ref": "#/components/schemas/TrialAssumptions"
-          },
-          "fixed_enrollment": {
-            "$ref": "#/components/schemas/ArmCounts"
-          },
-          "stress_scenario": {
-            "$ref": "#/components/schemas/StressScenario"
-          },
-          "simulation": {
-            "$ref": "#/components/schemas/SimulationOptions"
-          }
-        },
-        "type": "object",
-        "required": [
-          "planned_design",
-          "fixed_enrollment",
-          "stress_scenario"
-        ],
-        "title": "ScenarioEvaluateRequest"
-      },
-      "ScenarioEvaluateResponse": {
-        "properties": {
-          "model_version": {
-            "type": "string",
-            "const": "binary-v1",
-            "title": "Model Version",
-            "default": "binary-v1"
-          },
-          "analytic": {
-            "$ref": "#/components/schemas/AnalyticEvaluation"
-          },
-          "monte_carlo": {
-            "$ref": "#/components/schemas/MonteCarloEvaluation"
-          },
-          "warnings": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Warnings"
-          },
-          "metadata": {
-            "$ref": "#/components/schemas/ScenarioMetadata"
-          }
-        },
-        "type": "object",
-        "required": [
-          "analytic",
-          "monte_carlo",
-          "metadata"
-        ],
-        "title": "ScenarioEvaluateResponse"
-      },
       "ScenarioGridRequest": {
         "properties": {
+          "provenance": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FieldProvenance"
+            },
+            "type": "object",
+            "title": "Provenance"
+          },
           "planned_design": {
             "$ref": "#/components/schemas/TrialAssumptions"
           },
@@ -898,6 +1306,7 @@
             "description": "Selected stress scenario providing the selected baseline risk and dropout level for selected_point and power_curve"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "planned_design",
@@ -908,6 +1317,65 @@
       },
       "ScenarioGridResponse": {
         "properties": {
+          "grid_label": {
+            "type": "string",
+            "const": "expected_count_approximation",
+            "title": "Grid Label",
+            "default": "expected_count_approximation"
+          },
+          "fixed_enrollment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArmCounts"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "below_target": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Below Target"
+          },
+          "analytic_delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analytic Delta",
+            "description": "Selected minus original planned power in fraction units, independent of grid-domain validity; null when either comparison point is unavailable."
+          },
+          "software_versions": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Software Versions"
+          },
+          "provenance": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FieldProvenance"
+            },
+            "type": "object",
+            "title": "Provenance"
+          },
           "model_version": {
             "type": "string",
             "const": "binary-v1",
@@ -985,14 +1453,16 @@
               "$ref": "#/components/schemas/GridPoint"
             },
             "type": "array",
-            "title": "Frontier Points"
+            "title": "Frontier Points",
+            "description": "Unique interpolated target-frontier coordinates for markers. This list conveys no connectivity; use contour_segments to draw edges, never join frontier_points in list order."
           },
           "contour_segments": {
             "items": {
               "$ref": "#/components/schemas/ContourSegment"
             },
             "type": "array",
-            "title": "Contour Segments"
+            "title": "Contour Segments",
+            "description": "Independent adjacent frontier edges, preserving disconnected paths and avoiding invalid cells."
           },
           "power_curve": {
             "items": {
@@ -1026,6 +1496,13 @@
             "type": "array",
             "title": "Warnings"
           },
+          "diagnostics": {
+            "items": {
+              "$ref": "#/components/schemas/StatisticalDiagnostic"
+            },
+            "type": "array",
+            "title": "Diagnostics"
+          },
           "computed_at": {
             "type": "string",
             "title": "Computed At"
@@ -1049,52 +1526,150 @@
         ],
         "title": "ScenarioGridResponse"
       },
-      "ScenarioMetadata": {
+      "StatisticalDiagnostic": {
         "properties": {
-          "computed_at": {
+          "code": {
             "type": "string",
-            "title": "Computed At"
+            "title": "Code"
           },
-          "inputs_hash": {
+          "severity": {
             "type": "string",
-            "title": "Inputs Hash"
-          }
-        },
-        "type": "object",
-        "required": [
-          "computed_at",
-          "inputs_hash"
-        ],
-        "title": "ScenarioMetadata"
-      },
-      "SimulationOptions": {
-        "properties": {
-          "replicates": {
-            "type": "integer",
-            "maximum": 50000.0,
-            "minimum": 100.0,
-            "title": "Replicates",
-            "description": "Replication count",
-            "default": 10000
+            "enum": [
+              "info",
+              "warning",
+              "error"
+            ],
+            "title": "Severity"
           },
-          "seed": {
+          "field": {
+            "type": "string",
+            "title": "Field"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "arm": {
             "anyOf": [
               {
-                "type": "integer",
-                "maximum": 4294967295.0,
+                "type": "string",
+                "enum": [
+                  "control",
+                  "treatment"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arm"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "events",
+                  "non_events"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "expected_count": {
+            "anyOf": [
+              {
+                "type": "number",
                 "minimum": 0.0
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Seed",
-            "description": "Random seed for reproducibility",
-            "default": 42
+            "title": "Expected Count"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          },
+          "count_basis": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "evaluable_count",
+                  "expected_random_retention"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Count Basis"
+          },
+          "invalid_test_fraction": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalid Test Fraction"
+          },
+          "replicates": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replicates"
+          },
+          "invalid_test_policy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "nonrejection_over_all_replicates"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalid Test Policy"
           }
         },
         "type": "object",
-        "title": "SimulationOptions"
+        "required": [
+          "code",
+          "severity",
+          "field",
+          "method",
+          "message"
+        ],
+        "title": "StatisticalDiagnostic",
+        "description": "Stable, machine-readable description of a statistical limit or warning."
       },
       "StressScenario": {
         "properties": {

@@ -1,5 +1,6 @@
 "use client";
 
+
 import { useId, useRef, useState, type FormEvent } from "react";
 import type { CalculateRequest, TrialAssumptions } from "../lib/contracts";
 import {
@@ -13,6 +14,7 @@ export interface DesignFormProps {
   onCalculate: (request: CalculateRequest) => void | Promise<void>;
   /** Parent marks prior results stale and tracks edited input provenance here. */
   onDraftChange?: (draft: PlanningDraft, changedField: DraftField) => void;
+  submitLabel?: string;
   isCalculating?: boolean;
   error?: string | null;
 }
@@ -34,7 +36,7 @@ export function DesignForm(props: DesignFormProps) {
 }
 
 function DesignFormFields({ initialDraft, presetId, onCalculate, onDraftChange,
-  isCalculating = false, error = null }: DesignFormProps & { initialDraft: PlanningDraft }) {
+  isCalculating = false, error = null, submitLabel = "Calculate design" }: DesignFormProps & { initialDraft: PlanningDraft }) {
   const id = useId();
   const form = useRef<HTMLFormElement>(null);
   const submitting = useRef(false);
@@ -86,7 +88,7 @@ function DesignFormFields({ initialDraft, presetId, onCalculate, onDraftChange,
   function input(field: Exclude<DraftField, "effectKind">, label: string, help?: string) {
     const inputId = `${id}-${field}`;
     const describedBy = [help && `${inputId}-help`, errors[field] && `${inputId}-error`].filter(Boolean).join(" ");
-    return <div>
+    return <div className="planning-field">
       <label htmlFor={inputId}>{label}</label>{" "}
       <input id={inputId} name={field} type="text" inputMode="decimal" required
         value={draft[field]} aria-invalid={Boolean(errors[field])}
@@ -97,16 +99,16 @@ function DesignFormFields({ initialDraft, presetId, onCalculate, onDraftChange,
     </div>;
   }
 
-  return <section aria-labelledby={`${id}-heading`}>
+  return <section className="planning-formSection" aria-labelledby={`${id}-heading`}>
     <h2 id={`${id}-heading`}>Planning assumptions</h2>
     <p>Binary adverse endpoint, two-sided test, equal 1:1 arm enrollment, and symmetric dropout.</p>
     <p>Percent fields use the displayed percent units: enter 20 for 20%. Relative risk uses a decimal ratio.</p>
     <form ref={form} onSubmit={submit} noValidate aria-busy={busy}>
-      <fieldset disabled={busy}>
+      <fieldset className="planning-fields" disabled={busy}>
         <legend>Planned design inputs</legend>
         {input("controlPercent", "Control endpoint risk (%)",
           `Endpoint risk in the trial’s eligible control population over the stated follow-up period. This is not general-population disease prevalence.`)}
-        <div>
+        <div className="planning-field">
           <label htmlFor={`${id}-effectKind`}>Hypothetical treatment effect</label>{" "}
           <select id={`${id}-effectKind`} name="effectKind" value={draft.effectKind}
             aria-invalid={Boolean(errors.effectKind)} aria-describedby={errors.effectKind ? `${id}-effect-error` : undefined}
@@ -122,7 +124,7 @@ function DesignFormFields({ initialDraft, presetId, onCalculate, onDraftChange,
         {input("targetPercent", "Target power (%)")}
         {input("alphaPercent", "Two-sided alpha (%)")}
         {input("dropoutPercent", "Dropout in each arm (%)", "One shared fraction applies to both arms. Dropout assumes independent missingness; retained participant counts are not guaranteed.")}
-        <button type="submit">{busy ? "Calculating design…" : "Calculate design"}</button>
+        <button type="submit">{busy ? "Calculating design…" : submitLabel}</button>
       </fieldset>
       {Object.keys(errors).length > 0 && <p role="alert">Correct the marked planning inputs before calculating.</p>}
       {(callbackError || error) && <p role="alert">{callbackError || error}</p>}

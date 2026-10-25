@@ -1,226 +1,181 @@
 "use client";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from "react";
+import { calculateDesign, evaluateScenario, getApiMode, getStressGrid } from "@/lib/api";
+import type { CalculateRequest } from "@/lib/contracts";
+import type { WorkspaceState } from "@/lib/workspace-contracts";
+import { getPresetById } from "@/lib/presets";
+import { plannedFieldUpdateAction } from "@/lib/workspace-planning";
+import type { DraftField, PlanningDraft } from "@/lib/validation";
+import { buildStressEvaluationRequest, initializeWorkspaceState, workspaceReducer } from "@/lib/workspace-state";
+import { scheduleDebounced } from "@/lib/debounce";
+import { buildScenarioExport, type ExportRuns, type ScenarioExportPayload } from "@/lib/export";
+import { parseSimulationOptions, parseSimulationResult, simulationIdentity, type RunSimulation, type SimulationSelection } from "@/lib/simulation-client";
+import { PresetSelector } from "@/components/PresetSelector";
+import { HistoricalCaseStudy } from "@/components/HistoricalCaseStudy";
+import { DesignForm } from "@/components/DesignForm";
+import { DesignSummary } from "@/components/DesignSummary";
+import { StressControls } from "@/components/StressControls";
+import { PowerCurve, workspaceCurveProps } from "@/components/PowerCurve";
+import { DesignComparison, workspaceComparisonProps } from "@/components/DesignComparison";
+import { StressHeatmap, workspaceHeatmapProps } from "@/components/StressHeatmap";
+import { MonteCarloPanel } from "@/components/MonteCarloPanel";
+import { MethodDisclosures } from "@/components/MethodDisclosures";
+import { ScenarioExport } from "@/components/ScenarioExport";
+import styles from "./planning.module.css";
 
-import { useState } from "react";
-import { calculateDesign, evaluateScenario, getStressGrid } from "@/lib/api";
-import { presets } from "@/lib/mocks";
-import type { CalculateResponse, EvaluateResponse, GridResponse } from "@/lib/contracts";
-
-function percent(value: number, digits = 0): string {
-  return `${(value * 100).toFixed(digits)}%`;
-}
-
+// The chart revision seam tracks inputs, independently of concurrent operation tokens.
+const chartState = (state: WorkspaceState): WorkspaceState => ({ ...state, requestRevision: state.inputGeneration });
+const emptyRuns = (): ExportRuns => ({ design: null, evaluation: null, grid: null });
 export default function Home() {
-  const [presetId, setPresetId] = useState("baseline-collapse-v1");
-  const preset = presets.find((item) => item.id === presetId) ?? presets[1];
-  const [stressBaseline, setStressBaseline] = useState(preset.stress.control_event_rate);
-  const [stressDropout, setStressDropout] = useState(preset.stress.dropout);
-  const [designResult, setDesignResult] = useState<CalculateResponse | null>(null);
-  const [evaluateResult, setEvaluateResult] = useState<EvaluateResponse | null>(null);
-  const [gridResult, setGridResult] = useState<GridResponse | null>(null);
-  const [status, setStatus] = useState("Ready. All values shown are fixed illustrative mock fixtures.");
-
-  const displayedDesign = designResult ?? preset.design_response;
-  const displayedEvaluate = evaluateResult ?? preset.evaluate_response;
-  const displayedGrid = gridResult ?? preset.grid_response;
-
-  function changePreset(nextId: string) {
-    const nextPreset = presets.find((item) => item.id === nextId) ?? presets[1];
-    setPresetId(nextPreset.id);
-    setStressBaseline(nextPreset.stress.control_event_rate);
-    setStressDropout(nextPreset.stress.dropout);
-    setDesignResult(null);
-    setEvaluateResult(null);
-    setGridResult(null);
-    setStatus("Preset changed. Results are local illustrative fixtures.");
+  const [state, dispatch] = useReducer(workspaceReducer, undefined, () => initializeWorkspaceState("baseline-collapse-v1"));
+  const [formResetKey, setFormResetKey] = useState(0), [runs, setRuns] = useState<ExportRuns>(emptyRuns);
+  const [simulationDraft, setSimulationDraft] = useState({ seed: "42", replicates: "10000" });
+  const stateRef = useRef(state), generation = useRef(state.inputGeneration), token = useRef(0);
+  const cancelRefresh = useRef<(() => void) | null>(null);
+  const nextToken = useCallback(() => { token.current = Math.max(token.current, stateRef.current.requestRevision) + 1; return token.current; }, []);
+  const calculateAbort = useRef<AbortController | null>(null), evaluateAbort = useRef<AbortController | null>(null), gridAbort = useRef<AbortController | null>(null);
+  useLayoutEffect(() => { stateRef.current = state; }, [state]);
+  useEffect(() => () => { calculateAbort.current?.abort(); evaluateAbort.current?.abort(); gridAbort.current?.abort(); }, []);
+  function changeInputs() { generation.current++; cancelRefresh.current?.(); calculateAbort.current?.abort(); evaluateAbort.current?.abort(); gridAbort.current?.abort(); }
+  function selectPreset(presetId?: string) {
+    changeInputs(); setRuns(emptyRuns()); setSimulationDraft({ seed: "42", replicates: "10000" }); setFormResetKey(k => k + 1);
+    dispatch(presetId ? { type: "LOAD_PRESET", presetId } : { type: "RESET_TO_PRESET" });
   }
-
-  async function calculate() {
-    const response = await calculateDesign({ ...preset.assumptions, preset_id: preset.id });
-    setDesignResult(response);
-    setStatus("Calculate returned a fixed local mock response. No statistical calculation was performed.");
+  function changeBaseline(baseline: number) { changeInputs(); dispatch({ type: "UPDATE_STRESS_BASELINE", baseline }); }
+  function changeDropout(dropout: number) { changeInputs(); dispatch({ type: "UPDATE_STRESS_DROPOUT", dropout }); }
+  function selectPoint(point: { baseline: number; dropout: number }) { changeInputs(); dispatch({ type: "SELECT_STRESS_POINT", ...point }); }
+  function changePlanned(draft: PlanningDraft, field: DraftField) { changeInputs(); dispatch(plannedFieldUpdateAction(draft, field, state.presetId)); }
+  async function calculate(request: CalculateRequest) {
+    const captured = structuredClone(stateRef.current);
+    if (captured.inputGeneration !== generation.current) return;
+    changeInputs(); setRuns(emptyRuns());
+    const controller = new AbortController(); calculateAbort.current = controller;
+    const revision = nextToken(), expected = generation.current;
+    dispatch({ type: "START_CALCULATE", requestRevision: revision, expectedInputGeneration: captured.inputGeneration });
+    try {
+      const response = await calculateDesign({ ...request, provenance_ledger: captured.provenanceLedger }, controller.signal);
+      if (controller.signal.aborted || generation.current !== expected) return;
+      const canonical = { ...response, provenance: response.provenance.field_provenance ?? {}, diagnostics: response.diagnostics ?? [] }; delete (canonical as Partial<typeof canonical>).mock; delete canonical.execution;
+      setRuns(old => ({ ...old, design: { requestState: captured, response: canonical } }));
+      dispatch({ type: "CALCULATE_SUCCESS", response, requestRevision: revision });
+    } catch (error) {
+      if (controller.signal.aborted || generation.current !== expected) return;
+      dispatch({ type: "CALCULATE_ERROR", error: error instanceof Error ? error.message : String(error), requestRevision: revision });
+    }
   }
-
-  async function evaluate() {
-    const response = await evaluateScenario({
-      planned_design: preset.assumptions,
-      fixed_enrollment: displayedDesign.enrolled_n,
-      stress_scenario: {
-        control_event_rate: stressBaseline,
-        dropout: { control: stressDropout, treatment: stressDropout },
-        effect_override: null,
-      },
-      simulation: { replicates: 10000, seed: 42 },
-      preset_id: preset.id,
-    });
-    setEvaluateResult(response);
-    setStatus("Evaluate returned a fixed local mock response. Enrollment remains fixed; no simulation was run.");
-  }
-
-  async function loadGrid() {
-    const response = await getStressGrid({
-      planned_design: preset.assumptions,
-      fixed_enrollment: displayedDesign.enrolled_n,
-      x_baseline: preset.grid_response.x_baseline,
-      y_dropout: preset.grid_response.y_dropout,
-      preset_id: preset.id,
-    });
-    setGridResult(response);
-    setStatus("Grid returned a fixed local mock response. Its values and contour are illustrative.");
-  }
-
-  return (
-    <main>
-      <header>
-        <h1>Better Baseline</h1>
-        <p>Offline synthetic trial planning shell</p>
-        <p><strong>Offline demo.</strong> No backend or network calls.</p>
-      </header>
-
-      <section aria-labelledby="preview-heading">
-        <h2 id="preview-heading">Illustrative mock preview</h2>
-        <p>Every number is a fixed local fixture, not a statistical result. Changing inputs exercises the typed request boundary; results remain illustrative examples.</p>
-        <p role="status">{status}</p>
-        <label htmlFor="preset">Synthetic scenario</label>{" "}
-        <select id="preset" value={presetId} onChange={(event) => changePreset(event.target.value)}>
-          {presets.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}
-        </select>
-        <p>{preset.description}</p>
-        <p>Provenance: synthetic fixture; no citation URL or source study.</p>
-      </section>
-
-      <section aria-labelledby="planned-heading">
-        <h2 id="planned-heading">1. Planned design</h2>
-        <p>Binary undesirable event, two arms, equal 1:1 allocation, symmetric dropout.</p>
-        <ul>
-          <li>Planned control event risk: {percent(preset.assumptions.control_event_rate)}</li>
-          <li>Hypothetical effect: {preset.effect_label}</li>
-          <li>Alpha: {percent(preset.assumptions.alpha)}</li>
-          <li>Power target: {percent(preset.assumptions.target_power)}</li>
-          <li>Planned dropout: {percent(preset.assumptions.dropout.control)}</li>
-          <li>Planned enrollment: {displayedDesign.enrolled_n.control.toLocaleString()} control and {displayedDesign.enrolled_n.treatment.toLocaleString()} treatment participants</li>
-          <li>Evaluable sample: {displayedDesign.evaluable_n.control.toLocaleString()} per arm</li>
-          <li>Illustrative nominal power: {percent(displayedDesign.nominal_power_evaluable, 1)}</li>
-        </ul>
-        <p>Method label: {displayedDesign.method} (illustrative only).</p>
-        <button type="button" onClick={calculate}>Calculate design (local mock)</button>
-        <ul>
-          {displayedDesign.warnings.map((warning) => <li key={warning}>{warning}</li>)}
-        </ul>
-      </section>
-
-      <section aria-labelledby="stress-heading">
-        <h2 id="stress-heading">2. Stress scenario</h2>
-        <p>Stress controls do not resize the planned enrollment. Dropout is symmetric between arms.</p>
-        <p>
-          <label htmlFor="baseline">Stress control event risk: {percent(stressBaseline)}</label><br />
-          <input id="baseline" type="range" min="5" max="30" step="1" value={Math.round(stressBaseline * 100)} onChange={(event) => setStressBaseline(Number(event.target.value) / 100)} />
-          <span> 5% to 30%</span>
-        </p>
-        <p>
-          <label htmlFor="dropout">Stress symmetric dropout: {percent(stressDropout)}</label><br />
-          <input id="dropout" type="range" min="0" max="30" step="1" value={Math.round(stressDropout * 100)} onChange={(event) => setStressDropout(Number(event.target.value) / 100)} />
-          <span> 0% to 30%</span>
-        </p>
-        <button type="button" onClick={evaluate}>Evaluate fixed enrollment (local mock)</button>
-        <p>Selected request values: baseline {percent(stressBaseline)}, symmetric dropout {percent(stressDropout)}. The response remains the selected preset fixture.</p>
-      </section>
-
-      <section aria-labelledby="power-heading">
-        <h2 id="power-heading">3. Power by baseline risk</h2>
-        <p>Illustrative fixture values at the first dropout row. This is a numerical view, not a styled chart.</p>
-        <table>
-          <caption>Mock power curve data</caption>
-          <thead><tr><th scope="col">Control event risk</th><th scope="col">Illustrative power</th></tr></thead>
-          <tbody>
-            {displayedGrid.x_baseline.map((baseline, index) => (
-              <tr key={baseline}>
-                <td>{percent(baseline)}</td>
-                <td>{displayedGrid.power[0][index] === null ? "Invalid scenario (null)" : percent(displayedGrid.power[0][index] ?? 0)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <p>Target power: {percent(displayedGrid.target_power)}. Values are illustrative and do not describe trial outcomes.</p>
-      </section>
-
-      <section aria-labelledby="grid-heading">
-        <h2 id="grid-heading">4. Assumption sensitivity grid</h2>
-        <p>Cell indexing follows [dropout][baseline]. All cell values are mock data. The contract represents invalid cells as null with a matching invalid mask.</p>
-        <p>Grid method label: {displayedGrid.method}; {displayedGrid.grid_label}.</p>
-        <table>
-          <caption>Illustrative mock power grid by symmetric dropout and baseline event risk</caption>
-          <thead>
-            <tr>
-              <th scope="col">Dropout ↓ / baseline →</th>
-              {displayedGrid.x_baseline.map((baseline) => <th scope="col" key={baseline}>{percent(baseline)}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {displayedGrid.y_dropout.map((dropout, row) => (
-              <tr key={dropout}>
-                <th scope="row">{percent(dropout)}</th>
-                {displayedGrid.power[row].map((value, column) => (
-                  <td key={`${row}-${column}`}>
-                    {displayedGrid.invalid_mask[row][column]
-                      ? `Invalid (power ${value === null ? "null" : "unexpected value"})`
-                      : value === null ? "Invalid data (mask false)" : percent(value)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <p>Planned point: baseline {percent(displayedGrid.planned_point.baseline)}, dropout {percent(displayedGrid.planned_point.dropout)}.</p>
-        <p>Selected point: baseline {percent(displayedGrid.selected_point.baseline)}, dropout {percent(displayedGrid.selected_point.dropout)}.</p>
-        <p>Target-power contour points (fixture only):</p>
-        <ol>
-          {displayedGrid.frontier_points.map((point, index) => <li key={`${point.baseline}-${point.dropout}-${index}`}>Baseline {percent(point.baseline)}, dropout {percent(point.dropout)}</li>)}
-        </ol>
-        <button type="button" onClick={loadGrid}>Load grid response (local mock)</button>
-        <ul>{displayedGrid.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
-      </section>
-
-      <section aria-labelledby="evaluate-heading">
-        <h2 id="evaluate-heading">5. Evaluate selected scenario</h2>
-        <p>Selected baseline {percent(stressBaseline)}; symmetric dropout {percent(stressDropout)}; fixed enrollment {displayedDesign.enrolled_n.control.toLocaleString()} per arm.</p>
-        <p>Analytic method: {displayedEvaluate.analytic.method}.</p>
-        <ul>
-          <li>Illustrative conditional power: {displayedEvaluate.analytic.conditional_power_approx === null
-            ? "Unavailable: zero expected retention"
-            : percent(displayedEvaluate.analytic.conditional_power_approx)}</li>
-          <li>Stress expected retained count: {displayedEvaluate.analytic.assumed_evaluable_n.control.toLocaleString()} control and {displayedEvaluate.analytic.assumed_evaluable_n.treatment.toLocaleString()} treatment participants</li>
-          <li>Monte Carlo method: {displayedEvaluate.monte_carlo.method}</li>
-          <li>Two-sided significance fraction: {percent(displayedEvaluate.monte_carlo.significant_two_sided_fraction)}</li>
-          <li>Favorable-direction significance fraction: {percent(displayedEvaluate.monte_carlo.significant_favorable_fraction)}</li>
-          <li>Two-sided significance MCSE: {percent(displayedEvaluate.monte_carlo.mcse_two_sided, 1)}</li>
-          <li>Favorable-direction significance MCSE: {percent(displayedEvaluate.monte_carlo.mcse_favorable, 1)}</li>
-          <li>Invalid-test fraction: {percent(displayedEvaluate.monte_carlo.invalid_test_fraction, 1)}</li>
-          <li>Replicates: {displayedEvaluate.monte_carlo.replicates.toLocaleString()}</li>
-          <li>Seed: {displayedEvaluate.monte_carlo.seed}</li>
-        </ul>
-        <p><strong>Mock simulation fields only.</strong> No Monte Carlo run occurred. An estimate of statistical power is not a prediction that treatment works.</p>
-        <ul>{displayedEvaluate.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
-      </section>
-
-      <section aria-labelledby="provenance-heading">
-        <h2 id="provenance-heading">Provenance</h2>
-        <ul>
-          <li>Scenario: {displayedEvaluate.provenance.label} ({displayedEvaluate.provenance.scenario_id})</li>
-          <li>Scenario kind: {displayedEvaluate.provenance.scenario_kind}</li>
-          <li>Source type: {displayedEvaluate.provenance.source.type}</li>
-          <li>Citation URL: none</li>
-          <li>Endpoint: {displayedEvaluate.provenance.endpoint_type}</li>
-          <li>Follow-up: {displayedEvaluate.provenance.follow_up_label}</li>
-          <li>Model version: {displayedEvaluate.provenance.method_version}</li>
-          <li>Fixture source: {displayedEvaluate.provenance.generated_by}</li>
-          <li>Inputs hash: {displayedEvaluate.metadata.inputs_hash}</li>
-          <li>Fixture timestamp: {displayedEvaluate.metadata.computed_at}</li>
-        </ul>
-      </section>
-
-      <footer>
-        <p><strong>Planning support only.</strong> This offline synthetic shell is not clinical evidence, medical advice, or a validated design tool. Conditional power depends on assumptions and method. Review real study decisions with a qualified statistician.</p>
-      </footer>
-    </main>
-  );
+  const loadGrid = useCallback(async () => {
+    const captured = structuredClone(stateRef.current);
+    if (captured.inputGeneration !== generation.current || captured.designStatus !== "success" || !captured.frozenEnrollment) return;
+    gridAbort.current?.abort(); const controller = new AbortController(); gridAbort.current = controller;
+    const revision = nextToken();
+    dispatch({ type: "START_GRID", requestRevision: revision, expectedInputGeneration: captured.inputGeneration });
+    try {
+      const preset = getPresetById(captured.presetId);
+      const response = await getStressGrid({ planned_design: captured.plannedDraft, fixed_enrollment: captured.frozenEnrollment,
+        x_baseline: preset.grid_response.x_baseline, y_dropout: preset.grid_response.y_dropout,
+        selected_scenario: { control_event_rate: captured.stressBaseline, dropout: { control: captured.stressDropout, treatment: captured.stressDropout }, effect_override: null },
+        preset_id: captured.presetId, provenance_ledger: captured.provenanceLedger }, controller.signal,
+      raw => { if (!controller.signal.aborted && captured.inputGeneration === generation.current) setRuns(old => ({ ...old, grid: { requestState: captured, response: raw } })); });
+      if (controller.signal.aborted || captured.inputGeneration !== generation.current) return;
+      dispatch({ type: "GRID_SUCCESS", response, requestRevision: revision });
+    } catch (error) {
+      if (controller.signal.aborted || captured.inputGeneration !== generation.current) return;
+      dispatch({ type: "GRID_ERROR", error: error instanceof Error ? error.message : String(error), requestRevision: revision });
+    }
+  }, [nextToken]);
+  const evaluateAnalytic = useCallback(async () => {
+    const captured = structuredClone(stateRef.current);
+    if (captured.inputGeneration !== generation.current || captured.designStatus !== "success" || !captured.frozenEnrollment) return;
+    evaluateAbort.current?.abort(); const controller = new AbortController(); evaluateAbort.current = controller;
+    const revision = nextToken();
+    dispatch({ type: "START_EVALUATE", requestRevision: revision, expectedInputGeneration: captured.inputGeneration });
+    try {
+      const response = await evaluateScenario(buildStressEvaluationRequest(captured), controller.signal, "analytic");
+      if (controller.signal.aborted || captured.inputGeneration !== generation.current) return;
+      dispatch({ type: "EVALUATE_SUCCESS", response, requestRevision: revision });
+    } catch (error) {
+      if (controller.signal.aborted || captured.inputGeneration !== generation.current) return;
+      dispatch({ type: "EVALUATE_ERROR", error: error instanceof Error ? error.message : String(error), requestRevision: revision });
+    }
+  }, [nextToken]);
+  useEffect(() => {
+    if (state.designStatus !== "success") return;
+    const expectedGeneration = state.inputGeneration; let active = true;
+    const cancelTimer = scheduleDebounced(() => {
+      if (!active || generation.current !== expectedGeneration) return;
+      cancelRefresh.current = null; void evaluateAnalytic(); void loadGrid();
+    }, 350);
+    const cancel = () => { active = false; cancelTimer(); };
+    cancelRefresh.current = cancel;
+    return () => { cancel(); if (cancelRefresh.current === cancel) cancelRefresh.current = null; };
+  }, [state.inputGeneration, state.designStatus, evaluateAnalytic, loadGrid]);
+  const runSimulation: RunSimulation = useCallback(async (request, signal) => {
+    const captured = structuredClone(stateRef.current);
+    if (captured.inputGeneration !== generation.current || captured.designStatus !== "success" || !captured.frozenEnrollment) throw new Error("Calculate the current design first.");
+    if (getApiMode() !== "live") throw new Error("Monte Carlo requires the live backend; demo values are not replayable.");
+    const expected = { planned_design: captured.plannedDraft, fixed_enrollment: captured.frozenEnrollment,
+      stress_scenario: { control_event_rate: captured.stressBaseline, dropout: { control: captured.stressDropout, treatment: captured.stressDropout }, effect_override: null }, provenance: captured.provenanceLedger, simulation: request.simulation };
+    if (simulationIdentity(request) !== simulationIdentity(expected)) throw new Error("Simulation selection does not match current inputs.");
+    cancelRefresh.current?.(); cancelRefresh.current = null;
+    if (captured.gridStatus === "stale" || captured.gridStatus === "idle" || captured.gridStatus === "error") void loadGrid();
+    evaluateAbort.current?.abort(); const controller = new AbortController(); evaluateAbort.current = controller;
+    const abort = () => controller.abort(); signal.addEventListener("abort", abort, { once: true }); if (signal.aborted) controller.abort();
+    const revision = nextToken();
+    setRuns(old => ({ ...old, evaluation: null }));
+    dispatch({ type: "START_EVALUATE", requestRevision: revision, expectedInputGeneration: captured.inputGeneration });
+    try {
+      const response = await evaluateScenario({ ...buildStressEvaluationRequest(captured), simulation: request.simulation }, controller.signal);
+      if (controller.signal.aborted || captured.inputGeneration !== generation.current) throw new DOMException("Simulation aborted", "AbortError");
+      const result = { ...parseSimulationResult({ ...response, provenance: response.provenance.field_provenance ?? {} }, request), provenance: response.provenance.field_provenance ?? {}, diagnostics: response.diagnostics ?? [] };
+      setRuns(old => ({ ...old, evaluation: { requestState: captured, response: result } }));
+      dispatch({ type: "EVALUATE_SUCCESS", response, requestRevision: revision }); return result;
+    } catch (error) {
+      if (!controller.signal.aborted && captured.inputGeneration === generation.current) dispatch({ type: "EVALUATE_ERROR", error: error instanceof Error ? error.message : String(error), requestRevision: revision });
+      throw error;
+    } finally { signal.removeEventListener("abort", abort); }
+  }, [nextToken, loadGrid]);
+  const selection: SimulationSelection | null = state.designStatus === "success" && state.frozenEnrollment ? {
+    planned_design: state.plannedDraft, fixed_enrollment: state.frozenEnrollment,
+    stress_scenario: { control_event_rate: state.stressBaseline, dropout: { control: state.stressDropout, treatment: state.stressDropout }, effect_override: null }, provenance: state.provenanceLedger,
+  } : null;
+  const completedGrid = runs.grid ? { requestState: chartState(runs.grid.requestState), response: runs.grid.response } : null;
+  const curve = workspaceCurveProps(chartState(state), completedGrid), heatmap = workspaceHeatmapProps(chartState(state), completedGrid);
+  const { payload, exportReason } = useMemo((): { payload: ScenarioExportPayload | null; exportReason?: string } => {
+    try {
+      const options = parseSimulationOptions(simulationDraft.seed, simulationDraft.replicates);
+      if (!runs.evaluation || runs.evaluation.response.monte_carlo.seed !== options.seed || runs.evaluation.response.monte_carlo.replicates !== options.replicates) throw new Error("Run the displayed seed and replicate configuration before exporting.");
+      return { payload: buildScenarioExport(state, runs) };
+    } catch (error) { return { payload: null, exportReason: error instanceof Error ? error.message : "Complete current calculations and a selected simulation before exporting." }; }
+  }, [state, runs, simulationDraft]);
+  return <main className={styles.workspace}>
+    <header className={styles.header}><h1>Better Baseline</h1><p>See how fewer events than expected can weaken a trial before enrollment begins.</p><p>Plan a binary-outcome trial, freeze enrollment, and explore which assumptions put its statistical power at risk.</p><p><strong>Execution mode:</strong> {getApiMode() === "demo" ? "DEMO — fixtures and client calculations; no backend execution" : "LIVE — fresh calculations require the backend service"}</p></header>
+    <PresetSelector selectedPresetId={state.presetId} onSelectPreset={selectPreset} onResetPreset={() => selectPreset()} />
+    <HistoricalCaseStudy onLoadExample={selectPreset} />
+    <div className={styles.planningGrid}>
+    <section className={styles.planning} aria-labelledby="planned-heading"><h2 id="planned-heading">Planned design and enrollment locking</h2>
+      <DesignForm key={`${state.presetId}:${formResetKey}`} initialAssumptions={getPresetById(state.presetId).planned_design} presetId={state.presetId} onCalculate={calculate} onDraftChange={changePlanned} isCalculating={state.designStatus === "calculating"} error={state.designError} submitLabel="Calculate & Lock Design" />
+    </section>
+    <DesignSummary result={state.calculatedDesign} isStale={state.designStatus !== "success"} isCalculating={state.designStatus === "calculating"} error={state.designError} />
+    </div>
+    <div className={styles.stressWorkspace}>
+    <StressControls frozenEnrollment={state.frozenEnrollment} stressBaseline={state.stressBaseline} stressDropout={state.stressDropout} onBaselineChange={changeBaseline} onDropoutChange={changeDropout} onEvaluate={() => { void evaluateAnalytic(); }} evaluateStatus={state.evaluateStatus} evaluateError={state.evaluateError} isCalculating={state.designStatus !== "success"} />
+    <section className={styles.gridRequest} aria-labelledby="grid-heading"><h2 id="grid-heading">Analytic chart requests</h2><button type="button" onClick={() => { void loadGrid(); }} disabled={state.designStatus !== "success" || state.gridStatus === "loading"}>{state.gridStatus === "loading" ? "Loading Grid..." : "Load grid response from backend"}</button><span> Status: {state.gridStatus.toUpperCase()}</span>{state.gridError && <p role="alert">{state.gridError}</p>}</section>
+    </div>
+    <DesignComparison {...workspaceComparisonProps(chartState(state), completedGrid)} />
+    <div className={styles.analyticsGrid}>
+    <PowerCurve {...curve} onSelectBaseline={changeBaseline} />
+    <StressHeatmap {...heatmap} onSelectPoint={selectPoint} />
+    </div>
+    <div className={styles.simulation} onChangeCapture={event => {
+      if (!(event.target instanceof HTMLInputElement)) return;
+      const fields = event.currentTarget.querySelectorAll<HTMLInputElement>('input[type="text"]'); if (fields.length !== 2) return;
+      const next = { seed: fields[0].value, replicates: fields[1].value };
+      const pointers = [next.seed !== simulationDraft.seed ? "/simulation/seed" : "", next.replicates !== simulationDraft.replicates ? "/simulation/replicates" : ""].filter(Boolean);
+      if (!pointers.length) return; changeInputs(); setSimulationDraft(next); dispatch({ type: "UPDATE_SIMULATION_PROVENANCE", pointers });
+    }}><MonteCarloPanel key={`${state.presetId}:${formResetKey}`} selection={selection} runSimulation={runSimulation} unavailableReason={getApiMode() === "demo" ? "Live simulation is unavailable in demo mode." : undefined} /></div>
+    <ScenarioExport payload={payload} unavailableReason={exportReason} />
+    <section className={styles.provenance} aria-labelledby="provenance-heading"><h2 id="provenance-heading">Field provenance and audit trail</h2><p>Current result hash: <code>{state.displayedInputsHash ?? "stale/unhashed"}</code></p>
+      <div className={styles.tableScroll} role="region" aria-label="Active field provenance table" tabIndex={0}><table><caption>Active field provenance</caption><thead><tr><th scope="col">Field</th><th scope="col">Source</th><th scope="col">Description</th></tr></thead><tbody>{Object.entries(state.provenanceLedger).map(([field, source]) => <tr key={field}><th scope="row">{field}</th><td>{source.source}</td><td>{source.description}{source.source_url && <> — <a href={source.source_url}>{source.source_url}</a></>}</td></tr>)}</tbody></table></div>
+    </section><MethodDisclosures />
+  </main>;
 }

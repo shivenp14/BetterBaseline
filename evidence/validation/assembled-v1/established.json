@@ -1,0 +1,313 @@
+{
+  "status": "pass",
+  "captured_at": "2026-10-11T13:10:25.970885+00:00",
+  "engine_commit": "8b181b0fbebc2da4b827bedca7c451b520a361a9",
+  "statsmodels_version": "0.15.0",
+  "package_api": "NormalIndPower.power + proportion_effectsize; no product imports",
+  "power_tolerance": 1e-10,
+  "comparisons": 50,
+  "maximum_absolute_error": 1.6653345369377348e-15,
+  "results": [
+    {
+      "scope": "minimal_design",
+      "n": 903,
+      "package_power": 0.8002861288461953,
+      "absolute_error": 2.220446049250313e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 903,
+      "package_power": 0.8002861288461953,
+      "absolute_error": 2.220446049250313e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 903,
+      "package_power": 0.4699965739664286,
+      "absolute_error": 6.106226635438361e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 677,
+      "package_power": 0.5351313490059391,
+      "absolute_error": 2.220446049250313e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 379,
+      "package_power": 0.442714939744507,
+      "absolute_error": 2.7755575615628914e-16
+    },
+    {
+      "scope": "minimal_design",
+      "n": 903,
+      "package_power": 0.8002861288461953,
+      "absolute_error": 2.220446049250313e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 903,
+      "package_power": 0.8002861288461953,
+      "absolute_error": 2.220446049250313e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 1004,
+      "package_power": 0.5108769949771085,
+      "absolute_error": 7.771561172376096e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 753,
+      "package_power": 0.5792782869028872,
+      "absolute_error": 2.220446049250313e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 421,
+      "package_power": 0.48157736930782075,
+      "absolute_error": 2.7755575615628914e-16
+    },
+    {
+      "scope": "minimal_design",
+      "n": 1996,
+      "package_power": 0.8000668016329435,
+      "absolute_error": 8.881784197001252e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 1996,
+      "package_power": 0.8000668016329435,
+      "absolute_error": 8.881784197001252e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 1996,
+      "package_power": 0.4902763716665301,
+      "absolute_error": 5.551115123125783e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 1497,
+      "package_power": 0.5464885981615877,
+      "absolute_error": 1.6653345369377348e-15
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 838,
+      "package_power": 0.44262346017837584,
+      "absolute_error": 6.106226635438361e-16
+    },
+    {
+      "scope": "minimal_design",
+      "n": 225,
+      "package_power": 0.9003778981340554,
+      "absolute_error": 1.1102230246251565e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 225,
+      "package_power": 0.9003778981340554,
+      "absolute_error": 1.1102230246251565e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 282,
+      "package_power": 0.6106419525300332,
+      "absolute_error": 3.3306690738754696e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 211,
+      "package_power": 0.7089279443437895,
+      "absolute_error": 9.992007221626409e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 118,
+      "package_power": 0.5867494093449462,
+      "absolute_error": 3.3306690738754696e-16
+    },
+    {
+      "scope": "minimal_design",
+      "n": 4183,
+      "package_power": 0.8000825553746886,
+      "absolute_error": 6.661338147750939e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 4183,
+      "package_power": 0.8000825553746886,
+      "absolute_error": 6.661338147750939e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 5976,
+      "package_power": 0.6486164325806131,
+      "absolute_error": 1.4432899320127035e-15
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 4482,
+      "package_power": 0.7045639186837386,
+      "absolute_error": 2.220446049250313e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 2509,
+      "package_power": 0.5831899482711652,
+      "absolute_error": 4.440892098500626e-16
+    },
+    {
+      "scope": "minimal_design",
+      "n": 903,
+      "package_power": 0.8002861288461953,
+      "absolute_error": 2.220446049250313e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 903,
+      "package_power": 0.8002861288461953,
+      "absolute_error": 2.220446049250313e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 903,
+      "package_power": 0.9834072481939462,
+      "absolute_error": 0.0
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 677,
+      "package_power": 0.7980594806524539,
+      "absolute_error": 1.1102230246251565e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 379,
+      "package_power": 0.442714939744507,
+      "absolute_error": 2.7755575615628914e-16
+    },
+    {
+      "scope": "minimal_design",
+      "n": 6076,
+      "package_power": 0.9000389224090979,
+      "absolute_error": 2.220446049250313e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 6076,
+      "package_power": 0.9000389224090979,
+      "absolute_error": 2.220446049250313e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 6984,
+      "package_power": 0.9997695764044964,
+      "absolute_error": 0.0
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 5238,
+      "package_power": 0.9438406864024262,
+      "absolute_error": 6.661338147750939e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 2933,
+      "package_power": 0.5415562194363491,
+      "absolute_error": 4.440892098500626e-16
+    },
+    {
+      "scope": "minimal_design",
+      "n": 983,
+      "package_power": 0.7001675796650226,
+      "absolute_error": 2.220446049250313e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 983,
+      "package_power": 0.7001675796650226,
+      "absolute_error": 2.220446049250313e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 1093,
+      "package_power": 0.9441952987018216,
+      "absolute_error": 0.0
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 819,
+      "package_power": 0.7170213804842921,
+      "absolute_error": 9.992007221626409e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 459,
+      "package_power": 0.39678554882967343,
+      "absolute_error": 2.220446049250313e-16
+    },
+    {
+      "scope": "minimal_design",
+      "n": 45713,
+      "package_power": 0.8000012442499783,
+      "absolute_error": 2.220446049250313e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 45713,
+      "package_power": 0.8000012442499783,
+      "absolute_error": 2.220446049250313e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 228565,
+      "package_power": 0.9932238801014047,
+      "absolute_error": 0.0
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 171423,
+      "package_power": 0.9969092617206926,
+      "absolute_error": 0.0
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 95997,
+      "package_power": 0.9821317898294328,
+      "absolute_error": 0.0
+    },
+    {
+      "scope": "minimal_design",
+      "n": 2293,
+      "package_power": 0.8000375330225362,
+      "absolute_error": 1.1102230246251565e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 2293,
+      "package_power": 0.8000375330225362,
+      "absolute_error": 1.1102230246251565e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 3276,
+      "package_power": 0.06859008008477885,
+      "absolute_error": 1.1102230246251565e-16
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 2457,
+      "package_power": 0.09107826965023984,
+      "absolute_error": 9.71445146547012e-17
+    },
+    {
+      "scope": "fixed_enrollment_stress",
+      "n": 1375,
+      "package_power": 0.583030082892555,
+      "absolute_error": 3.3306690738754696e-16
+    }
+  ],
+  "limitation": "Rechecks independently captured HTTP results using an established implementation of the same approximation; not clinical validation."
+}
