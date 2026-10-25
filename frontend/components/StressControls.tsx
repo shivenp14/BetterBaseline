@@ -34,15 +34,14 @@ export function StressControls({
 
   return (
     <section className={"analytics-panel"} aria-labelledby="stress-heading">
-      <h2 id="stress-heading">Stress Controls & Fixed Enrollment Invariant</h2>
+      <h2 id="stress-heading">Change the scenario</h2>
       <p>
-        Vary underlying control risk or attrition under fixed sample size. Notice that
-        adjusting stress parameters <strong>never</strong> alters the locked enrolled counts.
+        Try a different control-group event rate or expected dropout to see how the estimated chance of detecting the assumed difference changes. These are what-if assumptions; the planned enrollment stays fixed.
       </p>
 
       {frozenEnrollment ? (
         <div className={"analytics-enrollment"}>
-          <strong>LOCKED ENROLLMENT (Immutable):</strong>{" "}
+          <strong>Planned enrollment (held fixed):</strong>{" "}
           <span>Control: {controlN.toLocaleString()} enrolled</span> |{" "}
           <span>Treatment: {treatmentN.toLocaleString()} enrolled</span>
           <br />
@@ -54,13 +53,13 @@ export function StressControls({
         </div>
       ) : (
         <div className={"analytics-enrollment"}>
-          <em>No calculated design locked yet. Run calculation to lock enrollment.</em>
+          <em>Calculate a planned design above to set the enrollment that this stress test holds fixed. You can adjust these assumptions now.</em>
         </div>
       )}
 
       <div className={"analytics-control"}>
         <label htmlFor="stress-baseline-slider">
-          <strong>Stress Control Risk (Eligible-Control Event Rate):</strong>{" "}
+          <strong>Control-group event rate:</strong>{" "}
           {(stressBaseline * 100).toFixed(1)}%
         </label>
         <br />
@@ -71,9 +70,11 @@ export function StressControls({
           max="0.99"
           step="0.01"
           value={stressBaseline}
+          aria-describedby="stress-baseline-help"
           onChange={(e) => onBaselineChange(parseFloat(e.target.value))}
           className={"analytics-slider"}
         />
+        <label htmlFor="stress-baseline-num">Enter as a decimal (0.20 means 20%):</label>{" "}
         <input
           id="stress-baseline-num"
           aria-label="Stress control risk fraction"
@@ -89,11 +90,12 @@ export function StressControls({
           className={"analytics-numeric"}
         />
         <small className={"analytics-unit"}>Numeric value is a fraction (0.10 = 10%). Risk range: 1–99%.</small>
+        <p id="stress-baseline-help">Share of people in the control group expected to have the outcome during follow-up.</p>
       </div>
 
       <div className={"analytics-control"}>
         <label htmlFor="stress-dropout-slider">
-          <strong>Stress Symmetric Dropout Rate:</strong>{" "}
+          <strong>Expected dropout in each group:</strong>{" "}
           {(stressDropout * 100).toFixed(1)}%
         </label>
         <br />
@@ -104,9 +106,11 @@ export function StressControls({
           max="0.50"
           step="0.01"
           value={stressDropout}
+          aria-describedby="stress-dropout-help"
           onChange={(e) => onDropoutChange(parseFloat(e.target.value))}
           className={"analytics-slider"}
         />
+        <label htmlFor="stress-dropout-num">Enter as a decimal (0.10 means 10%):</label>{" "}
         <input
           id="stress-dropout-num"
           aria-label="Stress symmetric dropout fraction"
@@ -121,6 +125,7 @@ export function StressControls({
           }}
           className={"analytics-numeric"}
         />
+        <p id="stress-dropout-help">The same estimate is applied to both groups. Actual retained counts may differ.</p>
       </div>
 
       <p className={"analytics-unit"}>Dropout numeric value is a fraction (0.10 = 10%). Slider range: 0–50%.</p>
@@ -131,7 +136,7 @@ export function StressControls({
             onClick={onEvaluate}
             disabled={isCalculating || evaluateStatus === "evaluating" || !frozenEnrollment}
           >
-            {evaluateStatus === "evaluating" ? "Evaluating Stress..." : "Evaluate Stress Scenario"}
+            {evaluateStatus === "evaluating" ? "Updating estimate…" : "Update estimate now"}
           </button>
         )}
         <span className={evaluateStatus === "stale" ? "analytics-warning" : "analytics-status"}>
@@ -146,7 +151,7 @@ export function StressControls({
 
       {evaluateError && (
         <div className={"analytics-error"}>
-          <strong>Error:</strong> {evaluateError}
+          <strong>Could not update this estimate:</strong> {evaluateError} You can retry using “Update estimate now.”
         </div>
       )}
     </section>
