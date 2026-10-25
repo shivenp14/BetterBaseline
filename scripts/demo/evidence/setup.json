@@ -1,0 +1,28 @@
+{
+  "validation_checkout": "/private/tmp/bb83-validation",
+  "assembly_commit": "912b9eeb9186ba3beb2eb15ae607723cd291e747",
+  "dependency_heads": {
+    "94": "ca6dc37b6f6450e7047d63b13a429dc2d4b13c9a",
+    "118": "4322bd049b37f36dddb9bb752f94c06e7d749b5a"
+  },
+  "setup": {
+    "python": "3.12.13",
+    "node": "24.15.0",
+    "uv": "0.9.26",
+    "backend_install": "uv sync --locked --extra dev --python 3.12",
+    "frontend_install": "npm ci",
+    "e2e_install": "npm ci; npx playwright install chromium",
+    "backend_tests": "368 passed; 212 subtests passed; 15 deprecation warnings",
+    "frontend_checks": "lint, typecheck, production build passed",
+    "npm_audit": "frontend npm ci reported 5 high severity findings in inherited dependencies; no dependency files changed",
+    "e2e": "8 passed (4.3s), unmodified #118 suite on combined checkout"
+  },
+  "source_sha256": {
+    "scripts/demo/rehearse.mjs": "6f95f465a107c9657b536838feb5a9264ed03d9ae58983ef9c923d71d4e09b00",
+    "backend/uv.lock": "afc08a0a3431064f515c8233d8bd2d15e2181e6456717b94980be7179870c2d8",
+    "frontend/package-lock.json": "1e461a428e87ee444288e91dc8825a43f83db104747f2c2282654e9da202666a"
+  },
+  "hosted": "No hosting target configured; not exercised",
+  "docker": "Daemon unavailable here; use #94 recorded container evidence",
+  "pending": "Independent teammate timed walkthrough; parent PR/core acceptance; no demo-ready tag"
+}
